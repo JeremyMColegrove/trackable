@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "is_profile_private" boolean DEFAULT false NOT NULL;
