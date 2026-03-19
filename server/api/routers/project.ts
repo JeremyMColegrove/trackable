@@ -41,9 +41,10 @@ import {
   resolveApiKeyExpiration,
 } from "@/server/api-keys"
 import { assertProjectAccess } from "@/server/project-access"
-import type { UsageEventPayload } from "@/db/schema/types"
+import type { TrackableKind, UsageEventPayload } from "@/db/schema/types"
 
 const accessRoleSchema = z.enum(["submit", "view", "manage"])
+const trackableKindSchema = z.enum(["survey", "api_ingestion"])
 
 // Helper to create a somewhat unique slug
 function generateSlug(name: string) {
@@ -53,7 +54,7 @@ function generateSlug(name: string) {
     .replace(/(^-|-$)+/g, "")
 
   if (!baseSlug) {
-    return `project-${Math.random().toString(36).substring(2, 8)}`
+    return `trackable-${Math.random().toString(36).substring(2, 8)}`
   }
 
   const randomSuffix = Math.random().toString(36).substring(2, 6)
@@ -65,26 +66,29 @@ function createShareToken() {
 }
 
 function extractUsageEventName(payload: UsageEventPayload) {
-  const candidateKeys = [
-    "name",
-    "clientName",
-    "eventName",
-    "label",
-    "title",
-    "source",
-  ]
+  const payloadName = payload.name
 
-  for (const key of candidateKeys) {
-    const payloadValue = payload[key]
-    if (typeof payloadValue === "string" && payloadValue.trim().length > 0) {
-      return payloadValue.trim()
-    }
+  if (typeof payloadName === "string" && payloadName.trim().length > 0) {
+    return payloadName.trim()
   }
 
   return "Unnamed"
 }
 
-export const projectsRouter = createTRPCRouter({
+function assertTrackableKind(
+  kind: TrackableKind,
+  expected: TrackableKind,
+  message: string
+) {
+  if (kind !== expected) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message,
+    })
+  }
+}
+
+export const trackablesRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(
       z.object({
@@ -128,7 +132,7 @@ export const projectsRouter = createTRPCRouter({
       if (!project) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Project not found.",
+          message: "Trackable not found.",
         })
       }
 
@@ -268,6 +272,7 @@ export const projectsRouter = createTRPCRouter({
 
       return {
         id: project.id,
+        kind: project.kind,
         name: project.name,
         description: project.description,
         settings: project.settings,
@@ -302,7 +307,7 @@ export const projectsRouter = createTRPCRouter({
         })),
         recentUsageEvents: aggregatedUsageEvents,
         apiKeys: ownedApiKeys.map((key) => {
-          const projectUsage = usageByKey.get(key.id)
+          const trackableUsage = usageByKey.get(key.id)
 
           return {
             id: key.id,
@@ -310,9 +315,9 @@ export const projectsRouter = createTRPCRouter({
             maskedKey: `${key.keyPrefix}...${key.lastFour}`,
             status: key.status,
             expiresAt: key.expiresAt?.toISOString() ?? null,
-            projectUsageCount: projectUsage?.usageCount ?? 0,
+            trackableUsageCount: trackableUsage?.usageCount ?? 0,
             lastUsedAt:
-              projectUsage?.lastOccurredAt ??
+              trackableUsage?.lastOccurredAt ??
               key.lastUsedAt?.toISOString() ??
               null,
           }
@@ -364,9 +369,14 @@ export const projectsRouter = createTRPCRouter({
 
       const form = shareLink.trackable.activeForm
       const settings = shareLink.trackable.settings ?? null
-      const isFormEnabled = settings?.isFormEnabled ?? true
 
-      if (!form || form.status === "archived" || !isFormEnabled) {
+      assertTrackableKind(
+        shareLink.trackable.kind,
+        "survey",
+        "This shared form is not available for this trackable."
+      )
+
+      if (!form || form.status === "archived") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "This shared form is not accepting responses right now.",
@@ -384,7 +394,7 @@ export const projectsRouter = createTRPCRouter({
         requiresAuthenticatedSharedFormAccess(settings)
 
       return {
-        project: {
+        trackable: {
           id: shareLink.trackable.id,
           name: shareLink.trackable.name,
           description: shareLink.trackable.description,
@@ -434,9 +444,14 @@ export const projectsRouter = createTRPCRouter({
 
       const form = shareLink.trackable.activeForm
       const settings = shareLink.trackable.settings ?? null
-      const isFormEnabled = settings?.isFormEnabled ?? true
 
-      if (!form || form.status === "archived" || !isFormEnabled) {
+      assertTrackableKind(
+        shareLink.trackable.kind,
+        "survey",
+        "This shared form is not available for this trackable."
+      )
+
+      if (!form || form.status === "archived") {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
           message: "This shared form is not accepting responses right now.",
@@ -576,22 +591,33 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const project = await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
 
-      const projectRecord = await db.query.trackableItems.findFirst({
-        where: eq(trackableItems.id, project.id),
+      const trackableRecord = await db.query.trackableItems.findFirst({
+        where: eq(trackableItems.id, trackable.id),
         columns: {
           id: true,
+          kind: true,
           name: true,
         },
       })
 
-      if (!projectRecord) {
+      if (!trackableRecord) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Project not found.",
+          message: "Trackable not found.",
         })
       }
+
+      assertTrackableKind(
+        trackableRecord.kind,
+        "survey",
+        "Only survey trackables can build forms."
+      )
 
       const form = await db.transaction(async (tx) => {
         const [versionResult] = await tx
@@ -599,16 +625,16 @@ export const projectsRouter = createTRPCRouter({
             maxVersion: max(trackableForms.version),
           })
           .from(trackableForms)
-          .where(eq(trackableForms.trackableId, projectRecord.id))
+          .where(eq(trackableForms.trackableId, trackableRecord.id))
 
         const nextVersion = (versionResult?.maxVersion ?? 0) + 1
 
         const [createdForm] = await tx
           .insert(trackableForms)
           .values({
-            trackableId: projectRecord.id,
+            trackableId: trackableRecord.id,
             version: nextVersion,
-            title: `${projectRecord.name} feedback form`,
+            title: `${trackableRecord.name} feedback form`,
             status: "draft",
             submitLabel: "Submit response",
             successMessage: "Thanks for your response.",
@@ -620,7 +646,7 @@ export const projectsRouter = createTRPCRouter({
           .set({
             activeFormId: createdForm.id,
           })
-          .where(eq(trackableItems.id, projectRecord.id))
+          .where(eq(trackableItems.id, trackableRecord.id))
 
         return createdForm
       })
@@ -644,7 +670,17 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const project = await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
+
+      assertTrackableKind(
+        trackable.kind,
+        "survey",
+        "Only survey trackables can save forms."
+      )
 
       const normalizedForm = normalizeEditableForm(input.form)
 
@@ -654,14 +690,14 @@ export const projectsRouter = createTRPCRouter({
             maxVersion: max(trackableForms.version),
           })
           .from(trackableForms)
-          .where(eq(trackableForms.trackableId, project.id))
+          .where(eq(trackableForms.trackableId, trackable.id))
 
         const nextVersion = (versionResult?.maxVersion ?? 0) + 1
 
         const [createdForm] = await tx
           .insert(trackableForms)
           .values({
-            trackableId: project.id,
+            trackableId: trackable.id,
             version: nextVersion,
             title: normalizedForm.title,
             status: normalizedForm.status,
@@ -675,7 +711,7 @@ export const projectsRouter = createTRPCRouter({
           .set({
             activeFormId: createdForm.id,
           })
-          .where(eq(trackableItems.id, project.id))
+          .where(eq(trackableItems.id, trackable.id))
 
         if (normalizedForm.fields.length > 0) {
           const createdFields = await tx
@@ -732,6 +768,7 @@ export const projectsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
+        kind: trackableKindSchema,
         name: z.string().min(2, "Name must be at least 2 characters"),
         description: z.string().optional(),
       })
@@ -745,49 +782,50 @@ export const projectsRouter = createTRPCRouter({
 
       const slug = generateSlug(input.name)
 
-      const [newProject] = await db.transaction(async (tx) => {
-        const [createdProject] = await tx
+      const [newTrackable] = await db.transaction(async (tx) => {
+        const [createdTrackable] = await tx
           .insert(trackableItems)
           .values({
             ownerId: userId,
+            kind: input.kind,
             name: input.name,
             description: input.description,
             slug,
           })
           .returning()
 
-        const [createdForm] = await tx
-          .insert(trackableForms)
-          .values({
-            trackableId: createdProject.id,
-            version: 1,
-            title: `${createdProject.name} feedback form`,
-            status: "draft",
-            submitLabel: "Submit response",
-            successMessage: "Thanks for your response.",
-          })
-          .returning()
+        if (input.kind === "survey") {
+          const [createdForm] = await tx
+            .insert(trackableForms)
+            .values({
+              trackableId: createdTrackable.id,
+              version: 1,
+              title: `${createdTrackable.name} feedback form`,
+              status: "draft",
+              submitLabel: "Submit response",
+              successMessage: "Thanks for your response.",
+            })
+            .returning()
 
-        await tx
-          .update(trackableItems)
-          .set({
-            activeFormId: createdForm.id,
-          })
-          .where(eq(trackableItems.id, createdProject.id))
+          await tx
+            .update(trackableItems)
+            .set({
+              activeFormId: createdForm.id,
+            })
+            .where(eq(trackableItems.id, createdTrackable.id))
+        }
 
-        return [createdProject]
+        return [createdTrackable]
       })
 
-      return newProject
+      return newTrackable
     }),
   updateSettings: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         name: z.string().min(1, "Name is required"),
         description: z.string().optional(),
-        isFormEnabled: z.boolean().optional(),
-        isApiEnabled: z.boolean().optional(),
         allowAnonymousSubmissions: z.boolean().optional(),
       })
     )
@@ -798,38 +836,45 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const project = await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
 
-      const projectRecord = await db.query.trackableItems.findFirst({
-        where: eq(trackableItems.id, project.id),
+      const trackableRecord = await db.query.trackableItems.findFirst({
+        where: eq(trackableItems.id, trackable.id),
         columns: {
           id: true,
+          kind: true,
           settings: true,
         },
       })
 
-      if (!projectRecord) {
+      if (!trackableRecord) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Project not found.",
+          message: "Trackable not found.",
         })
       }
 
-      const existingSettings = projectRecord.settings || {}
+      const existingSettings = trackableRecord.settings || {}
+      const nextSettings =
+        trackableRecord.kind === "survey"
+          ? {
+              ...existingSettings,
+              allowAnonymousSubmissions: input.allowAnonymousSubmissions ?? true,
+            }
+          : existingSettings
 
       const [updated] = await db
         .update(trackableItems)
         .set({
           name: input.name,
           description: input.description,
-          settings: {
-            ...existingSettings,
-            isFormEnabled: input.isFormEnabled ?? true,
-            isApiEnabled: input.isApiEnabled ?? true,
-            allowAnonymousSubmissions: input.allowAnonymousSubmissions ?? true,
-          },
+          settings: nextSettings,
         })
-        .where(eq(trackableItems.id, projectRecord.id))
+        .where(eq(trackableItems.id, trackableRecord.id))
         .returning()
 
       return updated
@@ -837,7 +882,7 @@ export const projectsRouter = createTRPCRouter({
   upsertEmailGrant: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         email: z.string().email(),
         role: accessRoleSchema,
       })
@@ -849,13 +894,13 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      await assertProjectAccess(input.projectId, userId, "manage")
+      await assertProjectAccess(input.trackableId, userId, "manage")
 
       const normalizedEmail = input.email.trim().toLowerCase()
 
       const existingGrant = await db.query.trackableAccessGrants.findFirst({
         where: and(
-          eq(trackableAccessGrants.trackableId, input.projectId),
+          eq(trackableAccessGrants.trackableId, input.trackableId),
           eq(trackableAccessGrants.subjectEmail, normalizedEmail)
         ),
         columns: {
@@ -880,7 +925,7 @@ export const projectsRouter = createTRPCRouter({
       const [createdGrant] = await db
         .insert(trackableAccessGrants)
         .values({
-          trackableId: input.projectId,
+          trackableId: input.trackableId,
           subjectType: "email",
           subjectEmail: normalizedEmail,
           role: input.role,
@@ -893,7 +938,7 @@ export const projectsRouter = createTRPCRouter({
   revokeAccessGrant: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         grantId: z.string().uuid(),
       })
     )
@@ -904,12 +949,12 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      await assertProjectAccess(input.projectId, userId, "manage")
+      await assertProjectAccess(input.trackableId, userId, "manage")
 
       const existingGrant = await db.query.trackableAccessGrants.findFirst({
         where: and(
           eq(trackableAccessGrants.id, input.grantId),
-          eq(trackableAccessGrants.trackableId, input.projectId)
+          eq(trackableAccessGrants.trackableId, input.trackableId)
         ),
         columns: {
           id: true,
@@ -937,7 +982,7 @@ export const projectsRouter = createTRPCRouter({
   createShareLink: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         role: accessRoleSchema,
       })
     )
@@ -948,12 +993,22 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
+
+      assertTrackableKind(
+        trackable.kind,
+        "survey",
+        "Only survey trackables can create share links."
+      )
 
       const [createdLink] = await db
         .insert(trackableShareLinks)
         .values({
-          trackableId: input.projectId,
+          trackableId: input.trackableId,
           token: createShareToken(),
           role: input.role,
           createdByUserId: userId,
@@ -965,7 +1020,7 @@ export const projectsRouter = createTRPCRouter({
   updateShareLink: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         linkId: z.string().uuid(),
         role: accessRoleSchema,
         isActive: z.boolean(),
@@ -978,12 +1033,22 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
+
+      assertTrackableKind(
+        trackable.kind,
+        "survey",
+        "Only survey trackables can update share links."
+      )
 
       const existingLink = await db.query.trackableShareLinks.findFirst({
         where: and(
           eq(trackableShareLinks.id, input.linkId),
-          eq(trackableShareLinks.trackableId, input.projectId)
+          eq(trackableShareLinks.trackableId, input.trackableId)
         ),
         columns: {
           id: true,
@@ -1012,7 +1077,7 @@ export const projectsRouter = createTRPCRouter({
   createApiKey: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         name: z.string().min(2, "Name must be at least 2 characters"),
         expirationPreset: z.enum(["never", "30_days", "60_days", "90_days"]),
       })
@@ -1024,7 +1089,17 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const project = await assertProjectAccess(input.projectId, userId, "manage")
+      const trackable = await assertProjectAccess(
+        input.trackableId,
+        userId,
+        "manage"
+      )
+
+      assertTrackableKind(
+        trackable.kind,
+        "api_ingestion",
+        "Only API ingestion trackables can create API keys."
+      )
 
       const plaintextKey = buildApiKeySecret()
       const expiresAt = resolveApiKeyExpiration(input.expirationPreset)
@@ -1032,8 +1107,8 @@ export const projectsRouter = createTRPCRouter({
       const [createdKey] = await db
         .insert(apiKeys)
         .values({
-          ownerId: project.ownerId,
-          projectId: project.id,
+          ownerId: trackable.ownerId,
+          projectId: trackable.id,
           name: input.name,
           keyPrefix: plaintextKey.slice(0, 20),
           secretHash: hashApiKey(plaintextKey),
@@ -1058,7 +1133,7 @@ export const projectsRouter = createTRPCRouter({
   revokeApiKey: protectedProcedure
     .input(
       z.object({
-        projectId: z.string().uuid(),
+        trackableId: z.string().uuid(),
         apiKeyId: z.string().uuid(),
       })
     )
@@ -1069,12 +1144,12 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      await assertProjectAccess(input.projectId, userId, "manage")
+      await assertProjectAccess(input.trackableId, userId, "manage")
 
       const existingKey = await db.query.apiKeys.findFirst({
         where: and(
           eq(apiKeys.id, input.apiKeyId),
-          eq(apiKeys.projectId, input.projectId)
+          eq(apiKeys.projectId, input.trackableId)
         ),
         columns: {
           id: true,

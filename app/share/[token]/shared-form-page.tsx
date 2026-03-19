@@ -84,7 +84,7 @@ function SharedFormUnavailable({
   )
 }
 
-type SharedProject = {
+type SharedTrackable = {
   id: string
   name: string
   description: string | null
@@ -110,7 +110,7 @@ export function SharedFormPage({ token }: { token: string }) {
   const trpc = useTRPC()
   const { isLoaded, userId } = useAuth()
   const sharedFormQuery = useQuery(
-    trpc.projects.getSharedForm.queryOptions(
+    trpc.trackables.getSharedForm.queryOptions(
       { token },
       {
         retry: false,
@@ -152,15 +152,15 @@ export function SharedFormPage({ token }: { token: string }) {
   }
 
   return (
-    <SharedFormCard
-      key={sharedFormQuery.data.form.id}
-      token={token}
-      isAnonymousVisitor={!userId}
-      initialHasSubmitted={sharedFormQuery.data.viewer.hasSubmitted}
-      project={sharedFormQuery.data.project}
-      form={sharedFormQuery.data.form}
-      settings={sharedFormQuery.data.settings}
-    />
+      <SharedFormCard
+        key={sharedFormQuery.data.form.id}
+        token={token}
+        isAnonymousVisitor={!userId}
+        initialHasSubmitted={sharedFormQuery.data.viewer.hasSubmitted}
+        trackable={sharedFormQuery.data.trackable}
+        form={sharedFormQuery.data.form}
+        settings={sharedFormQuery.data.settings}
+      />
   )
 }
 
@@ -168,14 +168,14 @@ function SharedFormCard({
   token,
   initialHasSubmitted,
   isAnonymousVisitor,
-  project,
+  trackable,
   form,
   settings,
 }: {
   token: string
   initialHasSubmitted: boolean
   isAnonymousVisitor: boolean
-  project: SharedProject
+  trackable: SharedTrackable
   form: SharedForm
   settings: SharedSettings
 }) {
@@ -185,20 +185,13 @@ function SharedFormCard({
   const searchParams = useSearchParams()
   const [submissionStatus, setSubmissionStatus] = useState<
     "idle" | "submitted" | "already-submitted"
-  >(initialHasSubmitted ? "already-submitted" : "idle")
-  const [responderEmail, setResponderEmail] = useState("")
-  const [answers, setAnswers] = useState<Record<string, FormAnswerValue>>(() =>
-    buildInitialAnswers(form.fields)
-  )
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  >(() => {
+    if (initialHasSubmitted) {
+      return "already-submitted"
+    }
 
-  useEffect(() => {
-    if (
-      submissionStatus !== "idle" ||
-      !isAnonymousVisitor ||
-      typeof document === "undefined"
-    ) {
-      return
+    if (!isAnonymousVisitor || typeof document === "undefined") {
+      return "idle"
     }
 
     const cookieName = getSharedFormCompletionCookieName(token)
@@ -206,10 +199,13 @@ function SharedFormCard({
       .split("; ")
       .some((entry) => entry.startsWith(`${cookieName}=true`))
 
-    if (hasCompletionCookie) {
-      setSubmissionStatus("already-submitted")
-    }
-  }, [isAnonymousVisitor, submissionStatus, token])
+    return hasCompletionCookie ? "already-submitted" : "idle"
+  })
+  const [responderEmail, setResponderEmail] = useState("")
+  const [answers, setAnswers] = useState<Record<string, FormAnswerValue>>(() =>
+    buildInitialAnswers(form.fields)
+  )
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
 
   useEffect(() => {
     if (submissionStatus === "idle" || !isAnonymousVisitor) {
@@ -219,14 +215,8 @@ function SharedFormCard({
     document.cookie = `${getSharedFormCompletionCookieName(token)}=true; path=/share/${encodeURIComponent(token)}; max-age=${sharedFormCompletionCookieMaxAge}; samesite=lax`
   }, [submissionStatus, isAnonymousVisitor, token])
 
-  useEffect(() => {
-    if (initialHasSubmitted) {
-      setSubmissionStatus("already-submitted")
-    }
-  }, [initialHasSubmitted])
-
   const submitSharedForm = useMutation(
-    trpc.projects.submitSharedForm.mutationOptions({
+    trpc.trackables.submitSharedForm.mutationOptions({
       onMutate: () => {
         setSubmissionError(null)
       },
@@ -321,8 +311,8 @@ function SharedFormCard({
             </h1>
             <p className="max-w-lg text-sm text-muted-foreground">
               {isRepeatVisit
-                ? `Your response for ${project.name} has already been recorded.`
-                : `Your submission for ${project.name} has been saved.`}
+                ? `Your response for ${trackable.name} has already been recorded.`
+                : `Your submission for ${trackable.name} has been saved.`}
             </p>
           </CardContent>
         </Card>
@@ -337,20 +327,20 @@ function SharedFormCard({
       <div className="relative mx-auto w-full max-w-3xl px-4 py-10 md:px-6">
         <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
           <ShieldCheck className="size-4" />
-          Shared form by {project.creatorName}
+          Shared form by {trackable.creatorName}
         </div>
 
         <Card className="rounded-3xl border-border/60 bg-card/95 shadow-sm backdrop-blur dark:bg-card/90">
           <CardHeader className="space-y-4 border-b border-border/50 px-6 py-6">
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="outline" className="rounded-full px-3 py-1">
-                {project.name}
+                {trackable.name}
               </Badge>
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight">{form.title}</h1>
               <p className="text-sm leading-6 text-muted-foreground">
-                {project.description ??
+                {trackable.description ??
                   "Fill out the form below and submit your response."}
               </p>
             </div>
@@ -567,7 +557,7 @@ function SharedFormCard({
 
               <div className="flex flex-col gap-3 border-t border-border/50 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Your response will be recorded for {project.name}.
+                  Your response will be recorded for {trackable.name}.
                 </p>
                 <Button
                   type="submit"

@@ -44,13 +44,13 @@ export const dashboardRouter = createTRPCRouter({
 
     const now = new Date()
     const windowStart = getWindowStart(now)
-    const projectIds = await getAccessibleProjectIds(userId)
+    const trackableIds = await getAccessibleProjectIds(userId)
 
-    const projectsCount = projectIds.length
+    const trackablesCount = trackableIds.length
 
     const [submissionTotals, recentSubmissions, recentUsageEvents] =
       await Promise.all([
-        projectIds.length === 0
+        trackableIds.length === 0
           ? Promise.resolve([])
           : db
               .select({
@@ -58,22 +58,22 @@ export const dashboardRouter = createTRPCRouter({
                 totalUsageTracks: sum(trackableItems.apiUsageCount),
               })
               .from(trackableItems)
-              .where(inArray(trackableItems.id, projectIds)),
+              .where(inArray(trackableItems.id, trackableIds)),
         db
           .query.trackableFormSubmissions.findMany({
               where: and(
-                inArray(trackableFormSubmissions.trackableId, projectIds),
+                inArray(trackableFormSubmissions.trackableId, trackableIds),
                 gte(trackableFormSubmissions.createdAt, windowStart)
               ),
               columns: {
                 createdAt: true,
               },
             }),
-        projectIds.length === 0
+        trackableIds.length === 0
           ? Promise.resolve([])
           : db.query.trackableApiUsageEvents.findMany({
               where: and(
-                inArray(trackableApiUsageEvents.trackableId, projectIds),
+                inArray(trackableApiUsageEvents.trackableId, trackableIds),
                 gte(trackableApiUsageEvents.occurredAt, windowStart)
               ),
               columns: {
@@ -105,7 +105,7 @@ export const dashboardRouter = createTRPCRouter({
     }
 
     return {
-      projectsCount,
+      trackablesCount,
       totalSubmissions,
       totalUsageTracks,
       submissionActivity,
@@ -113,25 +113,26 @@ export const dashboardRouter = createTRPCRouter({
     }
   }),
 
-  getProjects: protectedProcedure.query(async ({ ctx }) => {
+  getTrackables: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.auth.userId
 
     if (!userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
 
-    const projectIds = await getAccessibleProjectIds(userId)
+    const trackableIds = await getAccessibleProjectIds(userId)
 
-    if (projectIds.length === 0) {
+    if (trackableIds.length === 0) {
       return []
     }
 
     return db.query.trackableItems.findMany({
-      where: inArray(trackableItems.id, projectIds),
+      where: inArray(trackableItems.id, trackableIds),
       orderBy: [desc(trackableItems.createdAt)],
       limit: 10,
       columns: {
         id: true,
+        kind: true,
         name: true,
         submissionCount: true,
         apiUsageCount: true,

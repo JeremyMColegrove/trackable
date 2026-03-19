@@ -125,7 +125,7 @@ function AddMemberDialog() {
 						queryKey: trpc.team.getMemberCount.queryKey(),
 					}),
 					queryClient.invalidateQueries({
-						queryKey: trpc.dashboard.getProjects.queryKey(),
+						queryKey: trpc.dashboard.getTrackables.queryKey(),
 					}),
 					queryClient.invalidateQueries({
 						queryKey: trpc.dashboard.getMetrics.queryKey(),
@@ -163,7 +163,7 @@ function AddMemberDialog() {
 					<DialogTitle>Add member</DialogTitle>
 					<DialogDescription>
 						Search existing users and add them to your team. They will get the
-						same project access you have for your workspace.
+						same trackable access you have for your workspace.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -269,7 +269,7 @@ function TeamPageContent() {
 						queryKey: trpc.team.getMemberCount.queryKey(),
 					}),
 					queryClient.invalidateQueries({
-						queryKey: trpc.dashboard.getProjects.queryKey(),
+						queryKey: trpc.dashboard.getTrackables.queryKey(),
 					}),
 					queryClient.invalidateQueries({
 						queryKey: trpc.dashboard.getMetrics.queryKey(),
@@ -286,8 +286,8 @@ function TeamPageContent() {
 		memberToRemove?.id === currentUserId ? "Leave team" : "Remove member";
 	const removeDescription = memberToRemove
 		? memberToRemove.id === currentUserId
-			? "Leave this team? You will lose access to the shared team projects."
-			: `Remove ${getDisplayName(memberToRemove)} from the team? They will lose access to the shared team projects.`
+			? "Leave this team? You will lose access to the shared team trackables."
+			: `Remove ${getDisplayName(memberToRemove)} from the team? They will lose access to the shared team trackables.`
 		: "";
 
 	const teamMemberColumns = useMemo<ColumnDef<TeamMemberRow>[]>(
@@ -328,7 +328,7 @@ function TeamPageContent() {
 				header: "Access",
 				cell: () => (
 					<span className="text-sm text-muted-foreground">
-						Full project access
+						Full trackable access
 					</span>
 				),
 			},
@@ -380,7 +380,7 @@ function TeamPageContent() {
 							Members
 						</span>
 					}
-					description="Team members can open your projects from their dashboard and view or edit them."
+					description="Team members can open your trackables from their dashboard and view or edit them."
 					emptyMessage={
 						membersQuery.isLoading
 							? "Loading members..."

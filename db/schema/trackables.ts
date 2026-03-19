@@ -33,12 +33,14 @@ import {
   trackableAccessSubjectTypeEnum,
   trackableFormFieldKindEnum,
   trackableFormStatusEnum,
+  trackableKindEnum,
   trackableSubmissionSourceEnum,
 } from "@/db/schema/enums"
 import type {
   FormAnswerValue,
   FormFieldConfig,
   SubmissionMetadata,
+  TrackableKind,
   TrackableSubmissionSnapshot,
   TrackableSettings,
 } from "@/db/schema/types"
@@ -52,6 +54,7 @@ export const trackableItems = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     description: text("description"),
+    kind: trackableKindEnum("kind").$type<TrackableKind>().notNull(),
     activeFormId: uuid("active_form_id").references(
       (): AnyPgColumn => trackableForms.id,
       {

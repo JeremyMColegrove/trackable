@@ -16,19 +16,19 @@ import { hashApiKey } from "@/server/api-keys"
 
 interface RecordApiUsageInput {
   apiKey: string
-  name: string
-  payload?: UsageEventPayload
+  payload: UsageEventPayload
   metadata?: UsageEventMetadata | null
   requestId?: string | null
 }
 
 export async function recordApiUsage(input: RecordApiUsageInput) {
-  const normalizedName = input.name.trim()
+  const rawName = input.payload.name
+  const normalizedName = typeof rawName === "string" ? rawName.trim() : ""
 
   if (!normalizedName) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Usage name is required.",
+      message: 'Usage payload must include a non-empty "name" field.',
     })
   }
 
@@ -62,7 +62,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message:
-        "This API key is not bound to a project. Create a new API key for this project.",
+        "This API key is not bound to a trackable. Create a new API key for this trackable.",
     })
   }
 
@@ -73,34 +73,32 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
     ),
     columns: {
       id: true,
+      kind: true,
       name: true,
       apiUsageCount: true,
       lastApiUsageAt: true,
       archivedAt: true,
-      settings: true,
     },
   })
 
   if (!project || project.archivedAt) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Project not found.",
+      message: "Trackable not found.",
     })
   }
 
-  const isApiEnabled = project.settings?.isApiEnabled ?? true
-
-  if (!isApiEnabled) {
+  if (project.kind !== "api_ingestion") {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "API usage tracking is disabled for this project.",
+      message: "This trackable does not accept API ingestion events.",
     })
   }
 
   const occurredAt = new Date()
   const requestId = input.requestId?.trim() || randomUUID()
   const payload = {
-    ...(input.payload ?? {}),
+    ...input.payload,
     name: normalizedName,
   }
 
@@ -144,7 +142,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   return {
     id: createdUsageEvent.id,
     occurredAt: createdUsageEvent.occurredAt.toISOString(),
-    project: {
+    trackable: {
       id: project.id,
       name: project.name,
     },

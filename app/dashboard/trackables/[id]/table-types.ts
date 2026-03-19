@@ -1,13 +1,15 @@
 import type {
   SubmissionMetadata,
   TrackableFormSnapshot,
+  TrackableKind,
   TrackableSubmissionSnapshot,
   TrackableSettings,
   UsageEventPayload,
 } from "@/db/schema/types"
 
-export type ProjectDetails = {
+export type TrackableDetails = {
   id: string
+  kind: TrackableKind
   name: string
   description: string | null
   settings: TrackableSettings | null
@@ -65,7 +67,7 @@ export type ApiKeyRow = {
   maskedKey: string
   status: "active" | "revoked"
   expiresAt: string | null
-  projectUsageCount: number
+  trackableUsageCount: number
   lastUsedAt: string | null
 }
 

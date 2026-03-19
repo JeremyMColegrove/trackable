@@ -3,12 +3,6 @@ import { isNull } from "drizzle-orm"
 import { db } from "@/db"
 import { workspaceTeamMembers } from "@/db/schema"
 
-type ActiveTeamEdge = {
-  id: string
-  ownerId: string
-  memberUserId: string
-}
-
 async function getActiveTeamEdges() {
   return db.query.workspaceTeamMembers.findMany({
     where: isNull(workspaceTeamMembers.revokedAt),

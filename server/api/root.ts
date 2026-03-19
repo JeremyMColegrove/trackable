@@ -2,14 +2,14 @@ import { z } from "zod"
 
 import { accountRouter } from "@/server/api/routers/account"
 import { dashboardRouter } from "@/server/api/routers/dashboard"
-import { projectsRouter } from "@/server/api/routers/project"
+import { trackablesRouter } from "@/server/api/routers/project"
 import { teamRouter } from "@/server/api/routers/team"
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc"
 
 export const appRouter = createTRPCRouter({
   account: accountRouter,
   dashboard: dashboardRouter,
-  projects: projectsRouter,
+  trackables: trackablesRouter,
   team: teamRouter,
   hello: publicProcedure
     .input(

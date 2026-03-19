@@ -601,12 +601,12 @@ function FieldPreview({
 }
 
 export function FormBuilder({
-	projectId,
-	projectName,
+	trackableId,
+	trackableName,
 	activeForm,
 }: {
-	projectId: string;
-	projectName: string;
+	trackableId: string;
+	trackableName: string;
 	activeForm: TrackableFormSnapshot | null;
 }) {
 	const trpc = useTRPC();
@@ -615,15 +615,15 @@ export function FormBuilder({
 	const [draft, setDraft] = useState<EditableTrackableForm>(() =>
 		activeForm
 			? formSnapshotToEditableForm(activeForm)
-			: createDefaultEditableForm(projectName),
+			: createDefaultEditableForm(trackableName),
 	);
 
 	const saveForm = useMutation(
-		trpc.projects.saveForm.mutationOptions({
+		trpc.trackables.saveForm.mutationOptions({
 			onSuccess: async () => {
 				setSaveError(null);
 				await queryClient.invalidateQueries({
-					queryKey: trpc.projects.getById.queryKey({ id: projectId }),
+					queryKey: trpc.trackables.getById.queryKey({ id: trackableId }),
 				});
 			},
 			onError: (error) => {
@@ -637,8 +637,8 @@ export function FormBuilder({
 		() =>
 			activeForm
 				? normalizeEditableForm(formSnapshotToEditableForm(activeForm))
-				: normalizeEditableForm(createDefaultEditableForm(projectName)),
-		[activeForm, projectName],
+				: normalizeEditableForm(createDefaultEditableForm(trackableName)),
+		[activeForm, trackableName],
 	);
 	const validationResult = useMemo(
 		() => editableTrackableFormSchema.safeParse(normalizedDraft),
@@ -711,7 +711,7 @@ export function FormBuilder({
 		setDraft(
 			activeForm
 				? formSnapshotToEditableForm(activeForm)
-				: createDefaultEditableForm(projectName),
+				: createDefaultEditableForm(trackableName),
 		);
 		setSaveError(null);
 	}
@@ -727,7 +727,7 @@ export function FormBuilder({
 		}
 
 		saveForm.mutate({
-			projectId,
+			trackableId,
 			form: result.data,
 		});
 	}

@@ -28,6 +28,7 @@ export async function assertProjectAccess(
     where: eq(trackableItems.id, projectId),
     columns: {
       id: true,
+      kind: true,
       ownerId: true,
     },
   })
@@ -35,7 +36,7 @@ export async function assertProjectAccess(
   if (!project) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Project not found.",
+      message: "Trackable not found.",
     })
   }
 
@@ -64,7 +65,7 @@ export async function assertProjectAccess(
   if (!grant) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Project not found.",
+      message: "Trackable not found.",
     })
   }
 

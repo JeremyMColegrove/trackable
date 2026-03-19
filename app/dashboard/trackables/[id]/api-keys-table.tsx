@@ -21,22 +21,24 @@ import type { ApiKeyRow } from "./table-types"
 
 export function ApiKeysTable({
   data,
-  projectId,
+  trackableId,
+  headerButton,
 }: {
   data: ApiKeyRow[]
-  projectId: string
+  trackableId: string
+  headerButton?: React.ReactNode
 }) {
   const [apiKeyToRevoke, setApiKeyToRevoke] = useState<ApiKeyRow | null>(null)
   const trpc = useTRPC()
   const queryClient = useQueryClient()
 
   const revokeApiKey = useMutation(
-    trpc.projects.revokeApiKey.mutationOptions({
+    trpc.trackables.revokeApiKey.mutationOptions({
       onSuccess: async () => {
         setApiKeyToRevoke(null)
 
         await queryClient.invalidateQueries({
-          queryKey: trpc.projects.getById.queryKey({ id: projectId }),
+          queryKey: trpc.trackables.getById.queryKey({ id: trackableId }),
         })
       },
     })
@@ -53,7 +55,7 @@ export function ApiKeysTable({
     }
 
     revokeApiKey.mutate({
-      projectId,
+      trackableId,
       apiKeyId: apiKeyToRevoke.id,
     })
   }
@@ -65,11 +67,7 @@ export function ApiKeysTable({
         data={data}
         title="API Keys"
         description="Manage API keys that can authorize tracking requests."
-        headerButton={
-          <CreateApiKeyDialog
-            projectId={projectId}
-          />
-        }
+        headerButton={headerButton ?? <CreateApiKeyDialog trackableId={trackableId} />}
         emptyMessage="No API keys created yet."
         initialPageSize={5}
       />

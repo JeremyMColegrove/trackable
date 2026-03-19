@@ -82,13 +82,13 @@ export function getApiKeyColumns({
       ),
     },
     {
-      accessorKey: "projectUsageCount",
+      accessorKey: "trackableUsageCount",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Project Usage" />
+        <DataTableColumnHeader column={column} title="Trackable Usage" />
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {row.original.projectUsageCount}
+          {row.original.trackableUsageCount}
         </span>
       ),
     },

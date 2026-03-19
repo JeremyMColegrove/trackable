@@ -3,10 +3,17 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import type { TrackableKind } from "@/db/schema/types";
 
-export type DashboardProjectRow = {
+function formatTrackableKind(kind: TrackableKind) {
+	return kind === "api_ingestion" ? "API ingestion" : "Survey";
+}
+
+export type DashboardTrackableRow = {
 	id: string;
+	kind: TrackableKind;
 	name: string;
 	submissionCount: number;
 	apiUsageCount: number;
@@ -16,14 +23,23 @@ export type DashboardProjectRow = {
 	};
 };
 
-export const dashboardProjectColumns: ColumnDef<DashboardProjectRow>[] = [
+export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 	{
 		accessorKey: "name",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Project" />
+			<DataTableColumnHeader column={column} title="Trackable" />
 		),
 		cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
 		enableHiding: false,
+	},
+	{
+		accessorKey: "kind",
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title="Type" />
+		),
+		cell: ({ row }) => (
+			<Badge variant="outline">{formatTrackableKind(row.original.kind)}</Badge>
+		),
 	},
 	{
 		id: "owner",

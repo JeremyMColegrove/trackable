@@ -1,3 +1,5 @@
+export type TrackableKind = "survey" | "api_ingestion"
+
 export interface RatingFieldConfig {
   kind: "rating"
   scale: number
@@ -85,8 +87,6 @@ export interface TrackableSettings {
   allowMultipleSubmissions?: boolean
   collectResponderEmail?: boolean
   successRedirectUrl?: string | null
-  isFormEnabled?: boolean
-  isApiEnabled?: boolean
 }
 
 export interface SubmissionMetadata {

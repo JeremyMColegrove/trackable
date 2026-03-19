@@ -6,7 +6,7 @@ export type DashboardNavItem = {
 export const dashboardNavItems: DashboardNavItem[] = [
   {
     href: "/dashboard",
-    label: "Projects",
+    label: "Trackables",
   },
   {
     href: "/dashboard/team",
@@ -16,7 +16,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
 
 export function isDashboardNavItemActive(href: string, pathname: string) {
   if (href === "/dashboard") {
-    return pathname === href || pathname.startsWith("/dashboard/project/")
+    return pathname === href || pathname.startsWith("/dashboard/trackables/")
   }
 
   return pathname === href

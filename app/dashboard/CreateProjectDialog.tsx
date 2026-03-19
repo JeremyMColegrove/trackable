@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { DatabaseZap, FileText, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -19,7 +21,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,115 +28,234 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 import { useTRPC } from "@/trpc/client"
 
-const formSchema = z.object({
+const createTrackableSchema = z.object({
+  kind: z.enum(["survey", "api_ingestion"]),
   name: z.string().min(2, {
-    message: "Project name must be at least 2 characters.",
+    message: "Trackable name must be at least 2 characters.",
   }),
   description: z.string().optional(),
 })
 
-export function CreateProjectDialog() {
+type CreateTrackableValues = z.infer<typeof createTrackableSchema>
+type CreateStep = "kind" | "details"
+
+const trackableKindOptions = [
+  {
+    value: "api_ingestion" as const,
+    title: "API ingestion",
+    description: "Record API usage events and manage ingestion keys.",
+    icon: DatabaseZap,
+  },
+  {
+    value: "survey" as const,
+    title: "Survey",
+    description: "Collect structured responses with a shareable form.",
+    icon: FileText,
+  },
+]
+
+export function CreateTrackableDialog() {
   const [open, setOpen] = useState(false)
+  const [step, setStep] = useState<CreateStep>("kind")
   const trpc = useTRPC()
+  const router = useRouter()
   const queryClient = useQueryClient()
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CreateTrackableValues>({
+    resolver: zodResolver(createTrackableSchema),
     defaultValues: {
+      kind: "survey",
       name: "",
       description: "",
     },
   })
 
-  // We only invalidate queries on success
-  const createProject = useMutation(
-    trpc.projects.create.mutationOptions({
-      onSuccess: () => {
-        // Reset the form and close the dialog
+  const selectedKind = useWatch({
+    control: form.control,
+    name: "kind",
+  })
+  const selectedKindMeta = useMemo(
+    () =>
+      trackableKindOptions.find((option) => option.value === selectedKind) ??
+      trackableKindOptions[1],
+    [selectedKind]
+  )
+
+  const createTrackable = useMutation(
+    trpc.trackables.create.mutationOptions({
+      onSuccess: async (createdTrackable) => {
         form.reset()
+        setStep("kind")
         setOpen(false)
-        
-        // Invalidate both the dashboard metrics and the active projects list
-        queryClient.invalidateQueries({
-          queryKey: trpc.dashboard.getMetrics.queryKey(),
-        })
-        queryClient.invalidateQueries({
-          queryKey: trpc.dashboard.getProjects.queryKey(),
-        })
+
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: trpc.dashboard.getMetrics.queryKey(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: trpc.dashboard.getTrackables.queryKey(),
+          }),
+        ])
+
+        router.push(`/dashboard/trackables/${createdTrackable.id}`)
       },
     })
   )
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    createProject.mutate(values)
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen)
+
+    if (!nextOpen) {
+      form.reset()
+      setStep("kind")
+    }
   }
 
-  const { isSubmitting } = form.formState
+  function handleContinue() {
+    setStep("details")
+  }
+
+  function handleBack() {
+    setStep("kind")
+  }
+
+  function onSubmit(values: CreateTrackableValues) {
+    createTrackable.mutate(values)
+  }
+
+  const isSubmitting = form.formState.isSubmitting || createTrackable.isPending
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>New Project</Button>
+        <Button>
+          <Plus className="size-4" />
+          New Trackable
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create new project</DialogTitle>
+          <DialogTitle>
+            {step === "kind" ? "Create new trackable" : "Name your trackable"}
+          </DialogTitle>
           <DialogDescription>
-            Create a new internal tracking item to capture assignments, telemetry, and more.
+            {step === "kind"
+              ? "Choose the type of trackable you want to create."
+              : `Set the name and description for your ${selectedKindMeta.title.toLowerCase()} trackable.`}
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Acme Website Launch" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    The display name for your project.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {step === "kind" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {trackableKindOptions.map((option) => {
+                  const Icon = option.icon
+                  const isActive = selectedKind === option.value
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={cn(
+                        "rounded-2xl border p-5 text-left transition-colors",
+                        isActive
+                          ? "border-foreground bg-muted/70"
+                          : "border-border/60 hover:border-foreground/40 hover:bg-muted/30"
+                      )}
+                      onClick={() => form.setValue("kind", option.value)}
+                    >
+                      <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-muted text-foreground">
+                        <Icon className="size-5" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="font-medium">{option.title}</div>
+                        <p className="text-sm text-muted-foreground">
+                          {option.description}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  Creating a <span className="font-medium text-foreground">{selectedKindMeta.title}</span>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={
+                            selectedKind === "api_ingestion"
+                              ? "e.g. Production events"
+                              : "e.g. Customer satisfaction survey"
+                          }
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Add context for collaborators and future you."
+                          className="min-h-28 resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            <DialogFooter className="pt-2">
+              {step === "kind" ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={handleContinue} disabled={isSubmitting}>
+                    Continue
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                  >
+                    Back
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {createTrackable.isPending ? "Creating..." : "Create Trackable"}
+                  </Button>
+                </>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g. A campaign for tracking user feedback forms."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isSubmitting || createProject.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || createProject.isPending}
-              >
-                {createProject.isPending ? "Creating..." : "Create Project"}
-              </Button>
             </DialogFooter>
           </form>
         </Form>

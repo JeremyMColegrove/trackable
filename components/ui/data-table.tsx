@@ -78,18 +78,20 @@ export function DataTable<TData, TValue>({
 			)}
 		>
 			{(title || description || headerButton) && (
-				<div className="flex items-center justify-between px-1 py-4">
-					<div className="flex flex-col gap-1">
-						{title ? (
-							<h3 className="text-lg font-semibold">{title}</h3>
-						) : null}
-						{description ? (
-							<p className="text-sm text-muted-foreground">{description}</p>
-						) : null}
-					</div>
-					<div className="flex items-center space-x-2">
-						{headerButton}
-						<DataTableViewOptions table={table} />
+				<div className="flex flex-col gap-4 px-1 py-4">
+					<div className="flex justify-between items-end gap-3 lg:flex-row lg:items-start lg:justify-between">
+						<div className="flex flex-col justify-start gap-1">
+							{title ? (
+								<h3 className="text-lg font-semibold">{title}</h3>
+							) : null}
+							{description ? (
+								<p className="text-sm text-muted-foreground">{description}</p>
+							) : null}
+						</div>
+						<div className="flex items-center space-x-2">
+							{headerButton}
+							<DataTableViewOptions table={table} />
+						</div>
 					</div>
 				</div>
 			)}

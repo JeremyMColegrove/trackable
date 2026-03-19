@@ -1,5 +1,10 @@
 import { pgEnum } from "drizzle-orm/pg-core"
 
+export const trackableKindEnum = pgEnum("trackable_kind", [
+  "survey",
+  "api_ingestion",
+])
+
 export const trackableAccessSubjectTypeEnum = pgEnum(
   "trackable_access_subject_type",
   ["user", "email"]

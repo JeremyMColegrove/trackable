@@ -141,11 +141,11 @@ export const editableTrackableFormSchema = z
   })
 
 export const createTrackableFormSchema = z.object({
-  projectId: z.string().uuid(),
+  trackableId: z.string().uuid(),
 })
 
 export const saveTrackableFormSchema = z.object({
-  projectId: z.string().uuid(),
+  trackableId: z.string().uuid(),
   form: editableTrackableFormSchema,
 })
 

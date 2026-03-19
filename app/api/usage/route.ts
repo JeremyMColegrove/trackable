@@ -1,22 +1,67 @@
 import { TRPCError } from "@trpc/server"
+import { z } from "zod"
 
 import { recordApiUsage } from "@/server/usage-tracking/record-api-usage"
 
-function parseUsageMetadata(formData: FormData) {
-  const rawMetadata = formData.get("metadata") ?? formData.get("Metadata")
+const usagePayloadSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Missing "name" field.'),
+  })
+  .catchall(z.unknown())
 
-  if (rawMetadata === null) {
-    return null
+function buildRequestMetadata(request: Request) {
+  const metadata: Record<string, string> = {}
+
+  const contentType = request.headers.get("content-type")?.trim()
+  const userAgent = request.headers.get("user-agent")?.trim()
+  const forwardedFor = request.headers.get("x-forwarded-for")?.trim()
+
+  if (contentType) {
+    metadata.contentType = contentType
   }
 
-  if (typeof rawMetadata !== "string") {
+  if (userAgent) {
+    metadata.userAgent = userAgent
+  }
+
+  if (forwardedFor) {
+    metadata.forwardedFor = forwardedFor
+  }
+
+  return Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null
+}
+
+async function parseUsagePayload(request: Request) {
+  let body: unknown
+
+  try {
+    body = await request.json()
+  } catch {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: 'The "metadata" form-data field must be a text value.',
+      message: "Request body must be valid JSON.",
     })
   }
 
-  return rawMetadata
+  if (!body || Array.isArray(body) || typeof body !== "object") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Request body must be a JSON object.",
+    })
+  }
+
+  const parsedPayload = usagePayloadSchema.safeParse(body)
+
+  if (!parsedPayload.success) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        parsedPayload.error.issues[0]?.message ??
+        'Request body must include a non-empty "name" field.',
+    })
+  }
+
+  return parsedPayload.data
 }
 
 function getErrorStatus(error: TRPCError) {
@@ -43,35 +88,14 @@ export async function POST(request: Request) {
     )
   }
 
-  let formData: FormData
-
   try {
-    formData = await request.formData()
-  } catch {
-    return Response.json(
-      { error: "Request body must be valid form data." },
-      { status: 400 }
-    )
-  }
-
-  const rawName = formData.get("Name")
-  const name = typeof rawName === "string" ? rawName.trim() : ""
-
-  if (!name) {
-    return Response.json(
-      { error: 'Missing "Name" form-data field.' },
-      { status: 400 }
-    )
-  }
-
-  try {
-    const customMetadata = parseUsageMetadata(formData)
+    const payload = await parseUsagePayload(request)
 
     const usageEvent = await recordApiUsage({
       apiKey,
-      name,
+      payload,
       requestId: request.headers.get("x-request-id"),
-      metadata: customMetadata,
+      metadata: buildRequestMetadata(request),
     })
 
     return Response.json({
@@ -97,7 +121,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   return Response.json(
-    { error: 'Use POST with form-data and a "Name" field.' },
+    { error: 'Use POST with a JSON object body that includes a "name" field.' },
     { status: 405 }
   )
 }

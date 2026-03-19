@@ -44,12 +44,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 type CreateApiKeyDialogProps = {
-  projectId: string
+  trackableId: string
   onCreated?: (createdKey: { id: string; plaintextKey: string }) => void
 }
 
 export function CreateApiKeyDialog({
-  projectId,
+  trackableId,
   onCreated,
 }: CreateApiKeyDialogProps) {
   const [open, setOpen] = useState(false)
@@ -67,7 +67,7 @@ export function CreateApiKeyDialog({
   })
 
   const createApiKey = useMutation(
-    trpc.projects.createApiKey.mutationOptions({
+    trpc.trackables.createApiKey.mutationOptions({
       onSuccess: async (result) => {
         setCreatedKey(result.plaintextKey)
         setCopied(false)
@@ -81,7 +81,7 @@ export function CreateApiKeyDialog({
         })
 
         await queryClient.invalidateQueries({
-          queryKey: trpc.projects.getById.queryKey({ id: projectId }),
+          queryKey: trpc.trackables.getById.queryKey({ id: trackableId }),
         })
       },
     })
@@ -111,7 +111,7 @@ export function CreateApiKeyDialog({
 
   function onSubmit(values: FormValues) {
     createApiKey.mutate({
-      projectId,
+      trackableId,
       name: values.name,
       expirationPreset: values.expirationPreset,
     })
@@ -164,7 +164,7 @@ export function CreateApiKeyDialog({
             <DialogHeader>
               <DialogTitle>Create API key</DialogTitle>
               <DialogDescription>
-                Create a new API key for tracking usage on this project.
+                Create a new API key for tracking usage on this trackable.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
