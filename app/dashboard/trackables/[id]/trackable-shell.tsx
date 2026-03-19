@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppBrand } from "@/components/app-brand";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAccountButton } from "@/components/user-account-button";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
 import {
 	ArrowLeft,
 	KeyRound,
@@ -39,7 +39,6 @@ import {
 	Radio,
 	Settings2,
 	TableProperties,
-	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,10 +55,6 @@ type TrackableNavItem = {
 };
 
 const TrackableDetailsContext = createContext<TrackableDetails | null>(null);
-
-function formatTrackableKind(kind: TrackableDetails["kind"]) {
-	return kind === "survey" ? "Survey" : "API ingestion";
-}
 
 function getTrackableNavItems(trackable: TrackableDetails): TrackableNavItem[] {
 	const baseHref = `/dashboard/trackables/${trackable.id}`;
@@ -109,20 +104,13 @@ function getTrackableNavItems(trackable: TrackableDetails): TrackableNavItem[] {
 	];
 }
 
-function getWorkspaceNavItems(teamMemberCount: number): TrackableNavItem[] {
+function getWorkspaceNavItems(): TrackableNavItem[] {
 	return [
 		{
 			href: "/dashboard",
 			label: "Back to Dashboard",
 			icon: ArrowLeft,
 			isActive: (pathname) => pathname === "/dashboard",
-		},
-		{
-			href: "/dashboard/team",
-			label: "Team",
-			icon: Users,
-			isActive: (pathname) => pathname === "/dashboard/team",
-			badge: teamMemberCount,
 		},
 	];
 }
@@ -183,12 +171,9 @@ function TrackableShellError({
 
 function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
 	const pathname = usePathname();
-	const trpc = useTRPC();
 	const { isMobile, setOpenMobile } = useSidebar();
-	const memberCountQuery = useQuery(trpc.team.getMemberCount.queryOptions());
-	const teamMemberCount = memberCountQuery.data?.count ?? 0;
 	const trackableNavItems = getTrackableNavItems(trackable);
-	const workspaceNavItems = getWorkspaceNavItems(teamMemberCount);
+	const workspaceNavItems = getWorkspaceNavItems();
 
 	function handleNavigate() {
 		if (isMobile) {
@@ -199,7 +184,7 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
 	return (
 		<Sidebar variant="inset" collapsible="offcanvas">
 			<SidebarHeader className="gap-4 border-b px-4 py-4">
-				<AppBrand />
+				<AppBrand href="/dashboard" />
 			</SidebarHeader>
 
 			<SidebarContent>

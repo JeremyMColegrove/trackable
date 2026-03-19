@@ -1,13 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { z } from "zod"
-
 import { recordApiUsage } from "@/server/usage-tracking/record-api-usage"
-
-const usagePayloadSchema = z
-  .object({
-    name: z.string().trim().min(1, 'Missing "name" field.'),
-  })
-  .catchall(z.unknown())
 
 function buildRequestMetadata(request: Request) {
   const metadata: Record<string, string> = {}
@@ -50,18 +42,7 @@ async function parseUsagePayload(request: Request) {
     })
   }
 
-  const parsedPayload = usagePayloadSchema.safeParse(body)
-
-  if (!parsedPayload.success) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message:
-        parsedPayload.error.issues[0]?.message ??
-        'Request body must include a non-empty "name" field.',
-    })
-  }
-
-  return parsedPayload.data
+  return body as Record<string, unknown>
 }
 
 function getErrorStatus(error: TRPCError) {
@@ -121,7 +102,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   return Response.json(
-    { error: 'Use POST with a JSON object body that includes a "name" field.' },
+    { error: "Use POST with a JSON object body." },
     { status: 405 }
   )
 }

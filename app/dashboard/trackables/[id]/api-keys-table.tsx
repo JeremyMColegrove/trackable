@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Copy } from "lucide-react"
 
@@ -122,17 +122,24 @@ export function ApiKeysTable({
 }
 
 function ConnectionGuide({ trackableName }: { trackableName: string }) {
-  const endpoint = buildAbsoluteUrl("/api/usage").toString()
+  const [endpoint, setEndpoint] = useState(() =>
+    buildAbsoluteUrl("/api/usage").toString()
+  )
   const exampleName = JSON.stringify(trackableName)
+  const [copiedValue, setCopiedValue] = useState<"endpoint" | "curl" | null>(
+    null
+  )
+
+  useEffect(() => {
+    setEndpoint(new URL("/api/usage", window.location.origin).toString())
+  }, [])
+
   const exampleCurl = [
     `curl -X POST ${endpoint} \\`,
     '  -H "Content-Type: application/json" \\',
     '  -H "X-Api-Key: trk_live_your_connection_key" \\',
-    `  -d '{"name":${exampleName},"client":"web","environment":"production"}'`,
+    `  -d '{"trackable":${exampleName},"client":"web","environment":"production"}'`,
   ].join("\n")
-  const [copiedValue, setCopiedValue] = useState<"endpoint" | "curl" | null>(
-    null
-  )
 
   async function handleCopy(value: string, target: "endpoint" | "curl") {
     await navigator.clipboard.writeText(value)

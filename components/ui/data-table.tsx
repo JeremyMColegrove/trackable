@@ -27,10 +27,12 @@ interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
 	title?: React.ReactNode;
+	titleVariant?: "default" | "page";
 	description?: React.ReactNode;
 	onRowClick?: (row: TData) => void;
 	emptyMessage?: string;
 	headerButton?: React.ReactNode;
+	showViewOptions?: boolean;
 	initialPageSize?: number;
 	fillHeight?: boolean;
 }
@@ -39,10 +41,12 @@ export function DataTable<TData, TValue>({
 	columns,
 	data,
 	title,
+	titleVariant = "default",
 	description,
 	onRowClick,
 	emptyMessage = "No results.",
 	headerButton,
+	showViewOptions = true,
 	initialPageSize = 5,
 	fillHeight = false,
 }: DataTableProps<TData, TValue>) {
@@ -79,18 +83,26 @@ export function DataTable<TData, TValue>({
 		>
 			{(title || description || headerButton) && (
 				<div className="flex flex-col gap-4 px-1 py-4">
-					<div className="flex justify-between items-end gap-3 lg:flex-row lg:items-start lg:justify-between">
+					<div className="flex justify-between items-end gap-3 lg:flex-row lg:items-end lg:justify-between">
 						<div className="flex flex-col justify-start gap-1">
 							{title ? (
-								<h3 className="text-lg font-semibold">{title}</h3>
+								<h3
+									className={cn(
+										titleVariant === "page"
+											? "text-3xl font-semibold tracking-tight"
+											: "text-lg font-semibold",
+									)}
+								>
+									{title}
+								</h3>
 							) : null}
 							{description ? (
 								<p className="text-sm text-muted-foreground">{description}</p>
 							) : null}
 						</div>
-						<div className="flex items-center space-x-2">
+						<div className="flex items-end space-x-2">
 							{headerButton}
-							<DataTableViewOptions table={table} />
+							{showViewOptions ? <DataTableViewOptions table={table} /> : null}
 						</div>
 					</div>
 				</div>

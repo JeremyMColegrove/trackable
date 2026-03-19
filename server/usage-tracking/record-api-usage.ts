@@ -22,16 +22,6 @@ interface RecordApiUsageInput {
 }
 
 export async function recordApiUsage(input: RecordApiUsageInput) {
-  const rawName = input.payload.name
-  const normalizedName = typeof rawName === "string" ? rawName.trim() : ""
-
-  if (!normalizedName) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: 'Usage payload must include a non-empty "name" field.',
-    })
-  }
-
   const keyPrefix = input.apiKey.slice(0, 20)
   const secretHash = hashApiKey(input.apiKey)
   const now = new Date()
@@ -97,10 +87,6 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
 
   const occurredAt = new Date()
   const requestId = input.requestId?.trim() || randomUUID()
-  const payload = {
-    ...input.payload,
-    name: normalizedName,
-  }
 
   const [createdUsageEvent] = await db.transaction(async (tx) => {
     const [usageEvent] = await tx
@@ -110,7 +96,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
         apiKeyId: apiKey.id,
         requestId,
         occurredAt,
-        payload,
+        payload: input.payload,
         metadata: input.metadata ?? null,
       })
       .returning({

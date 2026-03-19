@@ -1,5 +1,13 @@
 const defaultSiteUrl = "http://localhost:3000"
 
+function normalizeSiteUrl(url: string) {
+  if (/^https?:\/\//i.test(url)) {
+    return url
+  }
+
+  return `https://${url}`
+}
+
 export const siteConfig = {
   name: "Trackable",
   title: "Trackable",
@@ -14,7 +22,9 @@ export function getSiteUrl() {
     process.env.SITE_URL
 
   try {
-    return new URL(configuredUrl ?? defaultSiteUrl)
+    return new URL(
+      configuredUrl ? normalizeSiteUrl(configuredUrl) : defaultSiteUrl
+    )
   } catch {
     return new URL(defaultSiteUrl)
   }

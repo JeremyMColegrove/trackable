@@ -6,6 +6,7 @@ import { createTRPCClient } from "@trpc/client"
 import { useState } from "react"
 
 import type { AppRouter } from "@/server/api/root"
+import { getSiteUrl } from "@/lib/site-config"
 import { getQueryClient } from "@/trpc/query-client"
 import { TRPCProvider } from "@/trpc/client"
 
@@ -18,7 +19,7 @@ function getBaseUrl() {
     return `https://${process.env.VERCEL_URL}`
   }
 
-  return `http://localhost:${process.env.PORT ?? 3000}`
+  return getSiteUrl().toString().replace(/\/$/, "")
 }
 
 export function TRPCReactProvider({
