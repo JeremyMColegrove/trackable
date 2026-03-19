@@ -9,7 +9,7 @@ export * from "@/db/schema/users"
 import { InferInsertModel, InferSelectModel } from "drizzle-orm"
 
 import { apiKeys, trackableApiUsageEvents } from "@/db/schema/api-usage"
-import { workspaceTeamMembers } from "@/db/schema/team"
+import { workspaceMembers, workspaces } from "@/db/schema/team"
 import {
   trackableAccessGrants,
   trackableFormAnswers,
@@ -24,8 +24,11 @@ import { users } from "@/db/schema/users"
 export type User = InferSelectModel<typeof users>
 export type NewUser = InferInsertModel<typeof users>
 
-export type WorkspaceTeamMember = InferSelectModel<typeof workspaceTeamMembers>
-export type NewWorkspaceTeamMember = InferInsertModel<typeof workspaceTeamMembers>
+export type Workspace = InferSelectModel<typeof workspaces>
+export type NewWorkspace = InferInsertModel<typeof workspaces>
+
+export type WorkspaceMember = InferSelectModel<typeof workspaceMembers>
+export type NewWorkspaceMember = InferInsertModel<typeof workspaceMembers>
 
 export type TrackableItem = InferSelectModel<typeof trackableItems>
 export type NewTrackableItem = InferInsertModel<typeof trackableItems>

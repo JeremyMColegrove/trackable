@@ -1,24 +1,42 @@
 import { relations, sql } from "drizzle-orm"
-import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { index, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 
+import { apiKeys } from "@/db/schema/api-usage"
 import {
   createdByUserId,
   revokedAt,
   timestamps,
   uuidPrimaryKey,
 } from "@/db/schema/_shared"
+import { workspaceRoleEnum } from "@/db/schema/enums"
+import { trackableItems } from "@/db/schema/trackables"
 import { users } from "@/db/schema/users"
 
-export const workspaceTeamMembers = pgTable(
-  "workspace_team_members",
+export const workspaces = pgTable(
+  "workspaces",
   {
     id: uuidPrimaryKey(),
-    ownerId: text("owner_id")
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdByUserId: createdByUserId().references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("workspaces_slug_idx").on(table.slug)]
+)
+
+export const workspaceMembers = pgTable(
+  "workspace_members",
+  {
+    id: uuidPrimaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    memberUserId: text("member_user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    role: workspaceRoleEnum("role").default("member").notNull(),
     createdByUserId: createdByUserId().references(() => users.id, {
       onDelete: "cascade",
     }),
@@ -26,27 +44,37 @@ export const workspaceTeamMembers = pgTable(
     ...timestamps,
   },
   (table) => [
-    index("workspace_team_members_owner_idx").on(table.ownerId),
-    index("workspace_team_members_member_idx").on(table.memberUserId),
-    uniqueIndex("workspace_team_members_owner_member_idx")
-      .on(table.ownerId, table.memberUserId)
+    index("workspace_members_workspace_idx").on(table.workspaceId),
+    index("workspace_members_user_idx").on(table.userId),
+    uniqueIndex("workspace_members_workspace_user_idx")
+      .on(table.workspaceId, table.userId)
       .where(sql`${table.revokedAt} is null`),
   ]
 )
 
-export const workspaceTeamMembersRelations = relations(
-  workspaceTeamMembers,
+export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
+  createdByUser: one(users, {
+    fields: [workspaces.createdByUserId],
+    references: [users.id],
+  }),
+  members: many(workspaceMembers),
+  trackables: many(trackableItems),
+  apiKeys: many(apiKeys),
+}))
+
+export const workspaceMembersRelations = relations(
+  workspaceMembers,
   ({ one }) => ({
-    owner: one(users, {
-      fields: [workspaceTeamMembers.ownerId],
-      references: [users.id],
+    workspace: one(workspaces, {
+      fields: [workspaceMembers.workspaceId],
+      references: [workspaces.id],
     }),
-    member: one(users, {
-      fields: [workspaceTeamMembers.memberUserId],
+    user: one(users, {
+      fields: [workspaceMembers.userId],
       references: [users.id],
     }),
     createdByUser: one(users, {
-      fields: [workspaceTeamMembers.createdByUserId],
+      fields: [workspaceMembers.createdByUserId],
       references: [users.id],
     }),
   })

@@ -6,11 +6,7 @@ import { TRPCError } from "@trpc/server"
 import { and, eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import {
-  apiKeys,
-  trackableApiUsageEvents,
-  trackableItems,
-} from "@/db/schema"
+import { apiKeys, trackableApiUsageEvents, trackableItems } from "@/db/schema"
 import type { UsageEventMetadata, UsageEventPayload } from "@/db/schema/types"
 import { hashApiKey } from "@/server/api-keys"
 
@@ -34,7 +30,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
     ),
     columns: {
       id: true,
-      ownerId: true,
+      workspaceId: true,
       projectId: true,
       expiresAt: true,
       usageCount: true,
@@ -59,7 +55,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   const project = await db.query.trackableItems.findFirst({
     where: and(
       eq(trackableItems.id, apiKey.projectId),
-      eq(trackableItems.ownerId, apiKey.ownerId)
+      eq(trackableItems.workspaceId, apiKey.workspaceId)
     ),
     columns: {
       id: true,

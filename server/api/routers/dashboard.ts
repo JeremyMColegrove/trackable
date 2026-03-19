@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { and, desc, gte, inArray, sum } from "drizzle-orm"
+import { and, desc, eq, gte, sum } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -7,7 +7,7 @@ import {
   trackableFormSubmissions,
   trackableItems,
 } from "@/db/schema"
-import { getAccessibleProjectIds } from "@/server/project-access"
+import { resolveActiveWorkspace } from "@/server/workspaces"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
 
 const ACTIVITY_WINDOW_DAYS = 7
@@ -44,43 +44,53 @@ export const dashboardRouter = createTRPCRouter({
 
     const now = new Date()
     const windowStart = getWindowStart(now)
-    const trackableIds = await getAccessibleProjectIds(userId)
-
-    const trackablesCount = trackableIds.length
+    const activeWorkspace = await resolveActiveWorkspace(userId)
 
     const [submissionTotals, recentSubmissions, recentUsageEvents] =
       await Promise.all([
-        trackableIds.length === 0
-          ? Promise.resolve([])
-          : db
-              .select({
-                totalSubmissions: sum(trackableItems.submissionCount),
-                totalUsageTracks: sum(trackableItems.apiUsageCount),
-              })
-              .from(trackableItems)
-              .where(inArray(trackableItems.id, trackableIds)),
         db
-          .query.trackableFormSubmissions.findMany({
-              where: and(
-                inArray(trackableFormSubmissions.trackableId, trackableIds),
-                gte(trackableFormSubmissions.createdAt, windowStart)
-              ),
-              columns: {
-                createdAt: true,
-              },
-            }),
-        trackableIds.length === 0
-          ? Promise.resolve([])
-          : db.query.trackableApiUsageEvents.findMany({
-              where: and(
-                inArray(trackableApiUsageEvents.trackableId, trackableIds),
-                gte(trackableApiUsageEvents.occurredAt, windowStart)
-              ),
-              columns: {
-                occurredAt: true,
-              },
-            }),
+          .select({
+            totalSubmissions: sum(trackableItems.submissionCount),
+            totalUsageTracks: sum(trackableItems.apiUsageCount),
+          })
+          .from(trackableItems)
+          .where(eq(trackableItems.workspaceId, activeWorkspace.workspaceId)),
+        db
+          .select({
+            createdAt: trackableFormSubmissions.createdAt,
+          })
+          .from(trackableFormSubmissions)
+          .innerJoin(
+            trackableItems,
+            eq(trackableItems.id, trackableFormSubmissions.trackableId)
+          )
+          .where(
+            and(
+              eq(trackableItems.workspaceId, activeWorkspace.workspaceId),
+              gte(trackableFormSubmissions.createdAt, windowStart)
+            )
+          ),
+        db
+          .select({
+            occurredAt: trackableApiUsageEvents.occurredAt,
+          })
+          .from(trackableApiUsageEvents)
+          .innerJoin(
+            trackableItems,
+            eq(trackableItems.id, trackableApiUsageEvents.trackableId)
+          )
+          .where(
+            and(
+              eq(trackableItems.workspaceId, activeWorkspace.workspaceId),
+              gte(trackableApiUsageEvents.occurredAt, windowStart)
+            )
+          ),
       ])
+
+    const trackablesCount = await db.$count(
+      trackableItems,
+      eq(trackableItems.workspaceId, activeWorkspace.workspaceId)
+    )
 
     const totals = submissionTotals[0]
     const totalSubmissions = Number(totals?.totalSubmissions) || 0
@@ -120,14 +130,10 @@ export const dashboardRouter = createTRPCRouter({
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
 
-    const trackableIds = await getAccessibleProjectIds(userId)
-
-    if (trackableIds.length === 0) {
-      return []
-    }
+    const activeWorkspace = await resolveActiveWorkspace(userId)
 
     return db.query.trackableItems.findMany({
-      where: inArray(trackableItems.id, trackableIds),
+      where: eq(trackableItems.workspaceId, activeWorkspace.workspaceId),
       orderBy: [desc(trackableItems.createdAt)],
       limit: 10,
       columns: {
@@ -138,10 +144,9 @@ export const dashboardRouter = createTRPCRouter({
         apiUsageCount: true,
       },
       with: {
-        owner: {
+        workspace: {
           columns: {
-            displayName: true,
-            imageUrl: true,
+            name: true,
           },
         },
       },

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users } from "@/db/schema"
+import { createDefaultWorkspaceForUser } from "@/server/workspaces"
 
 type ClerkUser = Extract<
   WebhookEvent,
@@ -60,6 +61,12 @@ async function upsertUser(user: ClerkUser) {
         updatedAt: new Date(),
       },
     })
+
+  await createDefaultWorkspaceForUser({
+    userId: user.id,
+    primaryEmail,
+    displayName: getDisplayName(user),
+  })
 }
 
 async function deleteUser(userId: string) {

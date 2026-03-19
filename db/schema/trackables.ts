@@ -19,7 +19,6 @@ import {
   expiresAt,
   metadataJson,
   nullableTimestamp,
-  ownerId,
   revokedAt,
   settingsJson,
   sortOrder,
@@ -36,6 +35,7 @@ import {
   trackableKindEnum,
   trackableSubmissionSourceEnum,
 } from "@/db/schema/enums"
+import { workspaces } from "@/db/schema/team"
 import type {
   FormAnswerValue,
   FormFieldConfig,
@@ -50,7 +50,9 @@ export const trackableItems = pgTable(
   "trackable_items",
   {
     id: uuidPrimaryKey(),
-    ownerId: ownerId().references(() => users.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     description: text("description"),
@@ -70,8 +72,11 @@ export const trackableItems = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("trackable_items_owner_slug_idx").on(table.ownerId, table.slug),
-    index("trackable_items_owner_idx").on(table.ownerId),
+    uniqueIndex("trackable_items_workspace_slug_idx").on(
+      table.workspaceId,
+      table.slug
+    ),
+    index("trackable_items_workspace_idx").on(table.workspaceId),
   ]
 )
 
@@ -255,9 +260,9 @@ export const trackableFormAnswers = pgTable(
 export const trackableItemsRelations = relations(
   trackableItems,
   ({ many, one }) => ({
-    owner: one(users, {
-      fields: [trackableItems.ownerId],
-      references: [users.id],
+    workspace: one(workspaces, {
+      fields: [trackableItems.workspaceId],
+      references: [workspaces.id],
     }),
     activeForm: one(trackableForms, {
       fields: [trackableItems.activeFormId],

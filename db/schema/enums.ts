@@ -35,3 +35,9 @@ export const trackableSubmissionSourceEnum = pgEnum(
 )
 
 export const apiKeyStatusEnum = pgEnum("api_key_status", ["active", "revoked"])
+
+export const workspaceRoleEnum = pgEnum("workspace_role", [
+  "owner",
+  "admin",
+  "member",
+])

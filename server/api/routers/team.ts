@@ -1,15 +1,14 @@
 import { TRPCError } from "@trpc/server"
-import { and, eq, ilike, inArray, isNull, notInArray, or } from "drizzle-orm"
+import { and, eq, ilike, isNull, ne, notInArray, or } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
-import { users, workspaceTeamMembers } from "@/db/schema"
+import { users, workspaceMembers } from "@/db/schema"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
 import {
-  getConnectedTeamUserIds,
-  getTeamOwnerId,
-  getTeamUserIds,
-} from "@/server/team-members"
+  assertWorkspaceManagementAccess,
+  resolveActiveWorkspace,
+} from "@/server/workspaces"
 
 const userSearchSchema = z.object({
   query: z.string().trim().min(2).max(100),
@@ -17,94 +16,98 @@ const userSearchSchema = z.object({
 
 export const teamRouter = createTRPCRouter({
   getMemberCount: protectedProcedure.query(async ({ ctx }) => {
-    const ownerId = ctx.auth.userId
+    const userId = ctx.auth.userId
 
-    if (!ownerId) {
+    if (!userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
 
-    return {
-      count: (await getConnectedTeamUserIds(ownerId)).length,
-    }
+    const membership = await resolveActiveWorkspace(userId)
+
+    const members = await db.query.workspaceMembers.findMany({
+      where: and(
+        eq(workspaceMembers.workspaceId, membership.workspaceId),
+        isNull(workspaceMembers.revokedAt)
+      ),
+      columns: { id: true },
+    })
+
+    return { count: members.length }
   }),
 
   listMembers: protectedProcedure.query(async ({ ctx }) => {
-    const currentUserId = ctx.auth.userId
+    const userId = ctx.auth.userId
 
-    if (!currentUserId) {
+    if (!userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
 
-    const [teamOwnerId, connectedUserIds] = await Promise.all([
-      getTeamOwnerId(currentUserId),
-      getConnectedTeamUserIds(currentUserId),
-    ])
-
-    const [currentUser, connectedMembers] = await Promise.all([
-      db.query.users.findFirst({
-        where: eq(users.id, currentUserId),
-        columns: {
-          id: true,
-          displayName: true,
-          primaryEmail: true,
-          imageUrl: true,
+    const membership = await resolveActiveWorkspace(userId)
+    const members = await db.query.workspaceMembers.findMany({
+      where: and(
+        eq(workspaceMembers.workspaceId, membership.workspaceId),
+        isNull(workspaceMembers.revokedAt)
+      ),
+      with: {
+        user: {
+          columns: {
+            id: true,
+            displayName: true,
+            primaryEmail: true,
+            imageUrl: true,
+          },
         },
-      }),
-      connectedUserIds.length === 0
-        ? Promise.resolve([])
-        : db.query.users.findMany({
-            where: inArray(users.id, connectedUserIds),
-            columns: {
-              id: true,
-              displayName: true,
-              primaryEmail: true,
-              imageUrl: true,
-            },
-          }),
-    ])
-
-    return [
-      {
-        id: currentUserId,
-        displayName: currentUser?.displayName ?? null,
-        primaryEmail: currentUser?.primaryEmail ?? null,
-        imageUrl: currentUser?.imageUrl ?? null,
-        roleLabel: currentUserId === teamOwnerId ? "Owner" : "Member",
-        isOwner: currentUserId === teamOwnerId,
-        addedAt: null,
       },
-      ...connectedMembers.map((member) => ({
-        id: member.id,
-        displayName: member.displayName,
-        primaryEmail: member.primaryEmail,
-        imageUrl: member.imageUrl,
-        roleLabel: member.id === teamOwnerId ? "Owner" : "Member",
-        isOwner: member.id === teamOwnerId,
-        addedAt: null,
-      })),
-    ]
+      orderBy: (table, { asc }) => [asc(table.createdAt)],
+    })
+
+    return members.map((member) => ({
+      id: member.user.id,
+      displayName: member.user.displayName,
+      primaryEmail: member.user.primaryEmail,
+      imageUrl: member.user.imageUrl,
+      roleLabel:
+        member.role === "owner"
+          ? "Owner"
+          : member.role === "admin"
+            ? "Admin"
+            : "Member",
+      isOwner: member.role === "owner",
+      addedAt: member.createdAt.toISOString(),
+    }))
   }),
 
   searchUsers: protectedProcedure
     .input(userSearchSchema)
     .query(async ({ ctx, input }) => {
-      const ownerId = ctx.auth.userId
+      const userId = ctx.auth.userId
 
-      if (!ownerId) {
+      if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const query = input.query.trim()
-
-      const excludedUserIds = [ownerId, ...(await getConnectedTeamUserIds(ownerId))]
+      const membership = await resolveActiveWorkspace(userId)
+      const existingMembers = await db.query.workspaceMembers.findMany({
+        where: and(
+          eq(workspaceMembers.workspaceId, membership.workspaceId),
+          isNull(workspaceMembers.revokedAt)
+        ),
+        columns: {
+          userId: true,
+        },
+      })
 
       return db.query.users.findMany({
         where: and(
           eq(users.isProfilePrivate, false),
-          notInArray(users.id, excludedUserIds),
+          ne(users.id, userId),
+          notInArray(
+            users.id,
+            existingMembers.map((member) => member.userId)
+          ),
           or(
-            ilike(users.displayName, `%${query}%`),
-            ilike(users.primaryEmail, `%${query}%`)
+            ilike(users.displayName, `%${input.query}%`),
+            ilike(users.primaryEmail, `%${input.query}%`)
           )
         ),
         limit: 8,
@@ -124,25 +127,28 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const currentUserId = ctx.auth.userId
+      const userId = ctx.auth.userId
 
-      if (!currentUserId) {
+      if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      if (currentUserId === input.memberUserId) {
+      const activeMembership = await resolveActiveWorkspace(userId)
+      await assertWorkspaceManagementAccess(
+        userId,
+        activeMembership.workspaceId
+      )
+
+      if (userId === input.memberUserId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "You are already on your own team.",
+          message: "You are already in this workspace.",
         })
       }
 
       const member = await db.query.users.findFirst({
         where: eq(users.id, input.memberUserId),
-        columns: {
-          id: true,
-          isProfilePrivate: true,
-        },
+        columns: { id: true, isProfilePrivate: true },
       })
 
       if (!member || member.isProfilePrivate) {
@@ -152,43 +158,30 @@ export const teamRouter = createTRPCRouter({
         })
       }
 
-      const teamOwnerId = await getTeamOwnerId(currentUserId)
-      const existingMembership = await db.query.workspaceTeamMembers.findFirst({
-        where: or(
-          and(
-            eq(workspaceTeamMembers.ownerId, teamOwnerId),
-            eq(workspaceTeamMembers.memberUserId, input.memberUserId)
-          ),
-          and(
-            eq(workspaceTeamMembers.ownerId, input.memberUserId),
-            eq(workspaceTeamMembers.memberUserId, teamOwnerId)
-          )
+      const existingMembership = await db.query.workspaceMembers.findFirst({
+        where: and(
+          eq(workspaceMembers.workspaceId, activeMembership.workspaceId),
+          eq(workspaceMembers.userId, input.memberUserId)
         ),
-        columns: {
-          id: true,
-          revokedAt: true,
-        },
+        columns: { id: true, revokedAt: true },
       })
 
       if (existingMembership) {
-        if (existingMembership.revokedAt) {
-          await db
-            .update(workspaceTeamMembers)
-            .set({
-              revokedAt: null,
-              updatedAt: new Date(),
-            })
-            .where(eq(workspaceTeamMembers.id, existingMembership.id))
-        }
-
-        return { ok: true }
+        await db
+          .update(workspaceMembers)
+          .set({
+            revokedAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(workspaceMembers.id, existingMembership.id))
+      } else {
+        await db.insert(workspaceMembers).values({
+          workspaceId: activeMembership.workspaceId,
+          userId: input.memberUserId,
+          role: "member",
+          createdByUserId: userId,
+        })
       }
-
-      await db.insert(workspaceTeamMembers).values({
-        ownerId: teamOwnerId,
-        memberUserId: input.memberUserId,
-        createdByUserId: currentUserId,
-      })
 
       return { ok: true }
     }),
@@ -200,102 +193,48 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const currentUserId = ctx.auth.userId
+      const userId = ctx.auth.userId
 
-      if (!currentUserId) {
+      if (!userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
-      const [teamOwnerId, teamUserIds] = await Promise.all([
-        getTeamOwnerId(currentUserId),
-        getTeamUserIds(currentUserId),
-      ])
+      const activeMembership = await resolveActiveWorkspace(userId)
+      await assertWorkspaceManagementAccess(
+        userId,
+        activeMembership.workspaceId
+      )
 
-      if (!teamUserIds.includes(input.memberUserId)) {
+      const member = await db.query.workspaceMembers.findFirst({
+        where: and(
+          eq(workspaceMembers.workspaceId, activeMembership.workspaceId),
+          eq(workspaceMembers.userId, input.memberUserId),
+          isNull(workspaceMembers.revokedAt)
+        ),
+        columns: { id: true, role: true },
+      })
+
+      if (!member) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Team member not found.",
+          message: "Workspace member not found.",
         })
       }
 
-      if (input.memberUserId === teamOwnerId) {
+      if (member.role === "owner") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "The team owner cannot be removed yet.",
+          message: "The workspace owner cannot be removed yet.",
         })
       }
 
-      const remainingUserIds = teamUserIds.filter(
-        (userId) => userId !== input.memberUserId
-      )
-      const now = new Date()
-
-      await db.transaction(async (tx) => {
-        await tx
-          .update(workspaceTeamMembers)
-          .set({
-            revokedAt: now,
-            updatedAt: now,
-          })
-          .where(
-            and(
-              isNull(workspaceTeamMembers.revokedAt),
-              or(
-                and(
-                  eq(workspaceTeamMembers.ownerId, input.memberUserId),
-                  inArray(workspaceTeamMembers.memberUserId, teamUserIds)
-                ),
-                and(
-                  eq(workspaceTeamMembers.memberUserId, input.memberUserId),
-                  inArray(workspaceTeamMembers.ownerId, teamUserIds)
-                )
-              )
-            )
-          )
-
-        for (const remainingUserId of remainingUserIds) {
-          if (remainingUserId === teamOwnerId) {
-            continue
-          }
-
-          const existingOwnerEdge = await tx.query.workspaceTeamMembers.findFirst({
-            where: or(
-              and(
-                eq(workspaceTeamMembers.ownerId, teamOwnerId),
-                eq(workspaceTeamMembers.memberUserId, remainingUserId)
-              ),
-              and(
-                eq(workspaceTeamMembers.ownerId, remainingUserId),
-                eq(workspaceTeamMembers.memberUserId, teamOwnerId)
-              )
-            ),
-            columns: {
-              id: true,
-              revokedAt: true,
-            },
-          })
-
-          if (existingOwnerEdge) {
-            if (existingOwnerEdge.revokedAt) {
-              await tx
-                .update(workspaceTeamMembers)
-                .set({
-                  revokedAt: null,
-                  updatedAt: now,
-                })
-                .where(eq(workspaceTeamMembers.id, existingOwnerEdge.id))
-            }
-
-            continue
-          }
-
-          await tx.insert(workspaceTeamMembers).values({
-            ownerId: teamOwnerId,
-            memberUserId: remainingUserId,
-            createdByUserId: currentUserId,
-          })
-        }
-      })
+      await db
+        .update(workspaceMembers)
+        .set({
+          revokedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(workspaceMembers.id, member.id))
 
       return { ok: true }
     }),

@@ -5,10 +5,9 @@ export function getShareLinkQuery() {
     with: {
       trackable: {
         with: {
-          owner: {
+          workspace: {
             columns: {
-              displayName: true,
-              primaryEmail: true,
+              name: true,
             },
           },
           activeForm: {
@@ -41,8 +40,10 @@ export async function getActiveShareLink(token: string) {
   })
 }
 
-export function requiresAuthenticatedSharedFormAccess(settings: {
-  allowAnonymousSubmissions?: boolean
-} | null) {
+export function requiresAuthenticatedSharedFormAccess(
+  settings: {
+    allowAnonymousSubmissions?: boolean
+  } | null
+) {
   return settings?.allowAnonymousSubmissions === false
 }
