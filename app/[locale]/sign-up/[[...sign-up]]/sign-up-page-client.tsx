@@ -1,11 +1,21 @@
 "use client"
 
 import { SignUp } from "@clerk/nextjs"
+import { useSearchParams } from "next/navigation"
+
+import { RedirectIfSignedIn } from "@/components/auth/redirect-if-signed-in"
 
 export function SignUpPageClient() {
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect_url") ?? "/dashboard"
+
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <SignUp />
-    </div>
+    <>
+      <RedirectIfSignedIn href={redirectUrl} />
+      <SignUp
+        forceRedirectUrl={redirectUrl}
+        fallbackRedirectUrl={redirectUrl}
+      />
+    </>
   )
 }

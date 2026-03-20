@@ -1,7 +1,14 @@
+import { AuthModal } from "@/components/auth/auth-modal";
+import { LandingPage } from "../../landing-page";
 import { SignUpPageClient } from "./sign-up-page-client";
 
-export const dynamic = "force-static";
-
 export default function SignUpPage() {
-	return <SignUpPageClient />;
+	return (
+		<>
+			<LandingPage />
+			<AuthModal>
+				<SignUpPageClient />
+			</AuthModal>
+		</>
+	);
 }

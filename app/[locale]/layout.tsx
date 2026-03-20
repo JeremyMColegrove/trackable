@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/components/trpc-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getClerkLocalization } from "@/lib/clerk-localization";
 import { buildAbsoluteUrl, siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -44,17 +45,23 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function RootLayout({
+export default async function RootLayout({
+	auth,
 	children,
+	params,
 }: Readonly<{
+	auth?: React.ReactNode;
 	children: React.ReactNode;
+	params: Promise<{ locale: string }>;
 }>) {
-	const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
-	const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up";
+	const { locale } = await params;
+	const signInUrl = locale !== "en" ? `/${locale}/sign-in` : `/sign-in`;
+	const signUpUrl = locale !== "en" ? `/${locale}/sign-up` : `/sign-up`;
+	const clerkLocalization = getClerkLocalization(locale);
 
 	return (
 		<html
-			lang="en"
+			lang={locale}
 			suppressHydrationWarning
 			className={cn(
 				"antialiased",
@@ -64,12 +71,17 @@ export default function RootLayout({
 			)}
 		>
 			<body className="min-h-svh bg-background">
-				<ClerkProvider signInUrl={signInUrl} signUpUrl={signUpUrl}>
+				<ClerkProvider
+					localization={clerkLocalization}
+					signInUrl={signInUrl}
+					signUpUrl={signUpUrl}
+				>
 					<GTProvider>
 						<TRPCReactProvider>
 							<TooltipProvider>
 								<ThemeProvider>
 									{children}
+									{auth}
 									<Toaster position="top-center" />
 								</ThemeProvider>
 							</TooltipProvider>
