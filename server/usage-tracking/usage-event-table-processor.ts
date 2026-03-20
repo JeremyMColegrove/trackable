@@ -5,6 +5,7 @@ import { type LiqeQuery, parse, test } from "liqe";
 
 import type {
 	UsageEventAggregation,
+	UsageEventLevel,
 	UsageEventSearchInput,
 	UsageEventSourceSnapshot,
 	UsageEventTableApiKey,
@@ -21,14 +22,15 @@ type UsageEventRecord = {
 
 type UsageEventGroup = {
 	id: string;
-	event: string;
-	status: string | null;
-	statusTone: "error" | "ok" | "warning" | "neutral";
+	event: string | null;
+	level: UsageEventLevel | null;
 	message: string | null;
 	aggregation: UsageEventAggregation;
 	groupField: string | null;
 	totalHits: number;
 	lastOccurredAt: string;
+	firstOccurredAt: string;
+	percentage: number;
 	apiKey: UsageEventTableApiKey | null;
 	apiKeyCount: number;
 	apiKeys: UsageEventTableApiKey[];
@@ -48,16 +50,22 @@ function extractPayloadString(
 	return null;
 }
 
-function resolveStatusTone(status: string | null) {
-	switch (status?.trim().toLowerCase()) {
+function resolveLogLevel(payload: Record<string, unknown>): UsageEventLevel | null {
+	const rawLevel = extractPayloadString(payload, "level");
+
+	switch (rawLevel?.trim().toLowerCase()) {
+		case "info":
+		case "warn":
 		case "error":
-			return "error" as const;
-		case "ok":
-			return "ok" as const;
+		case "debug":
+			return rawLevel.trim().toLowerCase() as UsageEventLevel;
 		case "warning":
-			return "warning" as const;
+			return "warn";
+		case "ok":
+		case "success":
+			return "info";
 		default:
-			return "neutral" as const;
+			return null;
 	}
 }
 
@@ -102,13 +110,13 @@ function serializeAggregateValue(value: unknown): string {
 	return JSON.stringify(value);
 }
 
-function formatAggregateValue(value: unknown): string {
+function formatAggregateValue(value: unknown): string | null {
 	if (value === null || value === undefined) {
-		return "Empty";
+		return null;
 	}
 
 	if (typeof value === "string") {
-		return value.trim() || "Empty";
+		return value.trim() || null;
 	}
 
 	if (
@@ -121,11 +129,11 @@ function formatAggregateValue(value: unknown): string {
 
 	if (Array.isArray(value)) {
 		const formattedValue = value
-			.map((entry): string => formatAggregateValue(entry))
+			.map((entry): string | null => formatAggregateValue(entry))
 			.filter(Boolean)
 			.join(", ");
 
-		return formattedValue || "Empty";
+		return formattedValue || null;
 	}
 
 	return JSON.stringify(value);
@@ -186,16 +194,18 @@ function buildColumns(aggregation: UsageEventAggregation) {
 	if (aggregation === "payload_field") {
 		return [
 			{ id: "event" as const, label: "Aggregate Value", visible: true },
-			{ id: "lastOccurredAt" as const, label: "Last Hit", visible: true },
-			{ id: "totalHits" as const, label: "Total Hits", visible: true },
+			{ id: "totalHits" as const, label: "Hits", visible: true },
+			{ id: "lastOccurredAt" as const, label: "Last Seen", visible: true },
+			{ id: "firstOccurredAt" as const, label: "First Seen", visible: true },
+			{ id: "percentage" as const, label: "%", visible: true },
 		];
 	}
 
 	return [
+		{ id: "lastOccurredAt" as const, label: "Timestamp", visible: true },
 		{ id: "event" as const, label: "Event", visible: true },
-		{ id: "status" as const, label: "Status", visible: true },
+		{ id: "level" as const, label: "Level", visible: true },
 		{ id: "message" as const, label: "Message", visible: true },
-		{ id: "lastOccurredAt" as const, label: "Last Hit", visible: true },
 	];
 }
 
@@ -228,7 +238,6 @@ export class UsageEventTableProcessor {
 				.map((event) => {
 					const occurredAt = event.occurredAt.toISOString();
 					const eventName = extractPayloadString(event.payload, "event");
-					const status = extractPayloadString(event.payload, "status");
 					const hit = {
 						id: event.id,
 						occurredAt,
@@ -240,13 +249,16 @@ export class UsageEventTableProcessor {
 					return {
 						id: event.id,
 						event: eventName,
-						status,
-						statusTone: resolveStatusTone(status),
-						message: extractPayloadString(event.payload, "msg"),
+						level: resolveLogLevel(event.payload),
+						message:
+							extractPayloadString(event.payload, "message") ??
+							extractPayloadString(event.payload, "msg"),
 						aggregation: this.input.aggregation,
 						groupField: null,
 						totalHits: 1,
 						lastOccurredAt: occurredAt,
+						firstOccurredAt: occurredAt,
+						percentage: filteredEvents.length > 0 ? 100 : 0,
 						apiKey: event.apiKey,
 						apiKeyCount: 1,
 						apiKeys: [event.apiKey],
@@ -318,6 +330,13 @@ export class UsageEventTableProcessor {
 				}
 
 				if (
+					new Date(existingGroup.firstOccurredAt).getTime() >
+					event.occurredAt.getTime()
+				) {
+					existingGroup.firstOccurredAt = occurredAt;
+				}
+
+				if (
 					!existingGroup.apiKeys.some((apiKey) => apiKey.id === event.apiKey.id)
 				) {
 					existingGroup.apiKeys.push(event.apiKey);
@@ -330,13 +349,14 @@ export class UsageEventTableProcessor {
 			groups.set(groupId, {
 				id: groupId,
 				event: aggregateValue,
-				status: null,
-				statusTone: "neutral",
+				level: null,
 				message: null,
 				aggregation: this.input.aggregation,
 				groupField: this.input.aggregateField,
 				totalHits: 1,
 				lastOccurredAt: occurredAt,
+				firstOccurredAt: occurredAt,
+				percentage: 0,
 				apiKey: null,
 				apiKeyCount: 1,
 				apiKeys: [event.apiKey],
@@ -347,6 +367,10 @@ export class UsageEventTableProcessor {
 		const sortedRows = Array.from(groups.values())
 			.map((group) => ({
 				...group,
+				percentage:
+					filteredEvents.length > 0
+						? Number(((group.totalHits / filteredEvents.length) * 100).toFixed(1))
+						: 0,
 				hits: [...group.hits].sort(
 					(left, right) =>
 						new Date(right.occurredAt).getTime() -
@@ -360,23 +384,23 @@ export class UsageEventTableProcessor {
 				switch (this.input.sort) {
 					case "event":
 						return this.input.dir === "asc"
-							? left.event.localeCompare(right.event)
-							: right.event.localeCompare(left.event);
+							? (left.event ?? "").localeCompare(right.event ?? "")
+							: (right.event ?? "").localeCompare(left.event ?? "");
 					case "totalHits":
 						return this.input.dir === "asc"
 							? left.totalHits - right.totalHits ||
-									left.event.localeCompare(right.event)
+									(left.event ?? "").localeCompare(right.event ?? "")
 							: right.totalHits - left.totalHits ||
-									right.event.localeCompare(left.event);
-					case "lastOccurredAt":
-					default:
-						return this.input.dir === "asc"
-							? new Date(left.lastOccurredAt).getTime() -
-									new Date(right.lastOccurredAt).getTime() ||
-									left.event.localeCompare(right.event)
-							: new Date(right.lastOccurredAt).getTime() -
-									new Date(left.lastOccurredAt).getTime() ||
-									right.event.localeCompare(left.event);
+									(right.event ?? "").localeCompare(left.event ?? "");
+						case "lastOccurredAt":
+						default:
+							return this.input.dir === "asc"
+								? new Date(left.lastOccurredAt).getTime() -
+										new Date(right.lastOccurredAt).getTime() ||
+										(left.event ?? "").localeCompare(right.event ?? "")
+								: new Date(right.lastOccurredAt).getTime() -
+										new Date(left.lastOccurredAt).getTime() ||
+										(right.event ?? "").localeCompare(left.event ?? "");
 				}
 			});
 

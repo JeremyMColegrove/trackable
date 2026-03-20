@@ -18,6 +18,12 @@ export const usageEventSortFieldValues = [
 ] as const
 
 export const usageEventSortDirectionValues = ["asc", "desc"] as const
+export const usageEventLevelValues = [
+  "info",
+  "warn",
+  "error",
+  "debug",
+] as const
 
 export const usageEventAggregationSchema = z.enum(usageEventAggregationValues)
 export const usageEventTimeRangeSchema = z.enum(usageEventTimeRangeValues)
@@ -25,6 +31,7 @@ export const usageEventSortFieldSchema = z.enum(usageEventSortFieldValues)
 export const usageEventSortDirectionSchema = z.enum(
   usageEventSortDirectionValues
 )
+export const usageEventLevelSchema = z.enum(usageEventLevelValues)
 
 export const usageEventSourceSnapshotSchema = z.object({
   totalEventCount: z.number().int().min(0),
@@ -69,13 +76,14 @@ export const usageHitRowSchema = z.object({
 export const usageEventTableRowSchema = z.object({
   id: z.string(),
   event: z.string().nullable(),
-  status: z.string().nullable(),
-  statusTone: z.enum(["error", "ok", "warning", "neutral"]),
+  level: usageEventLevelSchema.nullable(),
   message: z.string().nullable(),
   aggregation: usageEventAggregationSchema,
   groupField: z.string().nullable(),
   totalHits: z.number().int().min(0),
   lastOccurredAt: z.string().datetime(),
+  firstOccurredAt: z.string().datetime(),
+  percentage: z.number().min(0).max(100),
   apiKey: usageEventTableApiKeySchema.nullable(),
   apiKeyCount: z.number().int().min(0),
   apiKeys: z.array(usageEventTableApiKeySchema),
@@ -83,7 +91,15 @@ export const usageEventTableRowSchema = z.object({
 })
 
 export const usageEventTableColumnSchema = z.object({
-  id: z.enum(["event", "status", "message", "totalHits", "lastOccurredAt"]),
+  id: z.enum([
+    "event",
+    "level",
+    "message",
+    "totalHits",
+    "lastOccurredAt",
+    "firstOccurredAt",
+    "percentage",
+  ]),
   label: z.string(),
   visible: z.boolean(),
 })
@@ -109,6 +125,7 @@ export type UsageEventSortField = z.infer<typeof usageEventSortFieldSchema>
 export type UsageEventSortDirection = z.infer<
   typeof usageEventSortDirectionSchema
 >
+export type UsageEventLevel = z.infer<typeof usageEventLevelSchema>
 export type UsageEventSearchInput = z.infer<typeof usageEventSearchInputSchema>
 export type UsageEventUrlState = z.infer<typeof usageEventUrlStateSchema>
 export type UsageEventSourceSnapshot = z.infer<

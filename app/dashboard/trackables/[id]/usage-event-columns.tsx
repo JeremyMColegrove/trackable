@@ -3,18 +3,26 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
-import { cn } from "@/lib/utils"
 
-import {
-  formatDateTime,
-  formatStatusLabel,
-} from "./display-utils"
+import { formatDateTime } from "./display-utils"
+import { LogLevelBadge } from "./log-level-badge"
 import type { UsageEventColumn, UsageEventRow } from "./table-types"
 
 const usageEventColumnDefinitions: Record<
   UsageEventColumn["id"],
   ColumnDef<UsageEventRow>
 > = {
+  lastOccurredAt: {
+    accessorKey: "lastOccurredAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Timestamp" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {formatDateTime(row.original.lastOccurredAt)}
+      </span>
+    ),
+  },
   event: {
     id: "event",
     accessorFn: (row) => row.event ?? "",
@@ -34,40 +42,15 @@ const usageEventColumnDefinitions: Record<
         .includes(String(filterValue).toLowerCase())
     },
   },
-  status: {
-    id: "status",
-    accessorFn: (row) => row.status ?? "",
+  level: {
+    id: "level",
+    accessorFn: (row) => row.level ?? "",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
+      <DataTableColumnHeader column={column} title="Level" />
     ),
-    cell: ({ row }) => {
-      const tone = row.original.statusTone
-
-      return (
-        <div
-          className={cn(
-            "inline-flex items-center gap-2 text-sm font-medium",
-            tone === "error" && "text-red-700",
-            tone === "ok" && "text-emerald-700",
-            tone === "warning" && "text-amber-700",
-            tone === "neutral" && "text-slate-600"
-          )}
-        >
-          <span
-            className={cn(
-              "size-2 rounded-full",
-              tone === "error" && "bg-red-500",
-              tone === "ok" && "bg-emerald-500",
-              tone === "warning" && "bg-amber-500",
-              tone === "neutral" && "bg-slate-400"
-            )}
-          />
-          <span>{row.original.status ? formatStatusLabel(row.original.status) : "—"}</span>
-        </div>
-      )
-    },
+    cell: ({ row }) => <LogLevelBadge level={row.original.level} />,
     sortingFn: (left, right) =>
-      (left.original.status ?? "").localeCompare(right.original.status ?? ""),
+      (left.original.level ?? "").localeCompare(right.original.level ?? ""),
   },
   message: {
     id: "message",
@@ -86,22 +69,32 @@ const usageEventColumnDefinitions: Record<
   totalHits: {
     accessorKey: "totalHits",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Total Hits" />
+      <DataTableColumnHeader column={column} title="Hits" />
     ),
     cell: ({ row }) => (
       <span className="font-medium">{row.original.totalHits}</span>
     ),
   },
-  lastOccurredAt: {
-    accessorKey: "lastOccurredAt",
+  firstOccurredAt: {
+    accessorKey: "firstOccurredAt",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Hit" />
+      <DataTableColumnHeader column={column} title="First Seen" />
     ),
     cell: ({ row }) => (
       <span className="text-muted-foreground">
-        {formatDateTime(row.original.lastOccurredAt)}
+        {formatDateTime(row.original.firstOccurredAt)}
       </span>
     ),
+  },
+  percentage: {
+    accessorKey: "percentage",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="%" />
+    ),
+    cell: ({ row }) => (
+      <span className="font-medium">{formatPercentage(row.original.percentage)}</span>
+    ),
+    sortingFn: (left, right) => left.original.percentage - right.original.percentage,
   },
 }
 
@@ -120,4 +113,10 @@ export function getUsageEventColumns(
         ),
       } as ColumnDef<UsageEventRow>
     })
+}
+
+function formatPercentage(value: number) {
+  const roundedValue = Number.isInteger(value) ? String(value) : value.toFixed(1)
+
+  return `${roundedValue}%`
 }

@@ -1017,6 +1017,7 @@ function UsageEventsPage() {
 					<UsageEventsTable
 						data={usageEventTableQuery.data}
 						onFilterToGroup={handleFilterToGroup}
+						onApplyFilters={updateUrlState}
 					/>
 				</TrackableNarrowContent>
 			) : (
