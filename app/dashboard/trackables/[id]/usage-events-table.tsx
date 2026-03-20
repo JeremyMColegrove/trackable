@@ -25,6 +25,7 @@ export function UsageEventsTableSkeleton() {
 				<div className="divide-y">
 					{Array.from({ length: 6 }).map((_, index) => (
 						<div
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 							key={index}
 							className="grid grid-cols-[1.2fr_1.2fr_.8fr_1.8fr] gap-4 px-4 py-4"
 						>
@@ -65,7 +66,9 @@ export function UsageEventsTable({
 		UsageEventTableData["rows"][number] | null
 	>(null);
 
-	const subtitle = description || `${data.totalMatchedEvents} matching event${data.totalMatchedEvents === 1 ? "" : "s"} across ${data.totalGroupedRows} row${data.totalGroupedRows === 1 ? "" : "s"}.`;
+	const subtitle =
+		description ||
+		`${data.totalMatchedEvents} matching event${data.totalMatchedEvents === 1 ? "" : "s"} across ${data.totalGroupedRows} row${data.totalGroupedRows === 1 ? "" : "s"}.`;
 
 	return (
 		<>
