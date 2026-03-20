@@ -8,11 +8,13 @@ import iosSmallIcon from "@/images/ios/AppIcon-20@3x.png"
 type AppBrandProps = {
   href?: string
   className?: string
+  collapseTextOnMobile?: boolean
 }
 
 export function AppBrand({
   href = "/",
   className = "text-lg font-bold tracking-tighter",
+  collapseTextOnMobile = false,
 }: AppBrandProps) {
   return (
     <Link href={href} className={`flex items-center gap-2 ${className}`}>
@@ -24,7 +26,9 @@ export function AppBrand({
         className="h-6 w-6 rounded-sm"
         priority
       />
-      <span>Trackable.</span>
+      <span className={collapseTextOnMobile ? "hidden sm:inline" : undefined}>
+        Trackable.
+      </span>
     </Link>
   )
 }

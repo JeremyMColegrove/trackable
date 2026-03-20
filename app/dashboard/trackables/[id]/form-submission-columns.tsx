@@ -7,7 +7,6 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 
 import {
   formatDateTime,
-  formatRelativeTime,
   formatSubmissionSource,
 } from "./display-utils"
 import type { SubmissionRow } from "./table-types"
@@ -41,12 +40,9 @@ export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
       <DataTableColumnHeader column={column} title="Submitted" />
     ),
     cell: ({ row }) => (
-      <div className="space-y-0.5">
-        <div>{formatRelativeTime(row.original.createdAt)}</div>
-        <div className="text-xs text-muted-foreground">
-          {formatDateTime(row.original.createdAt)}
-        </div>
-      </div>
+      <span className="text-muted-foreground">
+        {formatDateTime(row.original.createdAt)}
+      </span>
     ),
   },
 ]

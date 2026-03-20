@@ -16,6 +16,8 @@ type LandingAuthActionsProps = {
   section: "navbar" | "hero"
 }
 
+const dashboardRedirectUrl = "/dashboard"
+
 export function LandingAuthActions({ section }: LandingAuthActionsProps) {
   const { isLoaded, userId } = useAuth()
   const isSignedIn = isLoaded && Boolean(userId)
@@ -45,7 +47,11 @@ export function LandingAuthActions({ section }: LandingAuthActionsProps) {
           </>
         ) : (
           <>
-            <SignInButton mode="modal">
+            <SignInButton
+              mode="modal"
+              forceRedirectUrl={dashboardRedirectUrl}
+              fallbackRedirectUrl={dashboardRedirectUrl}
+            >
               <button
                 type="button"
                 className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -53,7 +59,11 @@ export function LandingAuthActions({ section }: LandingAuthActionsProps) {
                 Sign in
               </button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton
+              mode="modal"
+              forceRedirectUrl={dashboardRedirectUrl}
+              fallbackRedirectUrl={dashboardRedirectUrl}
+            >
               <button
                 type="button"
                 className={cn(
@@ -87,13 +97,21 @@ export function LandingAuthActions({ section }: LandingAuthActionsProps) {
         </>
       ) : (
         <>
-          <SignUpButton mode="modal">
+          <SignUpButton
+            mode="modal"
+            forceRedirectUrl={dashboardRedirectUrl}
+            fallbackRedirectUrl={dashboardRedirectUrl}
+          >
             <Button size="lg">
               Start tracking now
               <ArrowRight className="ml-2 size-4" />
             </Button>
           </SignUpButton>
-          <SignInButton mode="modal">
+          <SignInButton
+            mode="modal"
+            forceRedirectUrl={dashboardRedirectUrl}
+            fallbackRedirectUrl={dashboardRedirectUrl}
+          >
             <Button size="lg" variant="outline">
               Log in to account
             </Button>

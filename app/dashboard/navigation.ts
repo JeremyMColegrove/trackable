@@ -3,7 +3,12 @@ export type DashboardNavItem = {
   label: string
 }
 
-export const dashboardNavItems: DashboardNavItem[] = []
+export const dashboardNavItems: DashboardNavItem[] = [
+  {
+    href: "/dashboard/internal/batch",
+    label: "Batch Jobs",
+  },
+]
 
 export function isDashboardNavItemActive(href: string, pathname: string) {
   if (href === "/dashboard") {

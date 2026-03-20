@@ -35,3 +35,21 @@ export const trackableSubmissionSourceEnum = pgEnum(
 )
 
 export const apiKeyStatusEnum = pgEnum("api_key_status", ["active", "revoked"])
+
+export const workspaceRoleEnum = pgEnum("workspace_role", [
+  "owner",
+  "admin",
+  "member",
+])
+
+export const batchJobRunStatusEnum = pgEnum("batch_job_run_status", [
+  "running",
+  "success",
+  "failed",
+  "skipped",
+])
+
+export const batchJobTriggerEnum = pgEnum("batch_job_trigger", [
+  "cron",
+  "manual",
+])

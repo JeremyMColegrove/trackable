@@ -21,7 +21,10 @@ type UsageEventRecord = {
 
 type UsageEventGroup = {
 	id: string;
-	name: string;
+	event: string;
+	status: string | null;
+	statusTone: "error" | "ok" | "warning" | "neutral";
+	message: string | null;
 	aggregation: UsageEventAggregation;
 	groupField: string | null;
 	totalHits: number;
@@ -32,14 +35,30 @@ type UsageEventGroup = {
 	hits: UsageEventTableResult["rows"][number]["hits"];
 };
 
-function extractUsageEventName(payload: Record<string, unknown>) {
-	const payloadName = payload.name;
+function extractPayloadString(
+	payload: Record<string, unknown>,
+	key: string,
+): string | null {
+	const value = payload[key];
 
-	if (typeof payloadName === "string" && payloadName.trim()) {
-		return payloadName.trim();
+	if (typeof value === "string" && value.trim()) {
+		return value.trim();
 	}
 
-	return "Unnamed";
+	return null;
+}
+
+function resolveStatusTone(status: string | null) {
+	switch (status?.trim().toLowerCase()) {
+		case "error":
+			return "error" as const;
+		case "ok":
+			return "ok" as const;
+		case "warning":
+			return "warning" as const;
+		default:
+			return "neutral" as const;
+	}
 }
 
 function parseMetadata(metadata: string | null) {
@@ -115,7 +134,6 @@ function formatAggregateValue(value: unknown): string {
 function buildSearchableSubject(event: UsageEventRecord) {
 	return {
 		...event.payload,
-		name: extractUsageEventName(event.payload),
 		occurredAt: event.occurredAt.toISOString(),
 		apiKey: event.apiKey,
 		metadata: parseMetadata(event.metadata),
@@ -165,19 +183,18 @@ function applyTimeRangeFilter(
 }
 
 function buildColumns(aggregation: UsageEventAggregation) {
+	if (aggregation === "payload_field") {
+		return [
+			{ id: "event" as const, label: "Aggregate Value", visible: true },
+			{ id: "lastOccurredAt" as const, label: "Last Hit", visible: true },
+			{ id: "totalHits" as const, label: "Total Hits", visible: true },
+		];
+	}
+
 	return [
-		{
-			id: "name" as const,
-			label:
-				aggregation === "payload_field" ? "Aggregate Value" : "Event",
-			visible: true,
-		},
-		{
-			id: "apiKey" as const,
-			label: "API Key",
-			visible: true,
-		},
-		{ id: "totalHits" as const, label: "Total Hits", visible: true },
+		{ id: "event" as const, label: "Event", visible: true },
+		{ id: "status" as const, label: "Status", visible: true },
+		{ id: "message" as const, label: "Message", visible: true },
 		{ id: "lastOccurredAt" as const, label: "Last Hit", visible: true },
 	];
 }
@@ -210,6 +227,8 @@ export class UsageEventTableProcessor {
 			const sortedRows = filteredEvents
 				.map((event) => {
 					const occurredAt = event.occurredAt.toISOString();
+					const eventName = extractPayloadString(event.payload, "event");
+					const status = extractPayloadString(event.payload, "status");
 					const hit = {
 						id: event.id,
 						occurredAt,
@@ -220,7 +239,10 @@ export class UsageEventTableProcessor {
 
 					return {
 						id: event.id,
-						name: extractUsageEventName(event.payload),
+						event: eventName,
+						status,
+						statusTone: resolveStatusTone(status),
+						message: extractPayloadString(event.payload, "msg"),
 						aggregation: this.input.aggregation,
 						groupField: null,
 						totalHits: 1,
@@ -233,16 +255,10 @@ export class UsageEventTableProcessor {
 				})
 				.sort((left, right) => {
 					switch (this.input.sort) {
-						case "name":
+						case "event":
 							return this.input.dir === "asc"
-								? left.name.localeCompare(right.name)
-								: right.name.localeCompare(left.name);
-						case "apiKeyName":
-							return this.input.dir === "asc"
-								? left.apiKey!.name.localeCompare(right.apiKey!.name) ||
-										left.name.localeCompare(right.name)
-								: right.apiKey!.name.localeCompare(left.apiKey!.name) ||
-										right.name.localeCompare(left.name);
+								? (left.event ?? "").localeCompare(right.event ?? "")
+								: (right.event ?? "").localeCompare(left.event ?? "");
 						case "totalHits":
 							return this.input.dir === "asc"
 								? left.totalHits - right.totalHits
@@ -270,7 +286,7 @@ export class UsageEventTableProcessor {
 		}
 
 		const groups = new Map<string, UsageEventGroup>();
-		const aggregateFieldLabel = formatFieldLabel(this.input.aggregateField);
+		const groupFieldLabel = formatFieldLabel(this.input.aggregateField);
 
 		for (const event of filteredEvents) {
 			const aggregateValue = formatAggregateValue(
@@ -313,7 +329,10 @@ export class UsageEventTableProcessor {
 
 			groups.set(groupId, {
 				id: groupId,
-				name: aggregateValue,
+				event: aggregateValue,
+				status: null,
+				statusTone: "neutral",
+				message: null,
 				aggregation: this.input.aggregation,
 				groupField: this.input.aggregateField,
 				totalHits: 1,
@@ -339,36 +358,25 @@ export class UsageEventTableProcessor {
 			}))
 			.sort((left, right) => {
 				switch (this.input.sort) {
-					case "name":
+					case "event":
 						return this.input.dir === "asc"
-							? left.name.localeCompare(right.name)
-							: right.name.localeCompare(left.name);
-					case "apiKeyName": {
-						const leftName = left.apiKey?.name ?? left.apiKeys[0]?.name ?? "";
-						const rightName =
-							right.apiKey?.name ?? right.apiKeys[0]?.name ?? "";
-
-						return this.input.dir === "asc"
-							? leftName.localeCompare(rightName) ||
-									left.name.localeCompare(right.name)
-							: rightName.localeCompare(leftName) ||
-									right.name.localeCompare(left.name);
-					}
+							? left.event.localeCompare(right.event)
+							: right.event.localeCompare(left.event);
 					case "totalHits":
 						return this.input.dir === "asc"
 							? left.totalHits - right.totalHits ||
-									left.name.localeCompare(right.name)
+									left.event.localeCompare(right.event)
 							: right.totalHits - left.totalHits ||
-									right.name.localeCompare(left.name);
+									right.event.localeCompare(left.event);
 					case "lastOccurredAt":
 					default:
 						return this.input.dir === "asc"
 							? new Date(left.lastOccurredAt).getTime() -
 									new Date(right.lastOccurredAt).getTime() ||
-									left.name.localeCompare(right.name)
+									left.event.localeCompare(right.event)
 							: new Date(right.lastOccurredAt).getTime() -
 									new Date(left.lastOccurredAt).getTime() ||
-									right.name.localeCompare(left.name);
+									right.event.localeCompare(left.event);
 				}
 			});
 
@@ -376,10 +384,10 @@ export class UsageEventTableProcessor {
 
 		return {
 			columns: buildColumns(this.input.aggregation).map((column) =>
-				column.id === "name"
+				column.id === "event"
 					? {
 							...column,
-							label: aggregateFieldLabel,
+							label: groupFieldLabel,
 						}
 					: column,
 			),

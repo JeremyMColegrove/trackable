@@ -1,47 +1,24 @@
-import { isNull } from "drizzle-orm"
+import "server-only"
+
+import { and, eq, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { workspaceTeamMembers } from "@/db/schema"
-
-async function getActiveTeamEdges() {
-  return db.query.workspaceTeamMembers.findMany({
-    where: isNull(workspaceTeamMembers.revokedAt),
-    columns: {
-      id: true,
-      ownerId: true,
-      memberUserId: true,
-    },
-  })
-}
+import { workspaceMembers } from "@/db/schema"
+import { resolveActiveWorkspace } from "@/server/workspaces"
 
 export async function getConnectedTeamUserIds(userId: string) {
-  const edges = await getActiveTeamEdges()
-  const visited = new Set<string>([userId])
-  const queue = [userId]
+  const activeWorkspace = await resolveActiveWorkspace(userId)
+  const members = await db.query.workspaceMembers.findMany({
+    where: and(
+      eq(workspaceMembers.workspaceId, activeWorkspace.workspaceId),
+      isNull(workspaceMembers.revokedAt)
+    ),
+    columns: {
+      userId: true,
+    },
+  })
 
-  while (queue.length > 0) {
-    const currentUserId = queue.shift()
-
-    if (!currentUserId) {
-      continue
-    }
-
-    for (const edge of edges) {
-      if (edge.ownerId === currentUserId && !visited.has(edge.memberUserId)) {
-        visited.add(edge.memberUserId)
-        queue.push(edge.memberUserId)
-      }
-
-      if (edge.memberUserId === currentUserId && !visited.has(edge.ownerId)) {
-        visited.add(edge.ownerId)
-        queue.push(edge.ownerId)
-      }
-    }
-  }
-
-  visited.delete(userId)
-
-  return Array.from(visited)
+  return members.map((member) => member.userId).filter((id) => id !== userId)
 }
 
 export async function getTeamUserIds(userId: string) {
@@ -49,30 +26,17 @@ export async function getTeamUserIds(userId: string) {
 }
 
 export async function getTeamOwnerId(userId: string) {
-  const teamUserIds = await getTeamUserIds(userId)
+  const activeWorkspace = await resolveActiveWorkspace(userId)
+  const owner = await db.query.workspaceMembers.findFirst({
+    where: and(
+      eq(workspaceMembers.workspaceId, activeWorkspace.workspaceId),
+      eq(workspaceMembers.role, "owner"),
+      isNull(workspaceMembers.revokedAt)
+    ),
+    columns: {
+      userId: true,
+    },
+  })
 
-  if (teamUserIds.length === 1) {
-    return userId
-  }
-
-  const edges = await getActiveTeamEdges()
-  const incomingCounts = new Map(teamUserIds.map((id) => [id, 0]))
-
-  for (const edge of edges) {
-    if (
-      teamUserIds.includes(edge.ownerId) &&
-      teamUserIds.includes(edge.memberUserId)
-    ) {
-      incomingCounts.set(
-        edge.memberUserId,
-        (incomingCounts.get(edge.memberUserId) ?? 0) + 1
-      )
-    }
-  }
-
-  const ownerCandidates = teamUserIds
-    .filter((id) => (incomingCounts.get(id) ?? 0) === 0)
-    .sort()
-
-  return ownerCandidates[0] ?? userId
+  return owner?.userId ?? userId
 }

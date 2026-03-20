@@ -72,7 +72,7 @@ export function ApiKeysTable({
           columns={columns}
           data={data}
           title="API Keys"
-          description="Manage the API keys that can send usage events to this trackable."
+          description="Manage the API keys that can send log events to this trackable."
           headerButton={
             headerButton ?? <CreateApiKeyDialog trackableId={trackableId} />
           }
@@ -138,7 +138,7 @@ function ConnectionGuide({ trackableName }: { trackableName: string }) {
     `curl -X POST ${endpoint} \\`,
     '  -H "Content-Type: application/json" \\',
     '  -H "X-Api-Key: trk_live_your_connection_key" \\',
-    `  -d '{"trackable":${exampleName},"client":"web","environment":"production"}'`,
+    `  -d '{"trackable":${exampleName},"level":"info","message":"Request completed","service":"web"}'`,
   ].join("\n")
 
   async function handleCopy(value: string, target: "endpoint" | "curl") {

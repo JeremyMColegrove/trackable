@@ -26,7 +26,7 @@ export function FormSubmissionsTable({
         description="Latest structured responses submitted to this trackable."
         onRowClick={setSelectedSubmission}
         emptyMessage="No form submissions have been recorded yet."
-        initialPageSize={5}
+        initialPageSize={10}
       />
       {selectedSubmission ? (
         <ActivityDetailsDialog

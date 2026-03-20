@@ -47,6 +47,7 @@ import {
   resolveApiKeyExpiration,
 } from "@/server/api-keys"
 import { assertProjectAccess } from "@/server/project-access"
+import { resolveActiveWorkspace } from "@/server/workspaces"
 import {
   getTrackableUsageAggregateFields,
   getTrackableUsageEvents,
@@ -57,6 +58,13 @@ import type { TrackableKind } from "@/db/schema/types"
 
 const accessRoleSchema = z.enum(["submit", "view", "manage"])
 const trackableKindSchema = z.enum(["survey", "api_ingestion"])
+const apiLogRetentionDaysSchema = z.union([
+  z.literal(3),
+  z.literal(7),
+  z.literal(30),
+  z.literal(90),
+  z.null(),
+])
 
 // Helper to create a somewhat unique slug
 function generateSlug(name: string) {
@@ -138,34 +146,33 @@ export const trackablesRouter = createTRPCRouter({
         })
       }
 
-      const [submissions, ownedApiKeys, usageCountsByKey] =
-        await Promise.all([
-          db.query.trackableFormSubmissions.findMany({
-            where: eq(trackableFormSubmissions.trackableId, project.id),
-            orderBy: [desc(trackableFormSubmissions.createdAt)],
-            limit: 25,
-            with: {
-              submittedByUser: {
-                columns: {
-                  displayName: true,
-                },
+      const [submissions, ownedApiKeys, usageCountsByKey] = await Promise.all([
+        db.query.trackableFormSubmissions.findMany({
+          where: eq(trackableFormSubmissions.trackableId, project.id),
+          orderBy: [desc(trackableFormSubmissions.createdAt)],
+          limit: 25,
+          with: {
+            submittedByUser: {
+              columns: {
+                displayName: true,
               },
             },
-          }),
-          db.query.apiKeys.findMany({
-            where: eq(apiKeys.projectId, project.id),
-            orderBy: [desc(apiKeys.createdAt)],
-          }),
-          db
-            .select({
-              apiKeyId: trackableApiUsageEvents.apiKeyId,
-              usageCount: count(trackableApiUsageEvents.id),
-              lastOccurredAt: max(trackableApiUsageEvents.occurredAt),
-            })
-            .from(trackableApiUsageEvents)
-            .where(eq(trackableApiUsageEvents.trackableId, project.id))
-            .groupBy(trackableApiUsageEvents.apiKeyId),
-        ])
+          },
+        }),
+        db.query.apiKeys.findMany({
+          where: eq(apiKeys.projectId, project.id),
+          orderBy: [desc(apiKeys.createdAt)],
+        }),
+        db
+          .select({
+            apiKeyId: trackableApiUsageEvents.apiKeyId,
+            usageCount: count(trackableApiUsageEvents.id),
+            lastOccurredAt: max(trackableApiUsageEvents.occurredAt),
+          })
+          .from(trackableApiUsageEvents)
+          .where(eq(trackableApiUsageEvents.trackableId, project.id))
+          .groupBy(trackableApiUsageEvents.apiKeyId),
+      ])
 
       const usageByKey = new Map(
         usageCountsByKey.map((entry) => [
@@ -269,11 +276,12 @@ export const trackablesRouter = createTRPCRouter({
 
       await assertProjectAccess(input.trackableId, userId, "view")
 
-      const [events, sourceSnapshot, availableAggregateFields] = await Promise.all([
-        getTrackableUsageEvents(input),
-        getTrackableUsageSourceSnapshot(input.trackableId),
-        getTrackableUsageAggregateFields(input.trackableId),
-      ])
+      const [events, sourceSnapshot, availableAggregateFields] =
+        await Promise.all([
+          getTrackableUsageEvents(input),
+          getTrackableUsageSourceSnapshot(input.trackableId),
+          getTrackableUsageAggregateFields(input.trackableId),
+        ])
 
       const tableResult = new UsageEventTableProcessor(
         events.map((event) => ({
@@ -319,8 +327,10 @@ export const trackablesRouter = createTRPCRouter({
 
       return {
         hasUpdates:
-          currentSnapshot.totalEventCount !== input.sourceSnapshot.totalEventCount ||
-          currentSnapshot.latestOccurredAt !== input.sourceSnapshot.latestOccurredAt,
+          currentSnapshot.totalEventCount !==
+            input.sourceSnapshot.totalEventCount ||
+          currentSnapshot.latestOccurredAt !==
+            input.sourceSnapshot.latestOccurredAt,
         latestOccurredAt: currentSnapshot.latestOccurredAt,
         latestEventCount: currentSnapshot.totalEventCount,
       }
@@ -381,9 +391,7 @@ export const trackablesRouter = createTRPCRouter({
           id: shareLink.trackable.id,
           name: shareLink.trackable.name,
           description: shareLink.trackable.description,
-          creatorName:
-            shareLink.trackable.owner.displayName ??
-            shareLink.trackable.owner.primaryEmail,
+          creatorName: shareLink.trackable.workspace.name,
         },
         form: {
           id: form.id,
@@ -398,7 +406,8 @@ export const trackablesRouter = createTRPCRouter({
           ),
         },
         settings: {
-          allowAnonymousSubmissions: settings?.allowAnonymousSubmissions ?? true,
+          allowAnonymousSubmissions:
+            settings?.allowAnonymousSubmissions ?? true,
           collectResponderEmail: settings?.collectResponderEmail ?? false,
           requiresAuthentication,
         },
@@ -458,10 +467,7 @@ export const trackablesRouter = createTRPCRouter({
         })
       }
 
-      if (
-        requiresAuthenticatedSharedFormAccess(settings) &&
-        !ctx.auth.userId
-      ) {
+      if (requiresAuthenticatedSharedFormAccess(settings) && !ctx.auth.userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "You must be signed in to submit this form.",
@@ -513,7 +519,9 @@ export const trackablesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            error instanceof Error ? error.message : "Unable to validate form answers.",
+            error instanceof Error
+              ? error.message
+              : "Unable to validate form answers.",
         })
       }
 
@@ -782,13 +790,14 @@ export const trackablesRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
+      const activeWorkspace = await resolveActiveWorkspace(userId)
       const slug = generateSlug(input.name)
 
       const [newTrackable] = await db.transaction(async (tx) => {
         const [createdTrackable] = await tx
           .insert(trackableItems)
           .values({
-            ownerId: userId,
+            workspaceId: activeWorkspace.workspaceId,
             kind: input.kind,
             name: input.name,
             description: input.description,
@@ -832,6 +841,7 @@ export const trackablesRouter = createTRPCRouter({
         name: z.string().min(1, "Name is required"),
         description: z.string().optional(),
         allowAnonymousSubmissions: z.boolean().optional(),
+        apiLogRetentionDays: apiLogRetentionDaysSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -868,9 +878,13 @@ export const trackablesRouter = createTRPCRouter({
         trackableRecord.kind === "survey"
           ? {
               ...existingSettings,
-              allowAnonymousSubmissions: input.allowAnonymousSubmissions ?? true,
+              allowAnonymousSubmissions:
+                input.allowAnonymousSubmissions ?? true,
             }
-          : existingSettings
+          : {
+              ...existingSettings,
+              apiLogRetentionDays: input.apiLogRetentionDays ?? null,
+            }
 
       const [updated] = await db
         .update(trackableItems)
@@ -1103,7 +1117,7 @@ export const trackablesRouter = createTRPCRouter({
       assertTrackableKind(
         trackable.kind,
         "api_ingestion",
-        "Only API ingestion trackables can create API keys."
+        "Only log trackables can create API keys."
       )
 
       const plaintextKey = buildApiKeySecret()
@@ -1112,7 +1126,7 @@ export const trackablesRouter = createTRPCRouter({
       const [createdKey] = await db
         .insert(apiKeys)
         .values({
-          ownerId: trackable.ownerId,
+          workspaceId: trackable.workspaceId,
           projectId: trackable.id,
           name: input.name,
           keyPrefix: plaintextKey.slice(0, 20),

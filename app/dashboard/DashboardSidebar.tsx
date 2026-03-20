@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-import { useIsMobile } from "@/hooks/use-mobile"
 import { AppBrand } from "@/components/app-brand"
 import {
   Sidebar,
@@ -23,7 +22,6 @@ import {
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const isMobile = useIsMobile()
   const { setOpenMobile } = useSidebar()
 
   return (
@@ -44,11 +42,7 @@ export function DashboardSidebar() {
                     <Link
                       href={item.href}
                       className="flex w-full items-center justify-between gap-2"
-                      onClick={() => {
-                        if (isMobile) {
-                          setOpenMobile(false)
-                        }
-                      }}
+                      onClick={() => setOpenMobile(false)}
                     >
                       <span>{item.label}</span>
                     </Link>

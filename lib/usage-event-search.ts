@@ -14,8 +14,7 @@ export const usageEventTimeRangeValues = [
 export const usageEventSortFieldValues = [
   "lastOccurredAt",
   "totalHits",
-  "name",
-  "apiKeyName",
+  "event",
 ] as const
 
 export const usageEventSortDirectionValues = ["asc", "desc"] as const
@@ -69,7 +68,10 @@ export const usageHitRowSchema = z.object({
 
 export const usageEventTableRowSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  event: z.string().nullable(),
+  status: z.string().nullable(),
+  statusTone: z.enum(["error", "ok", "warning", "neutral"]),
+  message: z.string().nullable(),
   aggregation: usageEventAggregationSchema,
   groupField: z.string().nullable(),
   totalHits: z.number().int().min(0),
@@ -81,7 +83,7 @@ export const usageEventTableRowSchema = z.object({
 })
 
 export const usageEventTableColumnSchema = z.object({
-  id: z.enum(["name", "apiKey", "totalHits", "lastOccurredAt"]),
+  id: z.enum(["event", "status", "message", "totalHits", "lastOccurredAt"]),
   label: z.string(),
   visible: z.boolean(),
 })

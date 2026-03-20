@@ -88,6 +88,7 @@ export interface TrackableSettings {
   allowMultipleSubmissions?: boolean
   collectResponderEmail?: boolean
   successRedirectUrl?: string | null
+  apiLogRetentionDays?: 3 | 7 | 30 | 90 | null
 }
 
 export interface SubmissionMetadata {

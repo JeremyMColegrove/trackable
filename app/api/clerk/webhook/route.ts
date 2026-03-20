@@ -4,62 +4,10 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users } from "@/db/schema"
+import { ensureUserProvisioned } from "@/server/user-provisioning"
 
-type ClerkUser = Extract<
-  WebhookEvent,
-  { type: "user.created" | "user.updated" }
->["data"]
-
-function getPrimaryEmail(user: ClerkUser) {
-  if (user.primary_email_address_id) {
-    const primaryEmail = user.email_addresses.find(
-      (emailAddress) => emailAddress.id === user.primary_email_address_id
-    )
-
-    if (primaryEmail) {
-      return primaryEmail.email_address
-    }
-  }
-
-  return user.email_addresses[0]?.email_address ?? null
-}
-
-function getDisplayName(user: ClerkUser) {
-  const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ")
-
-  return fullName || user.username || null
-}
-
-function getIsProfilePrivate(user: ClerkUser) {
-  return user.public_metadata?.isProfilePrivate === true
-}
-
-async function upsertUser(user: ClerkUser) {
-  const primaryEmail = getPrimaryEmail(user)
-
-  if (!primaryEmail) {
-    throw new Error(`Clerk user ${user.id} is missing a primary email address`)
-  }
-
-  await db
-    .insert(users)
-    .values({
-      id: user.id,
-      primaryEmail,
-      displayName: getDisplayName(user),
-      imageUrl: user.image_url,
-      isProfilePrivate: getIsProfilePrivate(user),
-    })
-    .onConflictDoUpdate({
-      target: users.id,
-      set: {
-        primaryEmail,
-        displayName: getDisplayName(user),
-        imageUrl: user.image_url,
-        isProfilePrivate: getIsProfilePrivate(user),
-        updatedAt: new Date(),
-      },
-    })
+async function upsertUser(userId: string) {
+  await ensureUserProvisioned(userId)
 }
 
 async function deleteUser(userId: string) {
@@ -95,7 +43,7 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "user.created":
       case "user.updated":
-        await upsertUser(event.data)
+        await upsertUser(event.data.id)
         break
       case "user.deleted":
         if (event.data.id) {

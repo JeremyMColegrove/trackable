@@ -49,7 +49,11 @@ export function formatDateTime(value: string | null) {
 }
 
 export function formatStatusLabel(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
+  return value
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^./, (char) => char.toUpperCase())
 }
 
 export function formatSubmissionSource(value: string) {

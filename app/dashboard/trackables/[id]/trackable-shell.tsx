@@ -290,7 +290,7 @@ function TrackableLayoutContent({
 		<TrackableDetailsContext.Provider value={trackable}>
 			<SidebarProvider defaultOpen className="bg-muted/20">
 				<TrackableSidebarNav trackable={trackable} />
-				<SidebarInset className="min-h-svh min-w-0 bg-background">
+				<SidebarInset className="min-h-svh min-w-0 overflow-hidden bg-background md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:shadow-none">
 					<header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
 						<div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
 							<div className="flex items-center gap-3">
@@ -312,7 +312,9 @@ function TrackableLayoutContent({
 							</div>
 						</div>
 					</header>
-					{children}
+					<div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-4 sm:pt-6">
+						{children}
+					</div>
 				</SidebarInset>
 			</SidebarProvider>
 		</TrackableDetailsContext.Provider>

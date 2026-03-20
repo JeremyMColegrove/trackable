@@ -30,9 +30,7 @@ export async function getShareMetadataContent(token: string) {
     maxFormTitleLength
   )
   const creatorName = trimText(
-    shareLink.trackable.owner.displayName?.trim() ||
-      shareLink.trackable.owner.primaryEmail?.trim() ||
-      "Trackable",
+    shareLink.trackable.workspace.name.trim() || "Trackable",
     maxCreatorNameLength
   )
   const projectDescription =

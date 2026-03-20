@@ -2,8 +2,11 @@ import { TRPCError } from "@trpc/server"
 import { and, eq, inArray, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { trackableAccessGrants, trackableItems } from "@/db/schema"
-import { getConnectedTeamUserIds } from "@/server/team-members"
+import {
+  trackableAccessGrants,
+  trackableItems,
+  workspaceMembers,
+} from "@/db/schema"
 
 type AccessRole = "submit" | "view" | "manage"
 
@@ -29,7 +32,7 @@ export async function assertProjectAccess(
     columns: {
       id: true,
       kind: true,
-      ownerId: true,
+      workspaceId: true,
     },
   })
 
@@ -40,13 +43,18 @@ export async function assertProjectAccess(
     })
   }
 
-  if (project.ownerId === userId) {
-    return project
-  }
+  const workspaceMembership = await db.query.workspaceMembers.findFirst({
+    where: and(
+      eq(workspaceMembers.workspaceId, project.workspaceId),
+      eq(workspaceMembers.userId, userId),
+      isNull(workspaceMembers.revokedAt)
+    ),
+    columns: {
+      id: true,
+    },
+  })
 
-  const connectedTeamUserIds = await getConnectedTeamUserIds(userId)
-
-  if (connectedTeamUserIds.includes(project.ownerId)) {
+  if (workspaceMembership) {
     return project
   }
 
@@ -76,16 +84,20 @@ export async function getAccessibleProjectIds(
   userId: string,
   minimumRole: AccessRole = "view"
 ) {
-  const connectedTeamUserIds = await getConnectedTeamUserIds(userId)
-  const ownerIds = [userId, ...connectedTeamUserIds]
-
-  const [ownedProjects, grantedProjects] = await Promise.all([
-    db.query.trackableItems.findMany({
-      where: inArray(trackableItems.ownerId, ownerIds),
-      columns: {
-        id: true,
-      },
-    }),
+  const [workspaceProjectRows, grantedProjects] = await Promise.all([
+    db
+      .select({
+        id: trackableItems.id,
+      })
+      .from(trackableItems)
+      .innerJoin(
+        workspaceMembers,
+        and(
+          eq(workspaceMembers.workspaceId, trackableItems.workspaceId),
+          eq(workspaceMembers.userId, userId),
+          isNull(workspaceMembers.revokedAt)
+        )
+      ),
     db.query.trackableAccessGrants.findMany({
       where: and(
         eq(trackableAccessGrants.subjectUserId, userId),
@@ -100,7 +112,7 @@ export async function getAccessibleProjectIds(
 
   return Array.from(
     new Set([
-      ...ownedProjects.map((project) => project.id),
+      ...workspaceProjectRows.map((project) => project.id),
       ...grantedProjects.map((grant) => grant.trackableId),
     ])
   )

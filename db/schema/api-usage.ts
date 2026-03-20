@@ -12,21 +12,22 @@ import {
   expiresAt,
   nullableTimestamp,
   occurredAt,
-  ownerId,
   timestamps,
   usageCount,
   uuidPrimaryKey,
 } from "@/db/schema/_shared"
 import { apiKeyStatusEnum } from "@/db/schema/enums"
+import { workspaces } from "@/db/schema/team"
 import type { UsageEventMetadata, UsageEventPayload } from "@/db/schema/types"
 import { trackableItems } from "@/db/schema/trackables"
-import { users } from "@/db/schema/users"
 
 export const apiKeys = pgTable(
   "api_keys",
   {
     id: uuidPrimaryKey(),
-    ownerId: ownerId().references(() => users.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").references(() => trackableItems.id, {
       onDelete: "cascade",
     }),
@@ -42,7 +43,7 @@ export const apiKeys = pgTable(
   },
   (table) => [
     uniqueIndex("api_keys_key_prefix_idx").on(table.keyPrefix),
-    index("api_keys_owner_idx").on(table.ownerId),
+    index("api_keys_workspace_idx").on(table.workspaceId),
     index("api_keys_project_idx").on(table.projectId),
     index("api_keys_status_idx").on(table.status),
   ]
@@ -79,9 +80,9 @@ export const trackableApiUsageEvents = pgTable(
 )
 
 export const apiKeysRelations = relations(apiKeys, ({ many, one }) => ({
-  owner: one(users, {
-    fields: [apiKeys.ownerId],
-    references: [users.id],
+  workspace: one(workspaces, {
+    fields: [apiKeys.workspaceId],
+    references: [workspaces.id],
   }),
   project: one(trackableItems, {
     fields: [apiKeys.projectId],

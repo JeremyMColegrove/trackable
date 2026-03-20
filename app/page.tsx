@@ -1,5 +1,7 @@
+import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AppBrand } from "@/components/app-brand";
 import { LandingAuthActions } from "@/components/auth/landing-auth-actions";
@@ -31,7 +33,13 @@ export function generateMetadata(): Metadata {
 	};
 }
 
-export default function Page() {
+export default async function Page() {
+	const { userId } = await auth();
+
+	if (userId) {
+		redirect("/dashboard");
+	}
+
 	return (
 		<main className="flex min-h-svh flex-col bg-background">
 			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -75,7 +83,7 @@ export default function Page() {
 								Fast surveys and tracking
 							</h3>
 							<p className="mt-2 text-base leading-relaxed text-muted-foreground">
-								Create surveys or API ingestion trackables quickly, so each
+								Create surveys or log ingestion trackables quickly, so each
 								response and event stream has a focused home.
 							</p>
 						</div>

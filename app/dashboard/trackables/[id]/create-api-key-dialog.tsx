@@ -162,7 +162,7 @@ export function CreateApiKeyDialog({
 						<DialogHeader>
 							<DialogTitle>Create API key</DialogTitle>
 							<DialogDescription>
-								Create an API key for this trackable.
+								Create an API key for sending logs to this trackable.
 							</DialogDescription>
 						</DialogHeader>
 						<Form {...form}>
@@ -178,7 +178,7 @@ export function CreateApiKeyDialog({
 											<FormLabel>Name</FormLabel>
 											<FormControl>
 												<Input
-													placeholder="e.g. Production ingestion key"
+													placeholder="e.g. Production log key"
 													{...field}
 												/>
 											</FormControl>
