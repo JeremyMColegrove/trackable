@@ -1,6 +1,8 @@
+import { withGTConfig } from "gt-next/config";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-}
+	output: "standalone",
+};
 
-export default nextConfig
+export default withGTConfig(nextConfig);

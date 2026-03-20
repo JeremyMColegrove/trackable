@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { T } from "gt-next";
 
 interface DataTableColumnHeaderProps<TData, TValue> {
   column: Column<TData, TValue>
@@ -45,12 +46,14 @@ export function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
             <ArrowUp className="size-4" />
-            Asc
-          </DropdownMenuItem>
+            
+                                  <T>Asc</T>
+                                </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
             <ArrowDown className="size-4" />
-            Desc
-          </DropdownMenuItem>
+            
+                                  <T>Desc</T>
+                                </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

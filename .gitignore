@@ -33,6 +33,9 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# translation file
+public/_gt/
+
 # compose bind-mounted data
 /data/*
 !/data/.gitkeep

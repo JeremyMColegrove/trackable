@@ -6,12 +6,14 @@ import { LoaderCircle, Shield } from "lucide-react"
 
 import { Switch } from "@/components/ui/switch"
 import { useTRPC } from "@/trpc/client"
+import { T, useGT } from "gt-next";
 
 export function UserAccountButton() {
+    const gt = useGT();
   return (
     <UserButton>
       <UserButton.UserProfilePage
-        label="Privacy"
+        label={gt("Privacy")}
         labelIcon={<Shield className="size-4" />}
         url="privacy"
       >
@@ -65,19 +67,22 @@ function ProfilePrivacyPage() {
     <div className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-sm font-semibold text-foreground">
-          Profile privacy
-        </h2>
+          
+                            <T>Profile privacy</T>
+                          </h2>
         <p className="text-sm text-muted-foreground">
-          Hide your profile from other users across Trackable.
-        </p>
+          
+                            <T>Hide your profile from other users across Trackable.</T>
+                          </p>
       </div>
 
       <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">Private profile</p>
+          <p className="text-sm font-medium text-foreground"><T>Private profile</T></p>
           <p className="text-sm text-muted-foreground">
-            When enabled, your profile is treated as private by the app.
-          </p>
+            
+                                  <T>When enabled, your profile is treated as private by the app.</T>
+                                </p>
         </div>
         <Switch
           checked={isProfilePrivate}
@@ -93,14 +98,16 @@ function ProfilePrivacyPage() {
       {profilePrivacyQuery.isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin" />
-          Loading privacy settings...
-        </div>
+          
+                            <T>Loading privacy settings...</T>
+                          </div>
       ) : null}
 
       {updateProfilePrivacy.error ? (
         <p className="text-sm text-destructive">
-          Failed to update your privacy setting. Please try again.
-        </p>
+          
+                            <T>Failed to update your privacy setting. Please try again.</T>
+                          </p>
       ) : null}
     </div>
   )

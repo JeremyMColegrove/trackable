@@ -1,6 +1,8 @@
 FROM node:22-alpine AS base
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat

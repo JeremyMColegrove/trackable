@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-
-import iosSmallIcon from "@/images/ios/AppIcon-20@3x.png"
+import iosSmallIcon from "@/images/ios/AppIcon-20@3x.png";
+import { T } from "gt-next";
+import Image from "next/image";
+import Link from "next/link";
 
 type AppBrandProps = {
-  href?: string
-  className?: string
-  collapseTextOnMobile?: boolean
-}
+	href?: string;
+	className?: string;
+	collapseTextOnMobile?: boolean;
+};
 
 export function AppBrand({
-  href = "/",
-  className = "text-lg font-bold tracking-tighter",
-  collapseTextOnMobile = false,
+	href = "/",
+	className = "text-lg font-bold tracking-tighter",
+	collapseTextOnMobile = false,
 }: AppBrandProps) {
-  return (
-    <Link href={href} className={`flex items-center gap-2 ${className}`}>
-      <Image
-        src={iosSmallIcon}
-        alt="Trackable logo"
-        width={24}
-        height={24}
-        className="h-6 w-6 rounded-sm"
-        priority
-      />
-      <span className={collapseTextOnMobile ? "hidden sm:inline" : undefined}>
-        Trackable.
-      </span>
-    </Link>
-  )
+	return (
+		<Link href={href} className={`flex items-center gap-2 ${className}`}>
+			<Image
+				src={iosSmallIcon}
+				alt={"Trackable logo"}
+				width={24}
+				height={24}
+				className="h-6 w-6 rounded-sm"
+				priority
+			/>
+			<span className={collapseTextOnMobile ? "hidden sm:inline" : undefined}>
+				<T>Trackable.</T>
+			</span>
+		</Link>
+	);
 }

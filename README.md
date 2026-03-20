@@ -17,13 +17,36 @@ Try out a hosted version [here](https://trackables.org).
 - Collect structured responses
 - Track usage events through API keys
 - Review submissions and usage history in one place
+- Supports multiple languages
 - Self-host with Docker
 - Lightweight and simple by design
 
+## Supported Languages
+
+Trackable currently supports the following languages:
+
+- English (`en`)
+- Spanish (`es`)
+- French (`fr`)
+- Arabic (`ar`)
+- Portuguese (`pt`)
+- Chinese, Simplified (`zh-CN`)
+- Hindi (`hi`)
+- German (`de`)
+- Japanese (`ja`)
+- Indonesian (`id`)
+- Russian (`ru`)
+- Korean (`ko`)
+- Turkish (`tr`)
+- Italian (`it`)
+- Dutch (`nl`)
+- Polish (`pl`)
+- Vietnamese (`vi`)
+
 ## Example Use Cases
 
-- Internal feedback forms
-- Lightweight survey collection
+- Public feedback forms
+- Survey collection
 - Simple event or usage logging
 - Shared intake forms
 - Personal or team-hosted tracking tools

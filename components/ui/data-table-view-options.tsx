@@ -12,6 +12,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { T } from "gt-next";
 
 interface DataTableViewOptionsProps<TData> {
 	table: Table<TData>;
@@ -25,11 +26,12 @@ export function DataTableViewOptions<TData>({
 			<DropdownMenuTrigger asChild>
 				<Button variant="outline">
 					<Settings2 />
-					View
-				</Button>
+					
+                    					<T>View</T>
+                    				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-44">
-				<DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+				<DropdownMenuLabel><T>Toggle columns</T></DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				{table
 					.getAllColumns()

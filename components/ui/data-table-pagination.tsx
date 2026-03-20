@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { T } from "gt-next";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>
@@ -20,12 +21,13 @@ export function DataTablePagination<TData>({
   return (
     <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
       <div>
-        {table.getFilteredRowModel().rows.length} item
-        {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
+        {table.getFilteredRowModel().rows.length}  <T>item</T>
+                      {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
       </div>
       <div className="flex items-center gap-2">
         <div className="mr-2">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          
+                            <T>Page</T> {table.getState().pagination.pageIndex + 1}  <T>of</T>{" "}
           {table.getPageCount() || 1}
         </div>
         <Button
@@ -35,7 +37,7 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanPreviousPage()}
         >
           <ChevronsLeft className="size-4" />
-          <span className="sr-only">First page</span>
+          <span className="sr-only"><T>First page</T></span>
         </Button>
         <Button
           variant="outline"
@@ -44,7 +46,7 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanPreviousPage()}
         >
           <ChevronLeft className="size-4" />
-          <span className="sr-only">Previous page</span>
+          <span className="sr-only"><T>Previous page</T></span>
         </Button>
         <Button
           variant="outline"
@@ -53,7 +55,7 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanNextPage()}
         >
           <ChevronRight className="size-4" />
-          <span className="sr-only">Next page</span>
+          <span className="sr-only"><T>Next page</T></span>
         </Button>
         <Button
           variant="outline"
@@ -62,7 +64,7 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanNextPage()}
         >
           <ChevronsRight className="size-4" />
-          <span className="sr-only">Last page</span>
+          <span className="sr-only"><T>Last page</T></span>
         </Button>
       </div>
     </div>
