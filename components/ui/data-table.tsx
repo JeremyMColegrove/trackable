@@ -82,7 +82,7 @@ export function DataTable<TData, TValue>({
 			)}
 		>
 			{(title || description || headerButton) && (
-				<div className="flex flex-col gap-4 px-1 py-4">
+				<div className="flex flex-col gap-4 px-1 pt-3">
 					<div className="flex justify-between items-end gap-3 lg:flex-row lg:items-end lg:justify-between">
 						<div className="flex flex-col justify-start gap-1">
 							{title ? (
