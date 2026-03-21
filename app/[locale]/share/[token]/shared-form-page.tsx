@@ -30,6 +30,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { T, useGT } from "gt-next";
 import {
+	AlertCircle,
 	CheckCircle2,
 	Heart,
 	Loader2,
@@ -102,17 +103,28 @@ function SharedFormStatusCard({
 	badge,
 	title,
 	description,
+	variant = "success",
 }: {
 	badge: string;
 	title: string;
 	description: string;
+	variant?: "success" | "error";
 }) {
+	const Icon = variant === "error" ? AlertCircle : CheckCircle2;
+
 	return (
 		<div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-10 md:px-6">
 			<Card className="w-full rounded-3xl border-border/60 bg-card/95 shadow-sm">
 				<CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
-					<div className="rounded-full bg-emerald-500/10 p-3 text-emerald-600">
-						<CheckCircle2 className="size-8" />
+					<div
+						className={cn(
+							"rounded-full p-3",
+							variant === "error"
+								? "bg-destructive/10 text-destructive"
+								: "bg-emerald-500/10 text-emerald-600",
+						)}
+					>
+						<Icon className="size-8" />
 					</div>
 					<Badge variant="outline" className="rounded-full px-3 py-1">
 						{badge}
@@ -218,12 +230,14 @@ export function SharedFormPage({ token }: { token: string }) {
 
 	if (sharedFormQuery.isError || !sharedFormQuery.data) {
 		return (
-			<SharedFormUnavailable
+			<SharedFormStatusCard
+				badge="Failed to load"
 				title={gt("Form unavailable")}
 				description={
 					sharedFormQuery.error?.message ??
 					"This shared form is not accepting responses right now."
 				}
+				variant="error"
 			/>
 		);
 	}
