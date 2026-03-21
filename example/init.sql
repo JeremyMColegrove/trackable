@@ -1,6 +1,8 @@
 CREATE TYPE "public"."api_key_status" AS ENUM('active', 'revoked');
 CREATE TYPE "public"."batch_job_run_status" AS ENUM('running', 'success', 'failed', 'skipped');
 CREATE TYPE "public"."batch_job_trigger" AS ENUM('cron', 'manual');
+CREATE TYPE "public"."subscription_status" AS ENUM('active', 'cancelled', 'expired', 'paused', 'past_due');
+CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'plus', 'pro');
 CREATE TYPE "public"."trackable_access_role" AS ENUM('submit', 'view', 'manage');
 CREATE TYPE "public"."trackable_access_subject_type" AS ENUM('user', 'email');
 CREATE TYPE "public"."trackable_form_field_kind" AS ENUM('rating', 'checkboxes', 'notes', 'short_text');
@@ -68,6 +70,19 @@ CREATE TABLE "batch_jobs" (
 	"last_completed_at" timestamp with time zone,
 	"last_status" "batch_job_run_status",
 	"last_summary" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE "workspace_subscriptions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"workspace_id" uuid NOT NULL,
+	"lemon_squeezy_subscription_id" text NOT NULL,
+	"lemon_squeezy_customer_id" text NOT NULL,
+	"variant_id" text NOT NULL,
+	"tier" "subscription_tier" DEFAULT 'free' NOT NULL,
+	"status" "subscription_status" DEFAULT 'active' NOT NULL,
+	"current_period_end" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -214,6 +229,7 @@ ALTER TABLE "trackable_api_usage_events" ADD CONSTRAINT "trackable_api_usage_eve
 ALTER TABLE "trackable_api_usage_events" ADD CONSTRAINT "trackable_api_usage_events_api_key_id_api_keys_id_fk" FOREIGN KEY ("api_key_id") REFERENCES "public"."api_keys"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "batch_job_leases" ADD CONSTRAINT "batch_job_leases_batch_job_id_batch_jobs_id_fk" FOREIGN KEY ("batch_job_id") REFERENCES "public"."batch_jobs"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "batch_job_runs" ADD CONSTRAINT "batch_job_runs_batch_job_id_batch_jobs_id_fk" FOREIGN KEY ("batch_job_id") REFERENCES "public"."batch_jobs"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "workspace_subscriptions" ADD CONSTRAINT "workspace_subscriptions_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
@@ -247,6 +263,8 @@ CREATE INDEX "batch_job_runs_job_key_idx" ON "batch_job_runs" USING btree ("job_
 CREATE INDEX "batch_job_runs_batch_job_idx" ON "batch_job_runs" USING btree ("batch_job_id");
 CREATE INDEX "batch_job_runs_started_at_idx" ON "batch_job_runs" USING btree ("started_at");
 CREATE UNIQUE INDEX "batch_jobs_key_idx" ON "batch_jobs" USING btree ("key");
+CREATE UNIQUE INDEX "workspace_subscriptions_workspace_idx" ON "workspace_subscriptions" USING btree ("workspace_id");
+CREATE UNIQUE INDEX "workspace_subscriptions_ls_sub_idx" ON "workspace_subscriptions" USING btree ("lemon_squeezy_subscription_id");
 CREATE INDEX "workspace_members_workspace_idx" ON "workspace_members" USING btree ("workspace_id");
 CREATE INDEX "workspace_members_user_idx" ON "workspace_members" USING btree ("user_id");
 CREATE UNIQUE INDEX "workspace_members_workspace_user_idx" ON "workspace_members" USING btree ("workspace_id","user_id") WHERE "workspace_members"."revoked_at" is null;

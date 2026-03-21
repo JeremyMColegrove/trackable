@@ -6,6 +6,7 @@ import { db } from "@/db"
 import { users, workspaceMembers } from "@/db/schema"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
 import { accessControlService } from "@/server/services/access-control.service"
+import { quotaService } from "@/server/subscriptions/quota.service"
 
 const userSearchSchema = z.object({
   query: z.string().trim().min(2).max(100),
@@ -154,6 +155,10 @@ export const teamRouter = createTRPCRouter({
           message: "User not found.",
         })
       }
+
+      await quotaService.assertCanAddWorkspaceMember(
+        activeMembership.workspaceId
+      )
 
       const existingMembership = await db.query.workspaceMembers.findFirst({
         where: and(

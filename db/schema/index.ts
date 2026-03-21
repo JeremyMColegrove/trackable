@@ -2,6 +2,7 @@ export * from "@/db/schema/_shared"
 export * from "@/db/schema/api-usage"
 export * from "@/db/schema/batch"
 export * from "@/db/schema/enums"
+export * from "@/db/schema/subscriptions"
 export * from "@/db/schema/team"
 export * from "@/db/schema/trackables"
 export * from "@/db/schema/types"
@@ -11,6 +12,7 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm"
 
 import { apiKeys, trackableApiUsageEvents } from "@/db/schema/api-usage"
 import { batchJobLeases, batchJobs, batchJobRuns } from "@/db/schema/batch"
+import { workspaceSubscriptions } from "@/db/schema/subscriptions"
 import { workspaceMembers, workspaces } from "@/db/schema/team"
 import {
   trackableAccessGrants,
@@ -81,3 +83,6 @@ export type NewBatchJobRun = InferInsertModel<typeof batchJobRuns>
 
 export type BatchJobLease = InferSelectModel<typeof batchJobLeases>
 export type NewBatchJobLease = InferInsertModel<typeof batchJobLeases>
+
+export type WorkspaceSubscription = InferSelectModel<typeof workspaceSubscriptions>
+export type NewWorkspaceSubscription = InferInsertModel<typeof workspaceSubscriptions>

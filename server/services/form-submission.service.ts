@@ -20,6 +20,7 @@ import {
 } from "@/lib/trackable-share-links"
 import { hasAuthenticatedSharedFormSubmission } from "@/lib/shared-form-submissions"
 import { assertTrackableKind } from "@/server/services/project.service"
+import { quotaService } from "@/server/subscriptions/quota.service"
 
 export class FormSubmissionService {
   async submitSharedForm(input: {
@@ -127,6 +128,8 @@ export class FormSubmissionService {
             : "Unable to validate form answers.",
       })
     }
+
+    await quotaService.assertCanSubmitResponse(shareLink.trackableId)
 
     const [createdSubmission] = await db.transaction(async (tx) => {
       const [submission] = await tx

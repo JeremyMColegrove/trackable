@@ -9,6 +9,7 @@ import { db } from "@/db"
 import { apiKeys, trackableApiUsageEvents, trackableItems } from "@/db/schema"
 import type { UsageEventMetadata, UsageEventPayload } from "@/db/schema/types"
 import { hashApiKey } from "@/server/api-keys"
+import { quotaService } from "@/server/subscriptions/quota.service"
 
 interface RecordApiUsageInput {
   apiKey: string
@@ -83,6 +84,8 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
 
   const occurredAt = new Date()
   const requestId = input.requestId?.trim() || randomUUID()
+
+  await quotaService.assertCanLogApiUsage(apiKey.workspaceId)
 
   const [createdUsageEvent] = await db.transaction(async (tx) => {
     const [usageEvent] = await tx
