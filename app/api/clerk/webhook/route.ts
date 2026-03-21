@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { ensureUserProvisioned } from "@/server/user-provisioning"
+import { logger } from "@/lib/logger"
 
 async function upsertUser(userId: string) {
   await ensureUserProvisioned(userId)
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
   const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET
 
   if (!signingSecret) {
-    console.error("Missing CLERK_WEBHOOK_SIGNING_SECRET")
+    logger.error("Missing CLERK_WEBHOOK_SIGNING_SECRET")
 
     return Response.json(
       { error: "Webhook signing secret is not configured." },
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   try {
     event = await verifyWebhook(request, { signingSecret })
   } catch (error) {
-    console.error("Failed to verify Clerk webhook", error)
+    logger.error({ error }, "Failed to verify Clerk webhook")
 
     return Response.json(
       { error: "Webhook signature verification failed." },
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
         break
     }
   } catch (error) {
-    console.error("Failed to process Clerk webhook", error)
+    logger.error({ error }, "Failed to process Clerk webhook")
 
     return Response.json(
       { error: "Failed to process webhook event." },

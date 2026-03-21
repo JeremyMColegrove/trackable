@@ -12,6 +12,7 @@ import { hashApiKey } from "@/server/api-keys"
 import { apiLogCache } from "@/server/redis/api-log-cache.repository"
 import { apiKeyCache } from "@/server/redis/api-key-cache.repository"
 import { quotaService } from "@/server/subscriptions/quota.service"
+import { logger } from "@/lib/logger"
 
 interface RecordApiUsageInput {
   apiKey: string
@@ -28,6 +29,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   const validationData = await apiKeyCache.getValidation(keyPrefix, secretHash)
   
   if (!validationData) {
+    logger.warn({ keyPrefix }, "Invalid API key during usage recording.")
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Invalid API key.",
@@ -37,6 +39,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   const { apiKey, project } = validationData
 
   if (apiKey.expiresAt && apiKey.expiresAt <= now) {
+    logger.warn({ apiKeyId: apiKey.id, trackableId: project?.id }, "Expired API key used.")
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Invalid API key.",
@@ -44,6 +47,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   }
 
   if (!apiKey.projectId) {
+    logger.warn({ apiKeyId: apiKey.id }, "API key not bound to trackable.")
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message:
@@ -52,6 +56,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   }
 
   if (!project || project.archivedAt) {
+    logger.warn({ apiKeyId: apiKey.id, trackableId: apiKey.projectId }, "Trackable not found or archived.")
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Trackable not found.",
@@ -59,6 +64,7 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   }
 
   if (project.kind !== "api_ingestion") {
+    logger.warn({ apiKeyId: apiKey.id, trackableId: project.id, kind: project.kind }, "Trackable does not accept log events.")
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "This trackable does not accept log events.",
@@ -68,7 +74,12 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   const occurredAt = new Date()
   const requestId = input.requestId?.trim() || randomUUID()
 
-  await quotaService.assertCanLogApiUsage(apiKey.workspaceId)
+  try {
+    await quotaService.assertCanLogApiUsage(apiKey.workspaceId)
+  } catch (err) {
+    logger.warn({ apiKeyId: apiKey.id, workspaceId: apiKey.workspaceId, trackableId: project.id }, "Quota exceeded for logging API usage.")
+    throw err
+  }
 
   const [createdUsageEvent] = await db.transaction(async (tx) => {
     const [usageEvent] = await tx
@@ -122,6 +133,13 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
       lastFour: apiKey.lastFour,
     },
   })
+
+  logger.info({
+    apiKeyId: apiKey.id,
+    trackableId: project.id,
+    requestId,
+    eventId: createdUsageEvent.id,
+  }, "Recorded API usage successfully.")
 
   return {
     id: createdUsageEvent.id,

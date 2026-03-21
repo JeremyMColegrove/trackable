@@ -3,6 +3,7 @@ import "server-only"
 import superjson from "superjson"
 
 import { redis } from "./redis-client"
+import { logger } from "@/lib/logger"
 
 export abstract class BaseCacheRepository<T> {
   protected constructor(
@@ -28,12 +29,19 @@ export abstract class BaseCacheRepository<T> {
    * Fetch an entity from the cache by ID, without invoking the DB fallback if missed.
    */
   async getRaw(id: string): Promise<T | null> {
-    const data = await redis.get(this.getKey(id))
-    if (!data) return null
+    const key = this.getKey(id)
+    const data = await redis.get(key)
+    if (!data) {
+      logger.debug({ cacheKey: key }, "Cache MISS (Raw)")
+      return null
+    }
 
     try {
-      return superjson.parse(data) as T
-    } catch {
+      const parsed = superjson.parse(data) as T
+      logger.debug({ cacheKey: key }, "Cache HIT (Raw)")
+      return parsed
+    } catch (err) {
+      logger.error({ cacheKey: key, error: err }, "Failed to parse cache entry")
       return null
     }
   }
@@ -48,7 +56,12 @@ export abstract class BaseCacheRepository<T> {
     }
 
     // Cache miss: fall back to the implemented DB method
+    const start = Date.now()
     const fallbackData = await this.fetchFallback(id)
+    const durationMs = Date.now() - start
+    
+    logger.info({ cacheKey: this.getKey(id), durationMs, hasData: fallbackData !== null }, "Cache fallback executed")
+
     if (fallbackData !== null) {
       await this.set(id, fallbackData)
     }
@@ -63,14 +76,26 @@ export abstract class BaseCacheRepository<T> {
     const keys = ids.map((id) => this.getKey(id))
     const results = await redis.mget(keys)
 
-    return results.map((data) => {
-      if (!data) return null
+    let hits = 0
+    let misses = 0
+
+    const entities = results.map((data, idx) => {
+      if (!data) {
+        misses++
+        return null
+      }
       try {
+        hits++
         return superjson.parse(data) as T
-      } catch {
+      } catch (err) {
+        logger.error({ cacheKey: keys[idx], error: err }, "Failed to parse mget cache entry")
+        misses++
         return null
       }
     })
+
+    logger.debug({ prefix: this.prefix, keysCount: keys.length, hits, misses }, "Cache MGET completed")
+    return entities
   }
 
   /**
@@ -78,7 +103,14 @@ export abstract class BaseCacheRepository<T> {
    */
   async set(id: string, entity: T, ttlSeconds: number = this.defaultTtlSeconds): Promise<void> {
     const data = superjson.stringify(entity)
-    await redis.set(this.getKey(id), data, "EX", ttlSeconds)
+    const key = this.getKey(id)
+    try {
+      await redis.set(key, data, "EX", ttlSeconds)
+      logger.debug({ cacheKey: key, ttlSeconds }, "Cache SET completed")
+    } catch (err) {
+      logger.error({ cacheKey: key, error: err }, "Cache SET failed")
+      throw err
+    }
   }
 
   /**
@@ -92,7 +124,10 @@ export abstract class BaseCacheRepository<T> {
     ttlSeconds: number = this.defaultTtlSeconds
   ): Promise<T | null> {
     const current = await this.get(id)
-    if (!current) return null
+    if (!current) {
+      logger.debug({ cacheKey: this.getKey(id) }, "Cache UPDATE aborted (entity not found)")
+      return null
+    }
 
     const updated = { ...current, ...partial }
     await this.set(id, updated, ttlSeconds)
@@ -103,7 +138,9 @@ export abstract class BaseCacheRepository<T> {
    * Delete an entity from the cache.
    */
   async delete(id: string): Promise<void> {
-    await redis.del(this.getKey(id))
+    const key = this.getKey(id)
+    await redis.del(key)
+    logger.debug({ cacheKey: key }, "Cache DELETE completed")
   }
 
   // --- Secondary Index Mapping (Sets) ---
@@ -126,8 +163,12 @@ export abstract class BaseCacheRepository<T> {
    * Find all entity IDs for a specific index value and return the parsed entities.
    */
   async findByIndex(indexName: string, value: string): Promise<T[]> {
-    const ids = await redis.smembers(this.getIndexKey(indexName, value))
-    if (ids.length === 0) return []
+    const indexKey = this.getIndexKey(indexName, value)
+    const ids = await redis.smembers(indexKey)
+    if (ids.length === 0) {
+      logger.debug({ indexKey }, "Cache INDEX search returned empty")
+      return []
+    }
 
     const entities = await this.mget(ids)
     return entities.filter((e): e is T => e !== null)

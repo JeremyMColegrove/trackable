@@ -1,6 +1,7 @@
 import { subscriptionService } from "@/server/subscriptions/subscription.service";
 import type { SubscriptionTier } from "@/server/subscriptions/types";
 import { verifyLemonSqueezyWebhook } from "@/server/subscriptions/webhook-verification";
+import { logger } from "@/lib/logger"
 
 type LemonSqueezySubscriptionStatus =
 	| "on_trial"
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
 	const webhookSecret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
 
 	if (!webhookSecret) {
-		console.error("Missing LEMON_SQUEEZY_WEBHOOK_SECRET");
+		logger.error("Missing LEMON_SQUEEZY_WEBHOOK_SECRET");
 
 		return Response.json(
 			{ error: "Webhook secret is not configured." },
@@ -128,8 +129,9 @@ export async function POST(request: Request) {
 	const workspaceId = payload.meta.custom_data?.workspace_id;
 
 	if (!workspaceId) {
-		console.error(
-			`Lemon Squeezy webhook ${eventName} missing workspace_id in custom_data`,
+		logger.error(
+			{ eventName },
+			"Lemon Squeezy webhook missing workspace_id in custom_data",
 		);
 
 		return Response.json(
@@ -153,7 +155,7 @@ export async function POST(request: Request) {
 			currentPeriodEnd: parseCurrentPeriodEnd(attributes),
 		});
 	} catch (error) {
-		console.error("Failed to process Lemon Squeezy webhook", error);
+		logger.error({ error }, "Failed to process Lemon Squeezy webhook");
 
 		return Response.json(
 			{ error: "Failed to process webhook event." },
