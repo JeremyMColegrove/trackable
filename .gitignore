@@ -34,7 +34,7 @@ pnpm-debug.log*
 !.env.example
 
 # translation file
-public/_gt/
+# public/_gt/
 
 # compose bind-mounted data
 /data/*
