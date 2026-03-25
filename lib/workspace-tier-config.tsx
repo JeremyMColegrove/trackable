@@ -20,8 +20,8 @@ export interface WorkspaceTierPlan {
 
 function formatUsageLimit(
 	value: number | null,
-	singularLabel: string,
-	pluralLabel: string,
+	singularLabel: string | React.ReactNode,
+	pluralLabel: string | React.ReactNode,
 ) {
 	return value === null
 		? `Unlimited ${pluralLabel}`

@@ -14,7 +14,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 
 interface DataTableColumnHeaderProps<TData, TValue> {
 	column: Column<TData, TValue>;
-	title: string;
+	title: string | React.ReactNode;
 	className?: string;
 }
 

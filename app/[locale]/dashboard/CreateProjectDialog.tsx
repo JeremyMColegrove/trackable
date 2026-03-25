@@ -1,7 +1,8 @@
 "use client";
 
-import { WorkspaceTierDialog } from "@/app/[locale]/dashboard/workspace-tier-dialog";
 import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-provider";
+import { WorkspaceTierDialog } from "@/app/[locale]/dashboard/workspace-tier-dialog";
+import { useAppSettings } from "@/components/app-settings-provider";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -25,7 +26,6 @@ import {
 	getTrackableKindCreationLabel,
 	getTrackableKindVisuals,
 } from "@/lib/trackable-kind";
-import { useAppSettings } from "@/components/app-settings-provider";
 import { cn } from "@/lib/utils";
 import { getTierLimits } from "@/lib/workspace-tier-config";
 import { useTRPC } from "@/trpc/client";
@@ -53,13 +53,13 @@ const trackableKindOptions = [
 	{
 		value: "api_ingestion" as const,
 		title: getTrackableKindCreationLabel("api_ingestion"),
-		description: "Record log events and manage connection keys.",
+		description: <T>Record log events and manage connection keys.</T>,
 		icon: DatabaseZap,
 	},
 	{
 		value: "survey" as const,
 		title: getTrackableKindCreationLabel("survey"),
-		description: "Collect structured responses with a shareable form.",
+		description: <T>Collect structured responses with a shareable form.</T>,
 		icon: FileText,
 	},
 ];
@@ -70,16 +70,23 @@ function CreateTrackableWizardHeader({
 	selectedKindTitle: string;
 }) {
 	const { activeStep } = useWizard();
+	const gt = useGT();
 
 	return (
 		<DialogHeader>
 			<DialogTitle>
-				{activeStep === 0 ? "Create new trackable" : "Name your trackable"}
+				{activeStep === 0 ? (
+					<T>Create new trackable</T>
+				) : (
+					<T>Name your trackable</T>
+				)}
 			</DialogTitle>
 			<DialogDescription>
-				{activeStep === 0
-					? "Choose the type of trackable you want to create."
-					: `Set the name and description for your ${selectedKindTitle.toLowerCase()} trackable.`}
+				{activeStep === 0 ? (
+					<T>Choose the type of trackable you want to create.</T>
+				) : (
+					`${gt("Set the name and description for your")} ${selectedKindTitle.toLowerCase()} ${gt("trackable.")}`
+				)}
 			</DialogDescription>
 		</DialogHeader>
 	);
@@ -125,7 +132,7 @@ function CreateTrackableWizardFooter({
 						<T>Back</T>
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? "Creating..." : "Create Trackable"}
+						{isSubmitting ? <T>Creating...</T> : <T>Create Trackable</T>}
 					</Button>
 				</>
 			)}
@@ -201,8 +208,8 @@ function TrackableDetailsStep({
 							<Input
 								placeholder={
 									selectedKind === "api_ingestion"
-										? "e.g. Application logs"
-										: "e.g. Customer satisfaction survey"
+										? gt("e.g. Application logs")
+										: gt("e.g. Customer satisfaction survey")
 								}
 								{...field}
 							/>
@@ -250,8 +257,7 @@ export function CreateTrackableDialog() {
 	const maxTrackableItems = getTierLimits(currentTier).maxTrackableItems;
 	const activeTrackablesCount = metrics.data?.activeTrackablesCount ?? 0;
 	const isCheckingTrackableLimit =
-		subscriptionsEnabled &&
-		(isWorkspaceContextLoading || metrics.isLoading);
+		subscriptionsEnabled && (isWorkspaceContextLoading || metrics.isLoading);
 	const hasReachedTrackableLimit =
 		subscriptionsEnabled &&
 		maxTrackableItems !== null &&
@@ -362,10 +368,7 @@ export function CreateTrackableDialog() {
 									selectedKind={selectedKind}
 									onSelect={(kind) => form.setValue("kind", kind)}
 								/>
-								<TrackableDetailsStep
-									form={form}
-									selectedKind={selectedKind}
-								/>
+								<TrackableDetailsStep form={form} selectedKind={selectedKind} />
 							</Wizard>
 						</form>
 					</Form>

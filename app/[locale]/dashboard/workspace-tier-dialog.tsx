@@ -16,7 +16,7 @@ import {
 	getWorkspaceTierPlans,
 } from "@/lib/workspace-tier-config";
 import type { SubscriptionTier } from "@/server/subscriptions/types";
-import { T, useGT } from "gt-next";
+import { T } from "gt-next";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -25,10 +25,10 @@ function getPlanCtaLabel(
 	currentTier: SubscriptionTier,
 ) {
 	if (tier === currentTier) {
-		return "Manage";
+		return <T>Manage</T>;
 	}
 
-	return "Switch";
+	return <T>Switch</T>;
 }
 
 export function WorkspaceTierDialog({
@@ -40,7 +40,6 @@ export function WorkspaceTierDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
-	const gt = useGT();
 	const plans = getWorkspaceTierPlans();
 	const currentPlan = getWorkspaceTierPlan(currentTier);
 

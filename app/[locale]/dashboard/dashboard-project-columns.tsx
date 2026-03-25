@@ -9,6 +9,7 @@ import {
 	getTrackableKindVisuals,
 } from "@/lib/trackable-kind";
 import type { ColumnDef } from "@tanstack/react-table";
+import { T } from "gt-next";
 import { ClipboardList, Database } from "lucide-react";
 
 export type DashboardTrackableRow = {
@@ -27,7 +28,7 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 	{
 		accessorKey: "name",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Trackable" />
+			<DataTableColumnHeader column={column} title={<T>Trackable</T>} />
 		),
 		cell: ({ row }) => (
 			<div className="flex items-center gap-3">
@@ -52,7 +53,7 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 	{
 		accessorKey: "kind",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Type" />
+			<DataTableColumnHeader column={column} title={<T>Type</T>} />
 		),
 		cell: ({ row }) => (
 			<Badge
@@ -66,7 +67,7 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 	{
 		accessorKey: "submissionCount",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Activity" />
+			<DataTableColumnHeader column={column} title={<T>Activity</T>} />
 		),
 		cell: ({ row }) => {
 			const isSurvey = row.original.kind === "survey";
@@ -77,7 +78,7 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 						: row.original.apiUsageCount
 					).toLocaleString()}
 					<span className="text-xs text-muted-foreground ml-1 font-normal">
-						{isSurvey ? "submissions" : "logs"}
+						{isSurvey ? <T>submissions</T> : <T>logs</T>}
 					</span>
 				</div>
 			);
@@ -86,13 +87,15 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 	{
 		accessorKey: "updatedAt",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Last Updated" />
+			<DataTableColumnHeader column={column} title={<T>Last Updated</T>} />
 		),
 		cell: ({ row }) => (
 			<div className="text-sm text-muted-foreground">
-				{row.original.updatedAt
-					? formatTableTimestamp(row.original.updatedAt)
-					: "Unknown"}
+				{row.original.updatedAt ? (
+					formatTableTimestamp(row.original.updatedAt)
+				) : (
+					<T>Unknown</T>
+				)}
 			</div>
 		),
 	},

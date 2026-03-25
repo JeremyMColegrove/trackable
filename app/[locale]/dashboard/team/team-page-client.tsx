@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
 "use client";
 
 import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-provider";
