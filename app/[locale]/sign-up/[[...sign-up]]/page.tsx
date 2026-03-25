@@ -9,7 +9,7 @@ import { SignUpPageClient } from "./sign-up-page-client"
 export const metadata: Metadata = createNoIndexMetadata({
   title: "Create account",
   description:
-    "Create a Trackable account to manage forms, responses, and API usage.",
+    "Create a Trackables account to manage forms, responses, and API usage.",
 })
 
 export default function SignUpPage() {

@@ -17,11 +17,11 @@ export function getTermsDocumentContent(): LegalDocumentContent {
         heading: <T>Use of the service</T>,
         paragraphs: [
           <T key="terms-use-1">
-            These Terms of Service govern access to and use of Trackable. By
+            These Terms of Service govern access to and use of Trackables. By
             using the service, you agree to these terms.
           </T>,
           <T key="terms-use-2">
-            You may use Trackable only in compliance with applicable laws and
+            You may use Trackables only in compliance with applicable laws and
             these terms. You are responsible for the content you create,
             collect, submit, or share through the service.
           </T>,

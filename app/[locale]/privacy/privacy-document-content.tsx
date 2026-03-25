@@ -17,7 +17,7 @@ export function getPrivacyDocumentContent(): LegalDocumentContent {
         heading: <T>Information we collect</T>,
         paragraphs: [
           <T key="privacy-collect-1">
-            This Privacy Statement explains how Trackable collects, uses, and
+            This Privacy Statement explains how Trackables collects, uses, and
             stores information when you use the service.
           </T>,
           <T key="privacy-collect-2">

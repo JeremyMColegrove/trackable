@@ -7,7 +7,7 @@ import { WorkspaceContextProvider } from "./workspace-context-provider"
 
 export const metadata: Metadata = createNoIndexMetadata({
   title: "Dashboard",
-  description: "Authenticated dashboard for managing trackable items.",
+  description: "Authenticated dashboard for managing trackables.",
 })
 
 export default function DashboardLayout({

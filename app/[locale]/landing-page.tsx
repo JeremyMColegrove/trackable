@@ -85,7 +85,7 @@ export function LandingPage() {
       <footer className="border-t py-12">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row sm:px-8">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} <T>Trackable.</T>
+            © {new Date().getFullYear()} <T>Trackables.</T>
           </p>
           <div className="flex gap-4">
             <Link

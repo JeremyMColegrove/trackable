@@ -1,12 +1,12 @@
-# Trackable
+# Trackables
 
 ![Dashboard](<./images/README/dashboard.webp>)
 
-Trackable is a lightweight, self-hostable log and survey application.
+Trackables is a lightweight, self-hostable log and survey application.
 
 It is built for simple data collection without unnecessary complexity. You can use it to share forms, collect structured responses, and track usage events through API keys.
 
-Trackable is free, open source, and intended to stay small, understandable, and easy to run yourself.
+Trackables is free, open source, and intended to stay small, understandable, and easy to run yourself.
 
 Try out a hosted version [here](https://trackables.org).
 
@@ -23,7 +23,7 @@ Try out a hosted version [here](https://trackables.org).
 
 ## Supported Languages
 
-Trackable currently supports English (`en`), Spanish (`es`), French (`fr`), Arabic (`ar`), Portuguese (`pt`), Chinese, Simplified (`zh-CN`), Hindi (`hi`), German (`de`), Japanese (`ja`), Indonesian (`id`), Russian (`ru`), Korean (`ko`), Turkish (`tr`), Italian (`it`), Dutch (`nl`), Polish (`pl`), and Vietnamese (`vi`).
+Trackables currently supports English (`en`), Spanish (`es`), French (`fr`), Arabic (`ar`), Portuguese (`pt`), Chinese, Simplified (`zh-CN`), Hindi (`hi`), German (`de`), Japanese (`ja`), Indonesian (`id`), Russian (`ru`), Korean (`ko`), Turkish (`tr`), Italian (`it`), Dutch (`nl`), Polish (`pl`), and Vietnamese (`vi`).
 
 ## Team Collaboration & Permissions
 
@@ -56,4 +56,4 @@ Log querying uses the Liqe syntax, and enables other filtering options such as g
 
 Contributions are welcome.
 
-If you want to improve Trackable, open an issue, start a discussion, or submit a pull request. Small fixes, documentation updates, and feature contributions are all welcome.
+If you want to improve Trackables, open an issue, start a discussion, or submit a pull request. Small fixes, documentation updates, and feature contributions are all welcome.

@@ -1,7 +1,7 @@
 services:
-  trackable:
-    image: jeremycolegrove/trackable:arm64
-    container_name: trackable
+  trackables:
+    image: jeremycolegrove/trackables:arm64
+    container_name: trackables
     depends_on:
       postgres:
         condition: service_healthy
@@ -21,16 +21,16 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: trackable-postgres
+    container_name: trackables-postgres
     environment:
-      POSTGRES_DB: "trackable"
+      POSTGRES_DB: "trackables"
       POSTGRES_USER: "superman"
       POSTGRES_PASSWORD: "peanutbutter"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U superman -d trackable"]
+      test: ["CMD-SHELL", "pg_isready -U superman -d trackables"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,7 +39,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: trackable-redis
+    container_name: trackables-redis
     ports:
       - 6379:6379
     volumes:
