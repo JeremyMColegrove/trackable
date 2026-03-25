@@ -29,7 +29,6 @@ Trackable currently supports English (`en`), Spanish (`es`), French (`fr`), Arab
 
 - Organize trackables inside shared workspaces and invite teammates.
 - Use workspace roles for access control: owner, admin, member, and viewer.
-- Share individual trackables through public links, direct user grants, or email grants.
 
 ## Example Use Cases
 
