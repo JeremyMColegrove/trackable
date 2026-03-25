@@ -1,5 +1,5 @@
 import { getActiveShareLink } from "@/lib/trackable-share-links"
-import { buildLocalizedUrl } from "@/lib/seo"
+import { buildLocalizedUrl } from "@/lib/discovery-files"
 
 const maxDescriptionLength = 160
 const maxFormTitleLength = 80
