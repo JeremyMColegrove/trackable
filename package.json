@@ -2,7 +2,7 @@
 	"name": "trackable",
 	"version": "1.0.0",
 	"type": "module",
-	"private": false,
+	"private": true,
 	"scripts": {
 		"seo": "node --import tsx scripts/generate-discovery-files.ts",
 		"translation": "npm run translate",
