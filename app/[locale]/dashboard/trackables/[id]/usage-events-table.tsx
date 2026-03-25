@@ -27,6 +27,7 @@ import {
   getUsageEventColumns,
   resolveUsageEventVisibleColumns,
 } from "./usage-event-columns"
+import { useGT } from "gt-next"
 
 export function UsageEventsTableSkeleton() {
   return (
@@ -95,6 +96,7 @@ export function UsageEventsTable({
   const [selectedUsageEvent, setSelectedUsageEvent] = useState<
     UsageEventTableData["rows"][number] | null
   >(null)
+  const gt = useGT()
   const visibleColumns = useMemo(
     () => resolveUsageEventVisibleColumns(data.columns, visibleColumnIds),
     [data.columns, visibleColumnIds]
@@ -153,6 +155,7 @@ export function UsageEventsTable({
       getUsageEventColumns(visibleColumns, {
         enableGroupByActions: !isGroupedTable,
         availableAggregateFields: data.availableAggregateFields,
+        translate: gt,
         onGroupByField,
         onRemoveColumn: (columnId) => {
           if (currentVisibleColumnIds.length <= 1) {
@@ -203,9 +206,9 @@ export function UsageEventsTable({
         data={data.rows}
         title={title}
         description={subtitle}
-        footer={data.rows.length > 0 ? "End of logs" : undefined}
+        footer={data.rows.length > 0 ? gt("End of logs") : undefined}
         onRowClick={setSelectedUsageEvent}
-        emptyMessage="No logs have been recorded yet."
+        emptyMessage={gt("No logs have been recorded yet.")}
         scrollMode="window"
         estimateRowHeight={44}
         enableColumnResizing

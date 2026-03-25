@@ -1,12 +1,8 @@
 /** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
 "use client";
 
-import { T } from "gt-next";
-import { CheckIcon, SparklesIcon } from "lucide-react";
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -20,6 +16,9 @@ import {
 	getWorkspaceTierPlans,
 } from "@/lib/workspace-tier-config";
 import type { SubscriptionTier } from "@/server/subscriptions/types";
+import { T, useGT } from "gt-next";
+import { CheckIcon, SparklesIcon } from "lucide-react";
+import Link from "next/link";
 
 function getPlanCtaLabel(
 	tier: SubscriptionTier,
@@ -41,6 +40,7 @@ export function WorkspaceTierDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
+	const gt = useGT();
 	const plans = getWorkspaceTierPlans();
 	const currentPlan = getWorkspaceTierPlan(currentTier);
 
@@ -55,8 +55,8 @@ export function WorkspaceTierDialog({
 						<DialogDescription className="mx-auto max-w-lg text-center text-sm text-white/80 sm:text-[15px]">
 							<T>
 								Select the perfect plan for your workspace needs. Upgrade
-								anytime as you grow. All paid plans are billed per workspace
-								per month.
+								anytime as you grow. All paid plans are billed per workspace per
+								month.
 							</T>
 						</DialogDescription>
 					</DialogHeader>
@@ -79,19 +79,21 @@ export function WorkspaceTierDialog({
 									isMostPopular
 										? "z-10 mt-3 bg-linear-to-b from-background to-primary/2 shadow-primary/5 ring-1 ring-primary/5 sm:mt-0 sm:scale-[1.02] border-primary/40"
 										: "border-border/70",
-									isCurrent && !isMostPopular ? "bg-muted/20 border-border" : "",
+									isCurrent && !isMostPopular
+										? "bg-muted/20 border-border"
+										: "",
 								)}
 							>
 								{(isCurrent || isMostPopular) && (
 									<div className="absolute -top-3 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-1.5 sm:flex-row">
 										{isCurrent ? (
 											<Badge className="h-auto rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-emerald-600">
-												Current Plan
+												<T>Current Plan</T>
 											</Badge>
 										) : null}
 										{isMostPopular ? (
 											<Badge className="h-auto rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm hover:bg-primary">
-												Best Seller
+												<T>Best Seller</T>
 											</Badge>
 										) : null}
 									</div>
@@ -109,9 +111,9 @@ export function WorkspaceTierDialog({
 								<div className="mb-4 flex items-end gap-1.5 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
 									{plan.priceLabel}
 									<span className="pb-1 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">
-										per workspace
+										<T>per workspace</T>
 										<br />
-										per month
+										<T>per month</T>
 									</span>
 								</div>
 

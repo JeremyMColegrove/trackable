@@ -4,8 +4,10 @@ import {
 	getDashboardNavItems,
 	isDashboardNavItemActive,
 } from "@/app/[locale]/dashboard/navigation";
+import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-provider";
 import { WorkspaceTierDialog } from "@/app/[locale]/dashboard/workspace-tier-dialog";
 import { WorkspaceTierSection } from "@/app/[locale]/dashboard/workspace-tier-section";
+import { useAppSettings } from "@/components/app-settings-provider";
 import { SidebarShell } from "@/components/sidebar-shell";
 import {
 	SidebarGroup,
@@ -16,16 +18,16 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useAppSettings } from "@/components/app-settings-provider";
-import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-provider";
 import type { SubscriptionTier } from "@/server/subscriptions/types";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { useGT } from "gt-next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
 export function DashboardSidebar() {
+	const gt = useGT();
 	const { subscriptionsEnabled } = useAppSettings();
 	const { currentTier, hasAdminControls } = useWorkspaceContext();
 	const trpc = useTRPC();

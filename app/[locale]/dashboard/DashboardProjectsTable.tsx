@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { getTrackableKindCreationLabel } from "@/lib/trackable-kind";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { useGT } from "gt-next";
+import { T, useGT } from "gt-next";
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -71,7 +71,7 @@ export function DashboardTrackablesTable({
 				</div>
 			) : null}
 			<DataTable
-				title={title}
+				title={typeof title === "string" ? title : (title ?? <T>Trackables</T>)}
 				titleVariant={titleVariant}
 				columns={dashboardTrackableColumns}
 				data={filteredTrackables}
@@ -79,10 +79,14 @@ export function DashboardTrackablesTable({
 					router.push(`/dashboard/trackables/${trackable.id}`)
 				}
 				emptyMessage={
-					isLoading ? "Loading trackables..." : "No trackables found."
+					isLoading ? gt("Loading trackables...") : gt("No trackables found.")
 				}
 				initialPageSize={10}
-				description={description}
+				description={
+					typeof description === "string"
+						? description
+						: (description ?? <T>An overview of your trackables</T>)
+				}
 				headerButton={headerButton}
 				showViewOptions={showViewOptions}
 			/>

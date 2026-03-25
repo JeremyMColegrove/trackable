@@ -1,8 +1,5 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { EyeOff, Rows3 } from "lucide-react";
-
 import {
 	VirtualDataTableColumnHeader,
 	type VirtualDataTableMenuItem,
@@ -14,7 +11,9 @@ import {
 	type UsageEventBuiltInColumnId,
 	type UsageEventVisibleColumnId,
 } from "@/lib/usage-event-search";
-
+import type { ColumnDef } from "@tanstack/react-table";
+import { T } from "gt-next";
+import { EyeOff, Rows3 } from "lucide-react";
 import {
 	formatCompactDateTime,
 	formatStatusLabel,
@@ -35,6 +34,7 @@ type UsageEventColumnOptions = {
 	onRemoveColumn?: (columnId: UsageEventVisibleColumn["id"]) => void;
 	canRemoveColumn?: (column: UsageEventVisibleColumn) => boolean;
 	headerTrailingContent?: React.ReactNode;
+	translate?: (value: string) => string;
 };
 
 type UsageEventTableMode = "flat" | "grouped";
@@ -211,12 +211,23 @@ const usageEventColumnDefinitions: Record<
 	},
 };
 
+const usageEventColumnTitles: Record<UsageEventBuiltInColumnId, string> = {
+	lastOccurredAt: "Timestamp",
+	event: "Event",
+	level: "Level",
+	message: "Message",
+	totalHits: "Hits",
+	firstOccurredAt: "First Seen",
+	percentage: "%",
+};
+
 export function getUsageEventColumns(
 	columns: UsageEventVisibleColumn[],
 	options: UsageEventColumnOptions = {},
 ): ColumnDef<UsageEventRow>[] {
 	const visibleColumns = columns.filter((column) => column.visible);
 	const availableAggregateFields = options.availableAggregateFields ?? [];
+	const gt = options.translate ?? ((value: string) => value);
 	const tableMode: UsageEventTableMode = columns.some(
 		(column) => column.id === "totalHits",
 	)
@@ -260,7 +271,11 @@ export function getUsageEventColumns(
 			header: ({ column: tableColumn }) => (
 				<VirtualDataTableColumnHeader
 					column={tableColumn}
-					title={column.label}
+					title={
+						isComputedUsageEventColumn(column)
+							? column.label
+							: usageEventColumnTitles[column.id]
+					}
 					menuItems={menuItems}
 					trailingContent={headerTrailingContent}
 				/>
@@ -425,7 +440,7 @@ function buildColumnMenuItems(
 	if (options.onRemoveColumn && options.canRemoveColumn?.(column)) {
 		menuItems.push({
 			id: `remove-column-${column.id}`,
-			label: "Hide column",
+			label: <T>"Hide column"</T>,
 			icon: <EyeOff className="size-4" />,
 			onClick: () => options.onRemoveColumn?.(column.id),
 			separator: menuItems.length > 0,
