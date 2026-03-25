@@ -1,7 +1,10 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { formatDurationBadge } from "../utils/duration"
+import {
+  formatDateRangeDurationBadge,
+  formatDurationBadge,
+} from "../utils/duration"
 import {
   formatBlurredDateRangeValue,
   formatCompactDateRange,
@@ -66,4 +69,15 @@ test("formatDurationBadge returns compact duration badges", () => {
   assert.equal(formatDurationBadge(60 * 60 * 1000), "1h")
   assert.equal(formatDurationBadge(3 * 24 * 60 * 60 * 1000), "3d")
   assert.equal(formatDurationBadge(14 * 24 * 60 * 60 * 1000), "2w")
+})
+
+test("formatDateRangeDurationBadge returns infinity for all time", () => {
+  const value: DateRangeValue = {
+    start: new Date(1970, 0, 1, 0, 0, 0),
+    end: new Date(2026, 2, 24, 9, 0, 0),
+    source: "preset",
+    presetKey: "all_time",
+  }
+
+  assert.equal(formatDateRangeDurationBadge(value), "∞")
 })

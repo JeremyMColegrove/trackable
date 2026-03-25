@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
+import { useRouter } from "next/navigation";
 
 const createWorkspaceSchema = z.object({
 	name: z
@@ -47,6 +48,7 @@ export function CreateWorkspaceDialog({
 	onOpenChange,
 }: CreateWorkspaceDialogProps) {
 	const gt = useGT();
+	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 	const [submitError, setSubmitError] = useState<string | null>(null);
@@ -81,6 +83,8 @@ export function CreateWorkspaceDialog({
 						queryKey: trpc.team.getMemberCount.queryKey(),
 					}),
 				]);
+
+				router.replace("/dashboard");
 			},
 			onError: (error) => {
 				setSubmitError(error.message);

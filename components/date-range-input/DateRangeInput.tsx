@@ -11,7 +11,7 @@ import { DateRangePopover } from "./DateRangePopover";
 import { DateRangePresets } from "./DateRangePresets";
 import { useDateRangeInput } from "./hooks/use-date-range-input";
 import { getNextDateRangeSelection } from "./utils/date-range-selection";
-import { formatDurationBadge, getDateRangeDurationMs } from "./utils/duration";
+import { formatDateRangeDurationBadge } from "./utils/duration";
 import { defaultDateRangePresets } from "./utils/presets";
 import type {
 	DateRangeChangeMeta,
@@ -129,11 +129,11 @@ export function DateRangeInput({
 	}, [commitDraft, isOpen, setIsOpen, setIsFocused]);
 
 	const durationLabel = useMemo(() => {
-		if (!committedValue || committedValue.presetKey === "all_time") {
+		if (!committedValue) {
 			return null;
 		}
 
-		return formatDurationBadge(getDateRangeDurationMs(committedValue));
+		return formatDateRangeDurationBadge(committedValue);
 	}, [committedValue]);
 
 	return (

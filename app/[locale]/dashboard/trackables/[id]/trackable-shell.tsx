@@ -103,7 +103,7 @@ function getTrackableNavItems(
 	return [
 		{
 			href: baseHref,
-			label: gt("Events"),
+			label: gt("Logs"),
 			icon: Radio,
 			isActive: (pathname) => pathname === baseHref,
 		},
@@ -174,7 +174,7 @@ function getTrackableBreadcrumbLabel({
 		return gt("Responses");
 	}
 
-	return gt("Events");
+	return gt("Logs");
 }
 
 function TrackableShellSkeleton() {

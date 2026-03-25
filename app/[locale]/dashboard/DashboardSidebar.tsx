@@ -35,8 +35,10 @@ export function DashboardSidebar() {
 	const [tierDialogOpen, setTierDialogOpen] = React.useState(false);
 	const [dialogTier, setDialogTier] =
 		React.useState<SubscriptionTier>(currentTier);
-	const memberCountQuery = useQuery(trpc.team.getMemberCount.queryOptions());
-	const teamMemberCount = memberCountQuery.data?.count;
+	const myInvitationsQuery = useQuery(
+		trpc.team.listMyPendingInvitations.queryOptions(),
+	);
+	const myInvitationCount = myInvitationsQuery.data?.length;
 
 	function handleOpenTierDialog(tier: SubscriptionTier) {
 		setDialogTier(tier);
@@ -71,8 +73,9 @@ export function DashboardSidebar() {
 										</Link>
 									</SidebarMenuButton>
 									{item.href === "/dashboard/team" &&
-									typeof teamMemberCount === "number" ? (
-										<SidebarMenuBadge>{teamMemberCount}</SidebarMenuBadge>
+									typeof myInvitationCount === "number" &&
+									myInvitationCount > 0 ? (
+										<SidebarMenuBadge>{myInvitationCount}</SidebarMenuBadge>
 									) : null}
 								</SidebarMenuItem>
 							))}

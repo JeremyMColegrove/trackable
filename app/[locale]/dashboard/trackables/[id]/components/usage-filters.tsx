@@ -25,13 +25,9 @@ export function UsageFilterBox({
 	label,
 	children,
 	className,
-	roundedUp,
 }: UsageFilterBoxProps) {
 	return (
 		<div className="flex items-start gap-3">
-			{roundedUp ? (
-				<div className="h-6 w-8 rounded-bl-3xl border-b border-l border-border" />
-			) : null}
 			<div
 				className={cn(
 					"flex items-center gap-3 rounded-md bg-accent pl-4 shadow-xs",
@@ -109,16 +105,14 @@ export function UsageTimeRangeFilter({
 	const gt = useGT();
 
 	return (
-		// <UsageFilterBox label={gt("Time Range")} className="pr-2">
 		<DateRangeInput
 			aria-label={gt("Log time range")}
 			value={value}
 			onChange={onValueChange}
 			placeholder={gt("All time")}
 			presets={usageTimeRangePresets}
-			className="min-w-[21rem] rounded-md bg-accent shadow-xs"
+			className="flex-1 min-w-90 max-w-110 rounded-md bg-accent shadow-xs"
 			fieldClassName="border-0 bg-transparent shadow-none focus-within:border-0 focus-within:ring-0"
 		/>
-		// </UsageFilterBox>
 	);
 }

@@ -18,8 +18,8 @@ import { getTrackableKindVisuals } from "@/lib/trackable-kind";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { T } from "gt-next";
-import { BarChart3 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { ChartLine } from "lucide-react";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 type ActivityPoint = {
 	dayOffset: number;
@@ -144,7 +144,7 @@ export function DashboardMetrics() {
 							<T>Compare submissions and usage tracking over the last 7 days</T>
 						</CardDescription>
 					</div>
-					<BarChart3 className="size-4 text-muted-foreground" />
+					<ChartLine className="size-4 text-muted-foreground" />
 				</CardHeader>
 				<CardContent className="p-4 pt-0">
 					{isLoading ? (
@@ -154,12 +154,10 @@ export function DashboardMetrics() {
 							config={activityChartConfig}
 							className="h-[100px] min-h-[100px] w-full aspect-auto [&_.recharts-responsive-container]:h-full!"
 						>
-							<BarChart
+							<LineChart
 								accessibilityLayer
 								data={chartData}
 								margin={{ top: 8, right: 8, left: 8, bottom: 0 }}
-								barGap={1}
-								barCategoryGap="28%"
 							>
 								<CartesianGrid vertical={false} />
 								<XAxis
@@ -178,19 +176,23 @@ export function DashboardMetrics() {
 										/>
 									}
 								/>
-								<Bar
+								<Line
 									dataKey="submissions"
-									fill="var(--color-submissions)"
-									radius={[4, 4, 0, 0]}
-									maxBarSize={14}
+									type="monotone"
+									stroke="var(--color-submissions)"
+									strokeWidth={2}
+									dot={false}
+									activeDot={{ r: 4 }}
 								/>
-								<Bar
+								<Line
 									dataKey="usage"
-									fill="var(--color-usage)"
-									radius={[4, 4, 0, 0]}
-									maxBarSize={14}
+									type="monotone"
+									stroke="var(--color-usage)"
+									strokeWidth={2}
+									dot={false}
+									activeDot={{ r: 4 }}
 								/>
-							</BarChart>
+							</LineChart>
 						</ChartContainer>
 					)}
 				</CardContent>

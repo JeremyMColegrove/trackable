@@ -1,4 +1,5 @@
 import { AppBrand } from "@/components/app-brand";
+import { WorkspaceSwitcher } from "@/app/[locale]/dashboard/workspace-switcher";
 import {
 	Sidebar,
 	SidebarContent,
@@ -23,11 +24,12 @@ export function SidebarShell({
 				<AppBrand href={href} />
 			</SidebarHeader>
 			<SidebarContent>{children}</SidebarContent>
-			{footer && (
-				<SidebarFooter className="border-t px-3 py-3">
+			<SidebarFooter className="border-t px-3 py-3">
+				<div className="space-y-2">
+					<WorkspaceSwitcher triggerClassName="w-full justify-between" />
 					{footer}
-				</SidebarFooter>
-			)}
+				</div>
+			</SidebarFooter>
 			<SidebarRail />
 		</Sidebar>
 	);
