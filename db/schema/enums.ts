@@ -40,7 +40,13 @@ export const workspaceRoleEnum = pgEnum("workspace_role", [
   "owner",
   "admin",
   "member",
+  "viewer",
 ])
+
+export const workspaceInvitationStatusEnum = pgEnum(
+  "workspace_invitation_status",
+  ["pending", "accepted", "rejected", "revoked"]
+)
 
 export const batchJobRunStatusEnum = pgEnum("batch_job_run_status", [
   "running",

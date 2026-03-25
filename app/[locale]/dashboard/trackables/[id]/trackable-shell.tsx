@@ -1,7 +1,9 @@
 "use client";
 
-import { AppBrand } from "@/components/app-brand";
+import { WorkspaceTierDialog } from "@/app/[locale]/dashboard/workspace-tier-dialog";
+import { WorkspaceTierSection } from "@/app/[locale]/dashboard/workspace-tier-section";
 import { RequireAuth } from "@/components/auth/require-auth";
+import { SidebarShell } from "@/components/sidebar-shell";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -10,30 +12,33 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
-	SidebarHeader,
 	SidebarInset,
 	SidebarMenu,
 	SidebarMenuBadge,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarProvider,
-	SidebarRail,
 	SidebarSeparator,
 	SidebarTrigger,
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAccountButton } from "@/components/user-account-button";
+import { isSubscriptionEnforcementEnabled } from "@/lib/subscription-enforcement";
+import {
+	getTrackableKindShortLabel,
+	getTrackableKindVisuals,
+} from "@/lib/trackable-kind";
+import type { SubscriptionTier } from "@/server/subscriptions/types";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { T, useGT, useLocale } from "gt-next";
 import {
 	ArrowLeft,
+	ChevronRight,
 	KeyRound,
 	LayoutTemplate,
 	Radio,
@@ -42,10 +47,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext } from "react";
-import { SurveyShareDialog } from "./survey-share-dialog";
+import { createContext, useContext, useState } from "react";
 import type { TrackableDetails } from "./table-types";
-import { T, useGT, useLocale } from "gt-next";
 
 type TrackableNavItem = {
 	href: string;
@@ -60,6 +63,7 @@ const TrackableDetailsContext = createContext<TrackableDetails | null>(null);
 function getTrackableNavItems(
 	trackable: TrackableDetails,
 	dashboardBaseHref: string,
+	gt: (value: string) => string,
 ): TrackableNavItem[] {
 	const baseHref = `${dashboardBaseHref}/trackables/${trackable.id}`;
 
@@ -67,57 +71,110 @@ function getTrackableNavItems(
 		return [
 			{
 				href: baseHref,
-				label: "Responses",
+				label: gt("Responses"),
 				icon: TableProperties,
 				isActive: (pathname) => pathname === baseHref,
 			},
-			{
-				href: `${baseHref}/form`,
-				label: "Form",
-				icon: LayoutTemplate,
-				isActive: (pathname) => pathname.startsWith(`${baseHref}/form`),
-			},
-			{
-				href: `${baseHref}/settings`,
-				label: "Settings",
-				icon: Settings2,
-				isActive: (pathname) => pathname.startsWith(`${baseHref}/settings`),
-			},
+			...(trackable.permissions.canManageForm
+				? [
+						{
+							href: `${baseHref}/form`,
+							label: gt("Form Builder"),
+							icon: LayoutTemplate,
+							isActive: (pathname: string) =>
+								pathname.startsWith(`${baseHref}/form`),
+						},
+					]
+				: []),
+			...(trackable.permissions.canManageSettings
+				? [
+						{
+							href: `${baseHref}/settings`,
+							label: gt("Settings"),
+							icon: Settings2,
+							isActive: (pathname: string) =>
+								pathname.startsWith(`${baseHref}/settings`),
+						},
+					]
+				: []),
 		];
 	}
 
 	return [
 		{
 			href: baseHref,
-			label: "Events",
+			label: gt("Events"),
 			icon: Radio,
 			isActive: (pathname) => pathname === baseHref,
 		},
-		{
-			href: `${baseHref}/api-keys`,
-			label: "Connection",
-			icon: KeyRound,
-			isActive: (pathname) => pathname.startsWith(`${baseHref}/api-keys`),
-		},
-		{
-			href: `${baseHref}/settings`,
-			label: "Settings",
-			icon: Settings2,
-			isActive: (pathname) => pathname.startsWith(`${baseHref}/settings`),
-		},
+		...(trackable.permissions.canManageApiKeys
+			? [
+					{
+						href: `${baseHref}/api-keys`,
+						label: gt("Connection"),
+						icon: KeyRound,
+						isActive: (pathname: string) =>
+							pathname.startsWith(`${baseHref}/api-keys`),
+					},
+				]
+			: []),
+		...(trackable.permissions.canManageSettings
+			? [
+					{
+						href: `${baseHref}/settings`,
+						label: gt("Settings"),
+						icon: Settings2,
+						isActive: (pathname: string) =>
+							pathname.startsWith(`${baseHref}/settings`),
+					},
+				]
+			: []),
 	];
 }
 
-function getWorkspaceNavItems(dashboardBaseHref: string): TrackableNavItem[] {
+function getWorkspaceNavItems(
+	dashboardBaseHref: string,
+	gt: (value: string) => string,
+): TrackableNavItem[] {
 	return [
 		{
 			href: dashboardBaseHref,
-			label: "Back to Dashboard",
+			label: gt("Back to Dashboard"),
 			icon: ArrowLeft,
 			isActive: (pathname) =>
 				pathname === dashboardBaseHref || pathname === "/dashboard",
 		},
 	];
+}
+
+function getTrackableBreadcrumbLabel({
+	pathname,
+	baseHref,
+	trackableKind,
+	gt,
+}: {
+	pathname: string;
+	baseHref: string;
+	trackableKind: TrackableDetails["kind"];
+	gt: (value: string) => string;
+}) {
+	if (pathname.startsWith(`${baseHref}/form`)) {
+		return gt("Form Builder");
+	}
+
+	if (pathname.startsWith(`${baseHref}/api-keys`)) {
+		return gt("Connection");
+	}
+
+	if (pathname.startsWith(`${baseHref}/settings`)) {
+		return gt("Settings");
+	}
+
+	if (trackableKind === "survey") {
+		return gt("Responses");
+	}
+
+	return gt("Events");
 }
 
 function TrackableShellSkeleton() {
@@ -145,7 +202,7 @@ function TrackableShellSkeleton() {
 
 				<div className="flex flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
 					<Skeleton className="h-12 w-72" />
-					<Skeleton className="h-[28rem] rounded-xl" />
+					<Skeleton className="h-112 rounded-xl" />
 				</div>
 			</div>
 		</div>
@@ -164,9 +221,8 @@ function TrackableShellError({
 			<Card className="w-full max-w-2xl">
 				<CardHeader className="flex flex-col gap-2">
 					<Badge variant="outline" className="w-fit">
-						
-                        						<T>Trackable</T>
-                        					</Badge>
+						<T>Trackable</T>
+					</Badge>
 					<CardTitle>{title}</CardTitle>
 					<CardDescription>{description}</CardDescription>
 				</CardHeader>
@@ -176,12 +232,24 @@ function TrackableShellError({
 }
 
 function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
+	const subscriptionsEnabled = isSubscriptionEnforcementEnabled();
+	const gt = useGT();
 	const locale = useLocale();
 	const pathname = usePathname();
 	const { isMobile, setOpenMobile } = useSidebar();
-	const dashboardBaseHref = locale === "en" ? "/dashboard" : `/${locale}/dashboard`;
-	const trackableNavItems = getTrackableNavItems(trackable, dashboardBaseHref);
-	const workspaceNavItems = getWorkspaceNavItems(dashboardBaseHref);
+	const [tierDialogOpen, setTierDialogOpen] = useState(false);
+	const [dialogTier, setDialogTier] = useState<SubscriptionTier>("free");
+	const dashboardBaseHref =
+		locale === "en" ? "/dashboard" : `/${locale}/dashboard`;
+	const trackableNavItems = getTrackableNavItems(
+		trackable,
+		dashboardBaseHref,
+		gt,
+	);
+	const workspaceNavItems = getWorkspaceNavItems(dashboardBaseHref, gt);
+	const trackableBadgeClassName = getTrackableKindVisuals(
+		trackable.kind,
+	).badgeClassName;
 
 	function handleNavigate() {
 		if (isMobile) {
@@ -189,15 +257,30 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
 		}
 	}
 
-	return (
-		<Sidebar variant="inset" collapsible="offcanvas">
-			<SidebarHeader className="gap-4 border-b px-4 py-4">
-				<AppBrand href={dashboardBaseHref} />
-			</SidebarHeader>
+	function handleOpenTierDialog(tier: SubscriptionTier) {
+		setDialogTier(tier);
+		setTierDialogOpen(true);
+	}
 
-			<SidebarContent>
+	return (
+		<>
+			<SidebarShell
+				href={dashboardBaseHref}
+				footer={
+					subscriptionsEnabled ? (
+						<WorkspaceTierSection onOpenDialog={handleOpenTierDialog} />
+					) : undefined
+				}
+			>
 				<SidebarGroup className="px-3 py-3">
-					<SidebarGroupLabel><T>Current Trackable</T></SidebarGroupLabel>
+					<SidebarGroupLabel className="justify-between gap-2">
+						<span>
+							<T>Current Trackable</T>
+						</span>
+						<Badge variant="outline" className={trackableBadgeClassName}>
+							{getTrackableKindShortLabel(trackable.kind)}
+						</Badge>
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu className="gap-1">
 							{trackableNavItems.map((item) => (
@@ -221,7 +304,9 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
 				<SidebarSeparator />
 
 				<SidebarGroup className="px-3 py-3">
-					<SidebarGroupLabel><T>Workspace</T></SidebarGroupLabel>
+					<SidebarGroupLabel>
+						<T>Workspace</T>
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{workspaceNavItems.map((item) => (
@@ -244,12 +329,16 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
-			</SidebarContent>
+			</SidebarShell>
 
-			<SidebarFooter className="border-t px-3 py-3"></SidebarFooter>
-
-			<SidebarRail />
-		</Sidebar>
+			{subscriptionsEnabled ? (
+				<WorkspaceTierDialog
+					currentTier={dialogTier}
+					open={tierDialogOpen}
+					onOpenChange={setTierDialogOpen}
+				/>
+			) : null}
+		</>
 	);
 }
 
@@ -260,8 +349,10 @@ function TrackableLayoutContent({
 	trackableId: string;
 	children: React.ReactNode;
 }) {
-    const gt = useGT();
+	const gt = useGT();
+	const locale = useLocale();
 	const trpc = useTRPC();
+	const pathname = usePathname();
 	const trackableQuery = useQuery(
 		trpc.trackables.getById.queryOptions(
 			{ id: trackableId },
@@ -276,7 +367,9 @@ function TrackableLayoutContent({
 			return (
 				<TrackableShellError
 					title={gt("Trackable not found")}
-					description={gt("This trackable does not exist or you no longer have access to it.")}
+					description={gt(
+						"This trackable does not exist or you no longer have access to it.",
+					)}
 				/>
 			);
 		}
@@ -285,7 +378,9 @@ function TrackableLayoutContent({
 			return (
 				<TrackableShellError
 					title={gt("Unable to load trackable")}
-					description={gt("There was a problem loading the latest trackable data.")}
+					description={gt(
+						"There was a problem loading the latest trackable data.",
+					)}
 				/>
 			);
 		}
@@ -294,29 +389,46 @@ function TrackableLayoutContent({
 	}
 
 	const trackable = trackableQuery.data;
+	const dashboardBaseHref =
+		locale === "en" ? "/dashboard" : `/${locale}/dashboard`;
+	const trackableBaseHref = `${dashboardBaseHref}/trackables/${trackable.id}`;
+	const breadcrumbLabel = getTrackableBreadcrumbLabel({
+		pathname,
+		baseHref: trackableBaseHref,
+		trackableKind: trackable.kind,
+		gt,
+	});
 
 	return (
 		<TrackableDetailsContext.Provider value={trackable}>
-			<SidebarProvider defaultOpen className="bg-muted/20">
+			<SidebarProvider defaultOpen className="bg-background">
 				<TrackableSidebarNav trackable={trackable} />
-				<SidebarInset className="min-h-svh min-w-0 overflow-hidden bg-background md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none md:peer-data-[variant=inset]:shadow-none">
+				<SidebarInset className="min-h-svh min-w-0 overflow-hidden bg-background">
 					<header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
-						<div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
-							<div className="flex items-center gap-3">
-								<SidebarTrigger />
-
-								<span className="truncate text-sm font-semibold">
-									{trackable.name}
-								</span>
+						<div className="flex h-15 w-full items-center justify-between px-4 sm:px-6">
+							<div className="flex min-w-0 items-center gap-3">
+								<SidebarTrigger className="-ml-1" />
+								<nav
+									aria-label={gt("Breadcrumb")}
+									className="flex min-w-0 items-center gap-2 text-sm"
+								>
+									<Link
+										href={dashboardBaseHref}
+										className="font-medium text-muted-foreground transition-colors hover:text-foreground"
+									>
+										{gt("Overview")}
+									</Link>
+									<ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+									<span className="truncate font-semibold">
+										{trackable.name}
+									</span>
+									<ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+									<span className="truncate text-muted-foreground">
+										{breadcrumbLabel}
+									</span>
+								</nav>
 							</div>
 							<div className="flex items-center gap-3">
-								{trackable.kind === "survey" ? (
-									<SurveyShareDialog
-										trackableId={trackable.id}
-										activeForm={trackable.activeForm}
-										shareLinks={trackable.shareSettings.shareLinks}
-									/>
-								) : null}
 								<UserAccountButton />
 							</div>
 						</div>

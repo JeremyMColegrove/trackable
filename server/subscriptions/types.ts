@@ -1,4 +1,10 @@
 export type SubscriptionTier = "free" | "plus" | "pro"
+export type SubscriptionStatus =
+  | "active"
+  | "cancelled"
+  | "expired"
+  | "paused"
+  | "past_due"
 
 export interface TierLimits {
   /** Maximum trackable items per workspace. `null` = unlimited. */
@@ -7,8 +13,20 @@ export interface TierLimits {
   maxResponsesPerSurvey: number | null
   /** Maximum active members per workspace. `null` = unlimited. */
   maxWorkspaceMembers: number | null
-  /** Maximum API log events per minute per workspace. `null` = unlimited. */
-  maxApiLogsPerMinute: number | null
+  /** Maximum API log events per second per workspace. `null` = unlimited. */
+  maxApiLogsPerSecond: number | null
   /** Maximum log retention in days. `null` = forever. */
   logRetentionDays: number | null
 }
+
+export interface WorkspaceSubscriptionState {
+  workspaceId: string
+  lemonSqueezySubscriptionId: string | null
+  lemonSqueezyCustomerId: string | null
+  variantId: string | null
+  tier: SubscriptionTier
+  status: SubscriptionStatus
+  currentPeriodEnd: Date | null
+}
+
+export type WorkspaceSubscriptionUpsertInput = WorkspaceSubscriptionState

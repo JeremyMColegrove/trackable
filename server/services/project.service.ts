@@ -45,6 +45,17 @@ export class ProjectService {
 	async getById(projectId: string, userId: string) {
 		await accessControlService.assertProjectAccess(projectId, userId, "view");
 
+		let canManageTrackable = false;
+
+		try {
+			await accessControlService.assertProjectAccess(projectId, userId, "manage");
+			canManageTrackable = true;
+		} catch (error) {
+			if (!(error instanceof TRPCError) || error.code !== "NOT_FOUND") {
+				throw error;
+			}
+		}
+
 		const project = await db.query.trackableItems.findFirst({
 			where: eq(trackableItems.id, projectId),
 			with: {
@@ -76,6 +87,15 @@ export class ProjectService {
 				message: "Trackable not found.",
 			});
 		}
+
+		const permissions = {
+			canManageTrackable,
+			canManageResponses: canManageTrackable && project.kind === "survey",
+			canManageForm: canManageTrackable && project.kind === "survey",
+			canManageSettings: canManageTrackable,
+			canManageApiKeys:
+				canManageTrackable && project.kind === "api_ingestion",
+		};
 
 		const [submissions, ownedApiKeys, usageCountsByKey] = await Promise.all([
 			db.query.trackableFormSubmissions.findMany({
@@ -120,6 +140,7 @@ export class ProjectService {
 			kind: project.kind,
 			name: project.name,
 			description: project.description,
+			permissions,
 			settings: project.settings,
 			createdAt: project.createdAt.toISOString(),
 			submissionCount: project.submissionCount,
@@ -151,48 +172,54 @@ export class ProjectService {
 				metadata: submission.metadata,
 				submissionSnapshot: submission.submissionSnapshot,
 			})),
-			apiKeys: ownedApiKeys.map((key) => {
-				const trackableUsage = usageByKey.get(key.id);
+			apiKeys: permissions.canManageApiKeys
+				? ownedApiKeys.map((key) => {
+						const trackableUsage = usageByKey.get(key.id);
 
-				return {
-					id: key.id,
-					name: key.name,
-					maskedKey: `${key.keyPrefix}...${key.lastFour}`,
-					status: key.status,
-					expiresAt: key.expiresAt?.toISOString() ?? null,
-					trackableUsageCount: trackableUsage?.usageCount ?? 0,
-					lastUsedAt:
-						trackableUsage?.lastOccurredAt ??
-						key.lastUsedAt?.toISOString() ??
-						null,
-				};
-			}),
+						return {
+							id: key.id,
+							name: key.name,
+							maskedKey: `${key.keyPrefix}...${key.lastFour}`,
+							status: key.status,
+							expiresAt: key.expiresAt?.toISOString() ?? null,
+							trackableUsageCount: trackableUsage?.usageCount ?? 0,
+							lastUsedAt:
+								trackableUsage?.lastOccurredAt ??
+								key.lastUsedAt?.toISOString() ??
+								null,
+						};
+					})
+				: [],
 			shareSettings: {
-				accessGrants: project.accessGrants.map((grant) => ({
-					id: grant.id,
-					subjectType: grant.subjectType,
-					subjectLabel:
-						grant.subjectUser?.displayName ??
-						grant.subjectUser?.primaryEmail ??
-						grant.subjectEmail ??
-						"Unknown recipient",
-					subjectEmail:
-						grant.subjectUser?.primaryEmail ?? grant.subjectEmail ?? null,
-					role: grant.role,
-					acceptedAt: grant.acceptedAt?.toISOString() ?? null,
-					revokedAt: grant.revokedAt?.toISOString() ?? null,
-					createdAt: grant.createdAt.toISOString(),
-				})),
-				shareLinks: project.shareLinks.map((link) => ({
-					id: link.id,
-					token: link.token,
-					role: link.role,
-					createdAt: link.createdAt.toISOString(),
-					expiresAt: link.expiresAt?.toISOString() ?? null,
-					revokedAt: link.revokedAt?.toISOString() ?? null,
-					lastUsedAt: link.lastUsedAt?.toISOString() ?? null,
-					usageCount: link.usageCount,
-				})),
+				accessGrants: permissions.canManageTrackable
+					? project.accessGrants.map((grant) => ({
+							id: grant.id,
+							subjectType: grant.subjectType,
+							subjectLabel:
+								grant.subjectUser?.displayName ??
+								grant.subjectUser?.primaryEmail ??
+								grant.subjectEmail ??
+								"Unknown recipient",
+							subjectEmail:
+								grant.subjectUser?.primaryEmail ?? grant.subjectEmail ?? null,
+							role: grant.role,
+							acceptedAt: grant.acceptedAt?.toISOString() ?? null,
+							revokedAt: grant.revokedAt?.toISOString() ?? null,
+							createdAt: grant.createdAt.toISOString(),
+						}))
+					: [],
+				shareLinks: permissions.canManageTrackable
+					? project.shareLinks.map((link) => ({
+							id: link.id,
+							token: link.token,
+							role: link.role,
+							createdAt: link.createdAt.toISOString(),
+							expiresAt: link.expiresAt?.toISOString() ?? null,
+							revokedAt: link.revokedAt?.toISOString() ?? null,
+							lastUsedAt: link.lastUsedAt?.toISOString() ?? null,
+							usageCount: link.usageCount,
+						}))
+					: [],
 			},
 		};
 	}

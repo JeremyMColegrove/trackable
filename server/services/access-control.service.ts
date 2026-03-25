@@ -12,7 +12,7 @@ import {
 import { userActiveWorkspaceCache, userMembershipsCache } from "@/server/redis/access-control-cache.repository"
 
 export type AccessRole = "submit" | "view" | "manage"
-export type WorkspaceRole = "owner" | "admin" | "member"
+export type WorkspaceRole = "owner" | "admin" | "member" | "viewer"
 
 export class AccessControlService {
   private getAllowedRoles(minimumRole: AccessRole) {
@@ -29,6 +29,14 @@ export class AccessControlService {
 
   private canManageWorkspace(role: WorkspaceRole) {
     return role === "owner" || role === "admin"
+  }
+
+  private canManageTrackable(role: WorkspaceRole) {
+    return role === "owner" || role === "admin" || role === "member"
+  }
+
+  private canViewTrackable(role: WorkspaceRole) {
+    return role === "owner" || role === "admin" || role === "member" || role === "viewer"
   }
 
   async assertProjectAccess(
@@ -56,7 +64,16 @@ export class AccessControlService {
     const workspaceMembership = memberships.find(m => m.workspaceId === project.workspaceId)
 
     if (workspaceMembership) {
-      return project
+      let hasWorkspaceAccess = false
+      if (minimumRole === "manage" && this.canManageTrackable(workspaceMembership.role)) {
+         hasWorkspaceAccess = true
+      } else if ((minimumRole === "view" || minimumRole === "submit") && this.canViewTrackable(workspaceMembership.role)) {
+         hasWorkspaceAccess = true
+      }
+
+      if (hasWorkspaceAccess) {
+        return project
+      }
     }
 
     const grant = await db.query.trackableAccessGrants.findFirst({
@@ -82,6 +99,10 @@ export class AccessControlService {
   }
 
   async getAccessibleProjectIds(userId: string, minimumRole: AccessRole = "view") {
+    const validWorkspaceRoles = minimumRole === "manage" 
+      ? ["owner", "admin", "member"] as const
+      : ["owner", "admin", "member", "viewer"] as const
+
     const [workspaceProjectRows, grantedProjects] = await Promise.all([
       db
         .select({
@@ -93,6 +114,7 @@ export class AccessControlService {
           and(
             eq(workspaceMembers.workspaceId, trackableItems.workspaceId),
             eq(workspaceMembers.userId, userId),
+            inArray(workspaceMembers.role, validWorkspaceRoles),
             isNull(workspaceMembers.revokedAt)
           )
         ),

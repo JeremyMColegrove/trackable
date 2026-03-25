@@ -283,10 +283,12 @@ export const trackableAccessGrantsRelations = relations(
       references: [trackableItems.id],
     }),
     subjectUser: one(users, {
+      relationName: "trackableAccessGrantSubjectUser",
       fields: [trackableAccessGrants.subjectUserId],
       references: [users.id],
     }),
     createdByUser: one(users, {
+      relationName: "trackableAccessGrantCreatedByUser",
       fields: [trackableAccessGrants.createdByUserId],
       references: [users.id],
     }),

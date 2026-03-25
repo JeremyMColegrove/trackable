@@ -4,13 +4,11 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { LayoutTemplate } from "lucide-react"
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
+import { getTrackableKindVisuals } from "@/lib/trackable-kind"
 
-import {
-  formatDateTime,
-  formatSubmissionSource,
-} from "./display-utils"
+import { formatDateTime, formatSubmissionSource } from "./display-utils"
 import type { SubmissionRow } from "./table-types"
-import { useGT } from "gt-next";
+import { useGT } from "gt-next"
 
 export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
   {
@@ -22,7 +20,9 @@ export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3 pl-4">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+        <div
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full ${getTrackableKindVisuals("survey").iconContainerClassName}`}
+        >
           <LayoutTemplate className="size-4" />
         </div>
         <div className="space-y-0.5">
@@ -33,6 +33,13 @@ export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
         </div>
       </div>
     ),
+    meta: {
+      export: {
+        label: "Submitter",
+        getValue: ({ row }) =>
+          `${row.submitterLabel}\n${formatSubmissionSource(row.source)}`,
+      },
+    },
     enableHiding: false,
   },
   {
@@ -45,5 +52,11 @@ export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
         {formatDateTime(row.original.createdAt)}
       </span>
     ),
+    meta: {
+      export: {
+        label: "Submitted",
+        getValue: ({ row }) => formatDateTime(row.createdAt),
+      },
+    },
   },
 ]

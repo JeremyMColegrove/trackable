@@ -1,81 +1,104 @@
-import "server-only"
-
-import { eq } from "drizzle-orm"
-
-import { db } from "@/db"
-import { workspaceSubscriptions } from "@/db/schema"
-import { getTierLimits } from "@/server/subscriptions/tier-limits"
-import { areTiersUnlocked } from "@/server/subscriptions/tiers-unlocked"
-import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
-
-interface UpsertWebhookInput {
-  workspaceId: string
-  lemonSqueezySubscriptionId: string
-  lemonSqueezyCustomerId: string
-  variantId: string
-  tier: SubscriptionTier
-  status: "active" | "cancelled" | "expired" | "paused" | "past_due"
-  currentPeriodEnd: Date | null
-}
+import { getTierLimits } from "@/lib/workspace-tier-config";
+import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository";
+import type {
+	SubscriptionTier,
+	TierLimits,
+	WorkspaceSubscriptionState,
+	WorkspaceSubscriptionUpsertInput,
+} from "@/server/subscriptions/types";
 
 export class SubscriptionService {
-  async upsertFromWebhook(input: UpsertWebhookInput) {
-    if (areTiersUnlocked()) {
-      return
-    }
+	constructor(
+		private readonly repository: WorkspaceSubscriptionRepository,
+		private readonly subscriptionEnforcementEnabled: () => boolean,
+	) {}
 
-    await db
-      .insert(workspaceSubscriptions)
-      .values({
-        workspaceId: input.workspaceId,
-        lemonSqueezySubscriptionId: input.lemonSqueezySubscriptionId,
-        lemonSqueezyCustomerId: input.lemonSqueezyCustomerId,
-        variantId: input.variantId,
-        tier: input.tier,
-        status: input.status,
-        currentPeriodEnd: input.currentPeriodEnd,
-      })
-      .onConflictDoUpdate({
-        target: workspaceSubscriptions.lemonSqueezySubscriptionId,
-        set: {
-          variantId: input.variantId,
-          tier: input.tier,
-          status: input.status,
-          currentPeriodEnd: input.currentPeriodEnd,
-          lemonSqueezyCustomerId: input.lemonSqueezyCustomerId,
-          updatedAt: new Date(),
-        },
-      })
-  }
+	async ensureFreeWorkspaceSubscription(
+		workspaceId: string,
+	): Promise<WorkspaceSubscriptionState> {
+		if (!this.subscriptionEnforcementEnabled()) {
+			return this.buildSubscriptionsDisabledState(workspaceId);
+		}
 
-  async getWorkspaceTier(workspaceId: string): Promise<SubscriptionTier> {
-    if (areTiersUnlocked()) {
-      return "pro"
-    }
+		const existing = await this.repository.findByWorkspaceId(workspaceId);
 
-    const subscription = await db.query.workspaceSubscriptions.findFirst({
-      where: eq(workspaceSubscriptions.workspaceId, workspaceId),
-      columns: {
-        tier: true,
-        status: true,
-      },
-    })
+		if (existing) {
+			return existing;
+		}
 
-    if (!subscription || subscription.status !== "active") {
-      return "free"
-    }
+		const freeSubscription: WorkspaceSubscriptionUpsertInput = {
+			workspaceId,
+			lemonSqueezySubscriptionId: null,
+			lemonSqueezyCustomerId: null,
+			variantId: null,
+			tier: "free",
+			status: "active",
+			currentPeriodEnd: null,
+		};
 
-    return subscription.tier
-  }
+		await this.repository.upsert(freeSubscription);
 
-  async getWorkspaceLimits(workspaceId: string): Promise<TierLimits> {
-    if (areTiersUnlocked()) {
-      return getTierLimits("pro")
-    }
+		return freeSubscription;
+	}
 
-    const tier = await this.getWorkspaceTier(workspaceId)
-    return getTierLimits(tier)
-  }
+	async getWorkspaceSubscription(
+		workspaceId: string,
+	): Promise<WorkspaceSubscriptionState> {
+		if (!this.subscriptionEnforcementEnabled()) {
+			return this.buildSubscriptionsDisabledState(workspaceId);
+		}
+
+		const existing = await this.repository.findByWorkspaceId(workspaceId);
+
+		if (existing) {
+			return existing;
+		}
+
+		return this.ensureFreeWorkspaceSubscription(workspaceId);
+	}
+
+	async upsertWorkspaceSubscription(input: WorkspaceSubscriptionUpsertInput) {
+		if (!this.subscriptionEnforcementEnabled()) {
+			return;
+		}
+
+		await this.repository.upsert(input);
+	}
+
+	async getWorkspaceTier(workspaceId: string): Promise<SubscriptionTier> {
+		if (!this.subscriptionEnforcementEnabled()) {
+			return "pro";
+		}
+
+		const subscription = await this.getWorkspaceSubscription(workspaceId);
+
+		if (subscription.status !== "active") {
+			return "free";
+		}
+
+		return subscription.tier;
+	}
+
+	async getWorkspaceLimits(workspaceId: string): Promise<TierLimits> {
+		if (!this.subscriptionEnforcementEnabled()) {
+			return getTierLimits("pro");
+		}
+
+		const tier = await this.getWorkspaceTier(workspaceId);
+		return getTierLimits(tier);
+	}
+
+	private buildSubscriptionsDisabledState(
+		workspaceId: string,
+	): WorkspaceSubscriptionState {
+		return {
+			workspaceId,
+			lemonSqueezySubscriptionId: null,
+			lemonSqueezyCustomerId: null,
+			variantId: null,
+			tier: "pro",
+			status: "active",
+			currentPeriodEnd: null,
+		};
+	}
 }
-
-export const subscriptionService = new SubscriptionService()

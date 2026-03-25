@@ -9,21 +9,33 @@ import { Separator } from "@/components/ui/separator";
 import { Search } from "lucide-react";
 
 export function TrackablePageFrame(props: {
-	eyebrow: string;
 	title: string;
 	description: string;
 	search?: React.ReactNode;
+	headerActions?: React.ReactNode;
 	children: React.ReactNode;
 }) {
-	const { search, children } = props;
-	const hasTopControls = search !== undefined;
+	const { title, description, search, headerActions, children } = props;
 
 	return (
 		<main className="flex-1">
-			<div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pt-1 pb-0 lg:px-6">
-				{hasTopControls ? (
-					<div className="flex flex-col gap-1">{search}</div>
-				) : null}
+			<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-8 sm:px-6 lg:px-8">
+				<div className="flex flex-wrap items-start justify-between gap-4">
+					<div className="min-w-0 flex-1">
+						<h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+						{description && (
+							<p className="mt-1 text-sm text-muted-foreground">
+								{description}
+							</p>
+						)}
+					</div>
+					{headerActions && (
+						<div className="ml-auto flex shrink-0 items-center gap-2">
+							{headerActions}
+						</div>
+					)}
+				</div>
+				{search && <div className="flex flex-col gap-1">{search}</div>}
 				{children}
 			</div>
 		</main>
@@ -69,10 +81,6 @@ export function UnsupportedPageState({
 			</CardHeader>
 		</Card>
 	);
-}
-
-export function TrackableNarrowContent({ children }: { children: React.ReactNode }) {
-	return <div className="mx-auto w-full max-w-4xl">{children}</div>;
 }
 
 export function TrackableSectionHeader({

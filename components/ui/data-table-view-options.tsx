@@ -26,12 +26,13 @@ export function DataTableViewOptions<TData>({
 			<DropdownMenuTrigger asChild>
 				<Button variant="outline">
 					<Settings2 />
-					
-                    					<T>View</T>
-                    				</Button>
+					<T>View</T>
+				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-44">
-				<DropdownMenuLabel><T>Toggle columns</T></DropdownMenuLabel>
+				<DropdownMenuLabel>
+					<T>Toggle columns</T>
+				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				{table
 					.getAllColumns()

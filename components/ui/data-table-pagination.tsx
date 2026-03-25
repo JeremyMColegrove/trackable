@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { T } from "gt-next";
+import { T } from "gt-next"
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>
@@ -21,13 +21,12 @@ export function DataTablePagination<TData>({
   return (
     <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
       <div>
-        {table.getFilteredRowModel().rows.length}  <T>item</T>
-                      {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
+        {table.getFilteredRowModel().rows.length} <T>item</T>
+        {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
       </div>
       <div className="flex items-center gap-2">
         <div className="mr-2">
-          
-                            <T>Page</T> {table.getState().pagination.pageIndex + 1}  <T>of</T>{" "}
+          <T>Page</T> {table.getState().pagination.pageIndex + 1} <T>of</T>{" "}
           {table.getPageCount() || 1}
         </div>
         <Button

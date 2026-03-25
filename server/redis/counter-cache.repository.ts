@@ -16,7 +16,7 @@ export class CounterCacheRepository extends BaseCacheRepository<number> {
   /**
    * Atomically increment a counter within a specific time window.
    * If the counter doesn't exist, it creates it with the given TTL.
-   * For example, useful for rate limiting (e.g. requests per minute).
+   * For example, useful for rate limiting within a second or minute window.
    */
   async incrementWindow(id: string, amount: number = 1, ttlSeconds: number = this.defaultTtlSeconds): Promise<number> {
     const key = this.getKey(id)

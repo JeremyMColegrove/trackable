@@ -28,7 +28,9 @@ export async function getTrackableUsageSourceSnapshot(
 }
 
 export async function getTrackableUsageAggregateFields(trackableId: string) {
-  const events = await apiLogCache.getLogsForTrackable(trackableId)
+  const { logs: events } = await apiLogCache.getLimitedLogsForTrackable(
+    trackableId
+  )
 
   const fields = new Set<string>()
 
@@ -42,7 +44,9 @@ export async function getTrackableUsageAggregateFields(trackableId: string) {
 }
 
 export async function getTrackableUsageEvents(input: UsageEventSearchInput) {
-  let logs = await apiLogCache.getLogsForTrackable(input.trackableId)
+  const { logs: initialLogs, maxLogsFound } =
+    await apiLogCache.getLimitedLogsForTrackable(input.trackableId)
+  let logs = initialLogs
 
   if (input.from) {
     const fromTime = new Date(input.from).getTime()
@@ -54,5 +58,8 @@ export async function getTrackableUsageEvents(input: UsageEventSearchInput) {
     logs = logs.filter((log) => log.occurredAt.getTime() <= toTime)
   }
 
-  return logs
+  return {
+    logs,
+    maxLogsFound,
+  }
 }

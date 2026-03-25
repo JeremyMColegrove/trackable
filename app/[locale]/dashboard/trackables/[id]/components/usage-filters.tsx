@@ -1,11 +1,16 @@
 import {
+	DateRangeInput,
+	type DateRangePreset,
+	type DateRangeValue,
+} from "@/components/date-range-input";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { UsageEventTimeRange } from "@/lib/usage-event-search";
+import { usageEventPresetRangeDefinitions } from "@/lib/usage-event-search";
 import { cn } from "@/lib/utils";
 import { useGT } from "gt-next";
 
@@ -24,18 +29,16 @@ export function UsageFilterBox({
 }: UsageFilterBoxProps) {
 	return (
 		<div className="flex items-start gap-3">
-			{roundedUp && (
-				<div
-					className={`h-6 w-8 border-b ${roundedUp ? "rounded-bl-3xl border-l" : ""} border-border`}
-				/>
-			)}
+			{roundedUp ? (
+				<div className="h-6 w-8 rounded-bl-3xl border-b border-l border-border" />
+			) : null}
 			<div
 				className={cn(
 					"flex items-center gap-3 rounded-md bg-accent pl-4 shadow-xs",
 					className,
 				)}
 			>
-				<div className="text-xs font-semibold tracking-tight uppercase">
+				<div className="text-xs font-semibold uppercase tracking-tight">
 					{label}
 				</div>
 				{children}
@@ -77,44 +80,45 @@ export function UsageSelectFilter({
 	);
 }
 
-const usageTimeRangeOptions: Array<{
-	label: string;
-	value: Exclude<UsageEventTimeRange, "custom">;
-}> = [
-	{ label: "Last 15 min", value: "last_15_minutes" },
-	{ label: "Last 1 hour", value: "last_1_hour" },
-	{ label: "Last 24 hours", value: "last_24_hours" },
-	{ label: "Last 7 days", value: "last_7_days" },
-	{ label: "All time", value: "all_time" },
-];
+export const usageTimeRangePresets: DateRangePreset[] =
+	usageEventPresetRangeDefinitions.map((preset) => ({
+		key: preset.range,
+		label: preset.label,
+		getRange(now) {
+			if (preset.durationMs === null) {
+				return {
+					start: new Date(0),
+					end: new Date(now),
+				};
+			}
+
+			return {
+				start: new Date(now.getTime() - preset.durationMs),
+				end: new Date(now),
+			};
+		},
+	}));
 
 export function UsageTimeRangeFilter({
 	value,
 	onValueChange,
 }: {
-	value: Exclude<UsageEventTimeRange, "custom">;
-	onValueChange: (value: Exclude<UsageEventTimeRange, "custom">) => void;
+	value: DateRangeValue | null;
+	onValueChange: (value: DateRangeValue | null) => void;
 }) {
-    const gt = useGT();
+	const gt = useGT();
+
 	return (
-		<UsageFilterBox label={gt("Time Range")}>
-			<Select
-				value={value}
-				onValueChange={(nextValue) =>
-					onValueChange(nextValue as Exclude<UsageEventTimeRange, "custom">)
-				}
-			>
-				<SelectTrigger className="border-none">
-					<SelectValue placeholder={gt("All time")} />
-				</SelectTrigger>
-				<SelectContent align="end">
-					{usageTimeRangeOptions.map((option) => (
-						<SelectItem key={option.value} value={option.value}>
-							{option.label}
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
-		</UsageFilterBox>
+		// <UsageFilterBox label={gt("Time Range")} className="pr-2">
+		<DateRangeInput
+			aria-label={gt("Log time range")}
+			value={value}
+			onChange={onValueChange}
+			placeholder={gt("All time")}
+			presets={usageTimeRangePresets}
+			className="min-w-[21rem] rounded-md bg-accent shadow-xs"
+			fieldClassName="border-0 bg-transparent shadow-none focus-within:border-0 focus-within:ring-0"
+		/>
+		// </UsageFilterBox>
 	);
 }

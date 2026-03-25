@@ -14,7 +14,11 @@ import {
   trackableFormSubmissions,
   trackableShareLinks,
 } from "@/db/schema/trackables"
-import { workspaceMembers, workspaces } from "@/db/schema/team"
+import {
+  workspaceInvitations,
+  workspaceMembers,
+  workspaces,
+} from "@/db/schema/team"
 
 export const users = pgTable(
   "users",
@@ -29,6 +33,7 @@ export const users = pgTable(
         onDelete: "set null",
       }
     ),
+    hasAdminControls: boolean("has_admin_controls").default(false).notNull(),
     isProfilePrivate: boolean("is_profile_private").default(false).notNull(),
     lastSeenAt: lastSeenAt(),
     ...timestamps,
@@ -41,9 +46,25 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     fields: [users.activeWorkspaceId],
     references: [workspaces.id],
   }),
-  workspaceMemberships: many(workspaceMembers),
+  workspaceMemberships: many(workspaceMembers, {
+    relationName: "workspaceMemberUser",
+  }),
+  createdWorkspaceMemberships: many(workspaceMembers, {
+    relationName: "workspaceMemberCreatedByUser",
+  }),
+  receivedWorkspaceInvitations: many(workspaceInvitations, {
+    relationName: "workspaceInvitationInvitedUser",
+  }),
+  sentWorkspaceInvitations: many(workspaceInvitations, {
+    relationName: "workspaceInvitationInvitedByUser",
+  }),
   createdWorkspaces: many(workspaces),
   createdShareLinks: many(trackableShareLinks),
   submittedFormResponses: many(trackableFormSubmissions),
-  accessGrants: many(trackableAccessGrants),
+  subjectAccessGrants: many(trackableAccessGrants, {
+    relationName: "trackableAccessGrantSubjectUser",
+  }),
+  createdAccessGrants: many(trackableAccessGrants, {
+    relationName: "trackableAccessGrantCreatedByUser",
+  }),
 }))

@@ -10,6 +10,8 @@ export class ClearExpiredApiLogsBatchJob extends BatchJob {
 
   async run(context: BatchJobContext) {
     const summary = await cleanupExpiredApiUsage({
+      db: context.db,
+      logger: context.logger,
       now: context.now,
     })
 

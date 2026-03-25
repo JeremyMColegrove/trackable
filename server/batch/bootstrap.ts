@@ -10,7 +10,7 @@ declare global {
 }
 
 function isBatchSchedulerEnabled() {
-  return process.env.BATCH_SCHEDULER_ENABLED === "true"
+  return process.env.BATCH_SCHEDULER_ENABLED !== "false"
 }
 
 export async function bootstrapBatchScheduler() {

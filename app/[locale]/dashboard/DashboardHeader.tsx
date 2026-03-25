@@ -1,7 +1,6 @@
 "use client";
 
 import { CreateWorkspaceDialog } from "@/app/[locale]/dashboard/CreateWorkspaceDialog";
-import { AppBrand } from "@/components/app-brand";
 import {
 	Select,
 	SelectContent,
@@ -12,23 +11,32 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserAccountButton } from "@/components/user-account-button";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { T, useGT } from "gt-next";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { WorkspaceSettingsDialog } from "./workspace-settings-dialog";
 
 const CREATE_WORKSPACE_VALUE = "__create-workspace__";
+const SETTINGS_VALUE = "__workspace_settings__";
 
 export function DashboardHeader() {
 	const gt = useGT();
 	const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const workspaceContext = useQuery(
 		trpc.account.getWorkspaceContext.queryOptions(),
 	);
+	const canManageActiveWorkspace =
+		workspaceContext.data?.activeWorkspace.role === "owner" ||
+		workspaceContext.data?.activeWorkspace.role === "admin";
 
 	async function invalidateWorkspaceQueries() {
 		await Promise.all([
@@ -61,6 +69,13 @@ export function DashboardHeader() {
 			setIsCreateWorkspaceOpen(true);
 			return;
 		}
+		if (workspaceId === SETTINGS_VALUE) {
+			if (!canManageActiveWorkspace) {
+				return;
+			}
+			setIsSettingsOpen(true);
+			return;
+		}
 
 		switchWorkspace.mutate({ workspaceId });
 	}
@@ -68,13 +83,9 @@ export function DashboardHeader() {
 	return (
 		<>
 			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-				<div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-6">
-					<div className="flex min-w-0 items-center gap-6">
-						<AppBrand
-							href="/"
-							className="shrink-0 text-lg font-bold tracking-tighter"
-							collapseTextOnMobile
-						/>
+				<div className="flex h-15 w-full items-center justify-between gap-4 px-6 md:px-8">
+					<div className="flex h-full min-w-0 flex-1 items-center gap-4">
+						<SidebarTrigger className="-ml-1" />
 					</div>
 					<div className="flex min-w-0 items-center gap-3 ">
 						<Select
@@ -84,7 +95,7 @@ export function DashboardHeader() {
 							<SelectTrigger className="w-fit border-none">
 								<SelectValue placeholder={gt("Select workspace")} />
 							</SelectTrigger>
-							<SelectContent>
+							<SelectContent position="popper" align="start">
 								<SelectGroup>
 									<SelectLabel>
 										<T>Workspaces</T>
@@ -99,10 +110,20 @@ export function DashboardHeader() {
 								</SelectGroup>
 								<SelectSeparator />
 								<SelectGroup>
+									<SelectItem
+										value={SETTINGS_VALUE}
+										disabled={!canManageActiveWorkspace}
+									>
+										<div className="flex items-center gap-2">
+											<Settings className="size-4 inline-block" />
+											<T>Workspace Settings</T>
+										</div>
+									</SelectItem>
 									<SelectItem value={CREATE_WORKSPACE_VALUE}>
-										<Plus className="size-4" />
-
-										<T>Create new workspace</T>
+										<div className="flex items-center gap-2">
+											<Plus className="size-4 inline-block" />
+											<T>Create new workspace</T>
+										</div>
 									</SelectItem>
 								</SelectGroup>
 							</SelectContent>
@@ -115,6 +136,10 @@ export function DashboardHeader() {
 			<CreateWorkspaceDialog
 				open={isCreateWorkspaceOpen}
 				onOpenChange={setIsCreateWorkspaceOpen}
+			/>
+			<WorkspaceSettingsDialog
+				open={isSettingsOpen}
+				onOpenChange={setIsSettingsOpen}
 			/>
 		</>
 	);

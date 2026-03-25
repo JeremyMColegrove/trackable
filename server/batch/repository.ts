@@ -3,7 +3,7 @@ import "server-only"
 import { randomUUID } from "node:crypto"
 import { hostname } from "node:os"
 
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { and, eq, inArray, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { batchJobLeases, batchJobs, batchJobRuns } from "@/db/schema"
@@ -30,24 +30,37 @@ export async function syncBatchJobDefinitions(
 
   const now = new Date()
 
-  await db
-    .insert(batchJobs)
-    .values(
-      definitions.map((definition) => ({
-        key: definition.key,
-        name: definition.name,
-        schedule: definition.schedule,
-        updatedAt: now,
-      }))
-    )
-    .onConflictDoUpdate({
-      target: batchJobs.key,
-      set: {
-        name: sql`excluded.name`,
-        schedule: sql`excluded.schedule`,
-        updatedAt: now,
-      },
-    })
+  await db.transaction(async (tx) => {
+    for (const definition of definitions) {
+      const [createdJob] = await tx
+        .insert(batchJobs)
+        .values({
+          key: definition.key,
+          name: definition.name,
+          schedule: definition.schedule,
+          updatedAt: now,
+        })
+        .onConflictDoNothing({
+          target: batchJobs.key,
+        })
+        .returning({
+          id: batchJobs.id,
+        })
+
+      if (createdJob) {
+        continue
+      }
+
+      await tx
+        .update(batchJobs)
+        .set({
+          name: definition.name,
+          schedule: definition.schedule,
+          updatedAt: now,
+        })
+        .where(eq(batchJobs.key, definition.key))
+    }
+  })
 
   return db.query.batchJobs.findMany({
     where: inArray(
@@ -211,33 +224,45 @@ export async function tryAcquireBatchLease(input: {
     now.getTime() + input.timeoutMs + LEASE_BUFFER_MS
   )
 
-  const result = await db.execute(sql`
-    insert into ${batchJobLeases} (
-      batch_job_id,
-      job_key,
-      locked_until,
-      locked_by,
-      updated_at
+  const [updatedLease] = await db
+    .update(batchJobLeases)
+    .set({
+      batchJobId: input.job.id,
+      jobKey: input.job.key,
+      lockedUntil,
+      lockedBy,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(batchJobLeases.batchJobId, input.job.id),
+        lte(batchJobLeases.lockedUntil, now)
+      )
     )
-    values (
-      ${input.job.id},
-      ${input.job.key},
-      ${lockedUntil},
-      ${lockedBy},
-      ${now}
-    )
-    on conflict (${batchJobLeases.jobKey}) do update
-    set
-      batch_job_id = excluded.batch_job_id,
-      locked_until = excluded.locked_until,
-      locked_by = excluded.locked_by,
-      updated_at = excluded.updated_at
-    where ${batchJobLeases.lockedUntil} <= ${now}
-    returning ${batchJobLeases.jobKey} as job_key
-  `)
+    .returning({
+      jobKey: batchJobLeases.jobKey,
+    })
 
-  if (result.rowCount === 0) {
-    return null
+  if (!updatedLease) {
+    const [createdLease] = await db
+      .insert(batchJobLeases)
+      .values({
+        batchJobId: input.job.id,
+        jobKey: input.job.key,
+        lockedUntil,
+        lockedBy,
+        updatedAt: now,
+      })
+      .onConflictDoNothing({
+        target: batchJobLeases.batchJobId,
+      })
+      .returning({
+        jobKey: batchJobLeases.jobKey,
+      })
+
+    if (!createdLease) {
+      return null
+    }
   }
 
   return {

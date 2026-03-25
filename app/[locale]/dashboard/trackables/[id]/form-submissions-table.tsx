@@ -7,17 +7,20 @@ import { DataTable } from "@/components/ui/data-table"
 import { ActivityDetailsDialog } from "./activity-details-dialog"
 import { formSubmissionColumns } from "./form-submission-columns"
 import type { SubmissionRow } from "./table-types"
-import { useGT } from "gt-next";
+import { useGT } from "gt-next"
 
 export function FormSubmissionsTable({
   data,
+  headerButton,
+  exportFileName,
 }: {
   data: SubmissionRow[]
+  headerButton?: React.ReactNode
+  exportFileName: string
 }) {
-    const gt = useGT();
-  const [selectedSubmission, setSelectedSubmission] = useState<SubmissionRow | null>(
-    null
-  )
+  const gt = useGT()
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<SubmissionRow | null>(null)
 
   return (
     <>
@@ -25,7 +28,13 @@ export function FormSubmissionsTable({
         columns={formSubmissionColumns}
         data={data}
         title={gt("Survey Data")}
-        description={gt("Latest structured responses submitted to this trackable.")}
+        description={gt(
+          "Latest structured responses submitted to this trackable."
+        )}
+        headerButton={headerButton}
+        exportOptions={{
+          fileName: exportFileName,
+        }}
         onRowClick={setSelectedSubmission}
         emptyMessage="No form submissions have been recorded yet."
         initialPageSize={10}

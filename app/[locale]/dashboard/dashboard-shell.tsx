@@ -25,7 +25,7 @@ export function DashboardShell({
   }
 
   return (
-    <SidebarProvider defaultOpen={false} className="bg-background">
+    <SidebarProvider defaultOpen={true} className="bg-background">
       <DashboardSidebar />
       <SidebarInset className="min-h-svh min-w-0 bg-background">
         <DashboardHeader />

@@ -210,6 +210,7 @@ export class FlatTableStrategy implements AggregationStrategy {
       totalMatchedEvents: filteredEvents.length,
       totalGroupedRows: sortedRows.length,
       availableAggregateFields: [],
+      maxLogsFound: false,
       sourceSnapshot,
     }
   }
@@ -312,6 +313,7 @@ export class GroupedAggregateStrategy implements AggregationStrategy {
       totalMatchedEvents: filteredEvents.length,
       totalGroupedRows: sortedRows.length,
       availableAggregateFields: [],
+      maxLogsFound: false,
       sourceSnapshot,
     }
   }

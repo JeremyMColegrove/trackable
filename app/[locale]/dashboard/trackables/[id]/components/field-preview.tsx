@@ -18,6 +18,8 @@ import {
 	type EditableTrackableFormField,
 } from "@/lib/project-form-builder";
 import { ArrowDown, ArrowUp, Edit3, Plus, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { T, useGT } from "gt-next";
 import { formatFieldKind } from "../display-utils";
 import {
 	isCheckboxesField,
@@ -25,7 +27,6 @@ import {
 	isRatingField,
 	isShortTextField,
 } from "../utils/form-field-utils";
-import { T, useGT } from "gt-next";
 
 export function FieldPreview({
 	field,
@@ -42,15 +43,21 @@ export function FieldPreview({
 	onMove: (index: number, direction: -1 | 1) => void;
 	onRemove: (index: number) => void;
 }) {
-    const gt = useGT();
+	const gt = useGT();
+	const [isEditing, setIsEditing] = useState(false);
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-start justify-between gap-4">
 				<div className="space-y-1">
 					<div className="flex flex-wrap items-center gap-2">
-						<label className="block text-lg font-medium">
+						<button
+							type="button"
+							className="block text-left text-lg font-medium transition-colors hover:text-foreground/80"
+							onClick={() => setIsEditing(true)}
+						>
 							{field.label || "Untitled field"}
-						</label>
+						</button>
 						<Badge variant="outline" className="rounded-full">
 							{field.required ? "Required" : formatFieldKind(field.kind)}
 						</Badge>
@@ -60,22 +67,31 @@ export function FieldPreview({
 					) : null}
 				</div>
 				<div className="flex items-center gap-2">
-					<Dialog>
+					<Dialog open={isEditing} onOpenChange={setIsEditing}>
 						<DialogTrigger asChild>
-							<Button type="button" size="sm" variant="outline">
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								onClick={() => setIsEditing(true)}
+							>
 								<Edit3 className="size-3.5" />
-								
-                                								<T>Edit</T>
-                                							</Button>
+
+								<T>Edit</T>
+							</Button>
 						</DialogTrigger>
 						<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
 							<DialogHeader>
-								<DialogTitle><T>Field</T></DialogTitle>
+								<DialogTitle>
+									<T>Field</T>
+								</DialogTitle>
 							</DialogHeader>
 
 							<div className="grid gap-3">
 								<div className="space-y-2">
-									<Label><T>Label</T></Label>
+									<Label>
+										<T>Label</T>
+									</Label>
 									<Input
 										value={field.label}
 										placeholder={gt("Field label")}
@@ -85,7 +101,9 @@ export function FieldPreview({
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label><T>Description</T></Label>
+									<Label>
+										<T>Description</T>
+									</Label>
 									<Textarea
 										value={field.description ?? ""}
 										placeholder={gt("Description")}
@@ -99,7 +117,9 @@ export function FieldPreview({
 									/>
 								</div>
 								<div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-									<Label><T>Required</T></Label>
+									<Label>
+										<T>Required</T>
+									</Label>
 									<Switch
 										checked={field.required}
 										onCheckedChange={(checked) =>
@@ -110,7 +130,9 @@ export function FieldPreview({
 
 								{isRatingField(field) ? (
 									<div className="space-y-2">
-										<Label><T>Scale</T></Label>
+										<Label>
+											<T>Scale</T>
+										</Label>
 										<Input
 											type="number"
 											min={3}
@@ -132,7 +154,9 @@ export function FieldPreview({
 
 								{isNotesField(field) || isShortTextField(field) ? (
 									<div className="space-y-2">
-										<Label><T>Placeholder</T></Label>
+										<Label>
+											<T>Placeholder</T>
+										</Label>
 										<Input
 											value={field.config.placeholder ?? ""}
 											placeholder={gt("Placeholder")}
@@ -151,7 +175,9 @@ export function FieldPreview({
 
 								{isCheckboxesField(field) ? (
 									<div className="space-y-2">
-										<Label><T>Options</T></Label>
+										<Label>
+											<T>Options</T>
+										</Label>
 										{field.config.options.map((option, optionIndex) => (
 											<div
 												key={option.id}
@@ -224,9 +250,9 @@ export function FieldPreview({
 											}
 										>
 											<Plus className="size-4" />
-											
-                                            											<T>Add option</T>
-                                            										</Button>
+
+											<T>Add option</T>
+										</Button>
 									</div>
 								) : null}
 							</div>

@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server"
+import { isApiLogRateLimitMessage } from "@/lib/subscription-limit-messages"
 import { recordApiUsage } from "@/server/usage-tracking/record-api-usage"
 
 function buildRequestMetadata(request: Request) {
@@ -46,10 +47,16 @@ async function parseUsagePayload(request: Request) {
 }
 
 function getErrorStatus(error: TRPCError) {
+  if (isApiLogRateLimitMessage(error.message)) {
+    return 503
+  }
+
   return error.code === "BAD_REQUEST"
     ? 400
     : error.code === "UNAUTHORIZED"
       ? 401
+      : error.code === "FORBIDDEN"
+        ? 403
       : error.code === "NOT_FOUND"
         ? 404
         : error.code === "CONFLICT"
@@ -87,7 +94,12 @@ export async function POST(request: Request) {
     if (error instanceof TRPCError) {
       return Response.json(
         { error: error.message },
-        { status: getErrorStatus(error) }
+        {
+          status: getErrorStatus(error),
+          headers: isApiLogRateLimitMessage(error.message)
+            ? { "Retry-After": "1" }
+            : undefined,
+        }
       )
     }
 

@@ -7,6 +7,7 @@ import { db } from "@/db"
 import { users } from "@/db/schema"
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
 import { userActiveWorkspaceCache } from "@/server/redis/access-control-cache.repository"
+import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
 import {
   createWorkspaceForUser,
   getWorkspaceMemberships,
@@ -24,11 +25,13 @@ export const accountRouter = createTRPCRouter({
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: {
+        hasAdminControls: true,
         isProfilePrivate: true,
       },
     })
 
     return {
+      hasAdminControls: user?.hasAdminControls ?? false,
       isProfilePrivate: user?.isProfilePrivate ?? false,
     }
   }),
@@ -40,17 +43,28 @@ export const accountRouter = createTRPCRouter({
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
 
-    const [activeMembership, memberships] = await Promise.all([
+    const [user, activeMembership, memberships] = await Promise.all([
+      db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          hasAdminControls: true,
+        },
+      }),
       accessControlService.resolveActiveWorkspace(userId),
       getWorkspaceMemberships(userId),
     ])
+    const activeTier = await subscriptionService.getWorkspaceTier(
+      activeMembership.workspace.id
+    )
 
     return {
+      hasAdminControls: user?.hasAdminControls ?? false,
       activeWorkspace: {
         id: activeMembership.workspace.id,
         name: activeMembership.workspace.name,
         slug: activeMembership.workspace.slug,
         role: activeMembership.role,
+        tier: activeTier,
       },
       workspaces: memberships.map((membership) => ({
         id: membership.workspace.id,
@@ -158,6 +172,15 @@ export const accountRouter = createTRPCRouter({
         .where(eq(users.id, userId))
 
       return {
+        hasAdminControls:
+          (
+            await db.query.users.findFirst({
+              where: eq(users.id, userId),
+              columns: {
+                hasAdminControls: true,
+              },
+            })
+          )?.hasAdminControls ?? false,
         isProfilePrivate: input.isProfilePrivate,
       }
     }),

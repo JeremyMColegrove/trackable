@@ -14,6 +14,7 @@ import type {
 	FormAnswerValue,
 	TrackableFormFieldSnapshot,
 } from "@/db/schema/types";
+import { isSurveyResponseLimitMessage } from "@/lib/subscription-limit-messages";
 import { getSharedFormCompletionCookieName } from "@/lib/shared-form-completion-cookie";
 import {
 	getEmptyAnswerValue,
@@ -139,6 +140,17 @@ function SharedFormStatusCard({
 	);
 }
 
+function SharedFormResponseLimitCard() {
+	return (
+		<SharedFormStatusCard
+			badge="Response limit reached"
+			title="This survey is no longer accepting responses."
+			description="This survey has already received the maximum number of responses allowed on the current plan. The workspace owner needs to upgrade to accept more responses."
+			variant="error"
+		/>
+	);
+}
+
 type SharedTrackable = {
 	id: string;
 	name: string;
@@ -228,6 +240,14 @@ export function SharedFormPage({ token }: { token: string }) {
 		);
 	}
 
+	if (
+		sharedFormQuery.error?.data?.code === "PRECONDITION_FAILED" &&
+		sharedFormQuery.error.message &&
+		isSurveyResponseLimitMessage(sharedFormQuery.error.message)
+	) {
+		return <SharedFormResponseLimitCard />;
+	}
+
 	if (sharedFormQuery.isError || !sharedFormQuery.data) {
 		return (
 			<SharedFormStatusCard
@@ -276,7 +296,7 @@ function SharedFormCard({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [submissionStatus, setSubmissionStatus] = useState<
-		"idle" | "submitted" | "already-submitted"
+		"idle" | "submitted" | "already-submitted" | "limit-reached"
 	>(() => {
 		if (initialHasSubmitted) {
 			return "already-submitted";
@@ -316,6 +336,11 @@ function SharedFormCard({
 				setSubmissionStatus("submitted");
 			},
 			onError: (error) => {
+				if (isSurveyResponseLimitMessage(error.message)) {
+					setSubmissionStatus("limit-reached");
+					return;
+				}
+
 				setSubmissionError(error.message);
 			},
 		}),
@@ -386,6 +411,10 @@ function SharedFormCard({
 	}
 
 	if (submissionStatus !== "idle") {
+		if (submissionStatus === "limit-reached") {
+			return <SharedFormResponseLimitCard />;
+		}
+
 		const isRepeatVisit = submissionStatus === "already-submitted";
 
 		return (

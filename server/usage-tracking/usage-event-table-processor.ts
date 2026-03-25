@@ -32,6 +32,7 @@ export class UsageEventTableProcessor {
     private readonly events: UsageEventRecord[],
     private readonly input: UsageEventSearchInput,
     private readonly sourceSnapshot: UsageEventSourceSnapshot,
+    private readonly maxLogsFound: boolean,
   ) {
     this.strategy =
       input.aggregation !== "none" && input.aggregateField
@@ -52,6 +53,7 @@ export class UsageEventTableProcessor {
     return {
       ...result,
       availableAggregateFields,
+      maxLogsFound: this.maxLogsFound,
     }
   }
 }

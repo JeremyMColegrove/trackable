@@ -7,6 +7,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGT } from "gt-next";
+import { PageShell } from "@/components/page-shell";
 
 function DashboardPageSkeleton() {
 	return (
@@ -32,24 +33,20 @@ export function DashboardPageClient() {
 	const gt = useGT();
 	return (
 		<RequireAuth fallback={<DashboardPageSkeleton />}>
-			<main className="flex-1">
-				<div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-8 sm:px-8">
-					<DashboardTrackablesTable
-						title={gt("Overview")}
-						titleVariant="page"
-						headerButton={<CreateTrackableDialog />}
-						description={undefined}
-						showSearch={false}
-						showViewOptions={false}
-					/>
+			<PageShell
+				title={gt("Overview")}
+				headerActions={<CreateTrackableDialog />}
+			>
+				<DashboardMetrics />
 
-					<Separator className="my-2" />
-
-					<div className="pt-4">
-						<DashboardMetrics />
-					</div>
-				</div>
-			</main>
+				<DashboardTrackablesTable
+					title={gt("Trackables")}
+					titleVariant="default"
+					description={gt("Manage your logs, surveys, and links")}
+					showSearch={false}
+					showViewOptions={false}
+				/>
+			</PageShell>
 		</RequireAuth>
 	);
 }

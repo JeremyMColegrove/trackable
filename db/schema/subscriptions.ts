@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 
 import { nullableTimestamp, timestamps, uuidPrimaryKey } from "@/db/schema/_shared"
@@ -15,9 +15,9 @@ export const workspaceSubscriptions = pgTable(
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    lemonSqueezySubscriptionId: text("lemon_squeezy_subscription_id").notNull(),
-    lemonSqueezyCustomerId: text("lemon_squeezy_customer_id").notNull(),
-    variantId: text("variant_id").notNull(),
+    lemonSqueezySubscriptionId: text("lemon_squeezy_subscription_id"),
+    lemonSqueezyCustomerId: text("lemon_squeezy_customer_id"),
+    variantId: text("variant_id"),
     tier: subscriptionTierEnum("tier").default("free").notNull(),
     status: subscriptionStatusEnum("status").default("active").notNull(),
     currentPeriodEnd: nullableTimestamp("current_period_end"),
@@ -25,9 +25,9 @@ export const workspaceSubscriptions = pgTable(
   },
   (table) => [
     uniqueIndex("workspace_subscriptions_workspace_idx").on(table.workspaceId),
-    uniqueIndex("workspace_subscriptions_ls_sub_idx").on(
-      table.lemonSqueezySubscriptionId
-    ),
+    uniqueIndex("workspace_subscriptions_ls_sub_idx")
+      .on(table.lemonSqueezySubscriptionId)
+      .where(sql`${table.lemonSqueezySubscriptionId} is not null`),
   ]
 )
 

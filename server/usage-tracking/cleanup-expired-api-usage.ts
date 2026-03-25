@@ -1,121 +1,160 @@
-import "server-only"
+import "server-only";
 
-import { and, count, eq, sql } from "drizzle-orm"
-
-import { db } from "@/db"
-import { apiKeys, trackableApiUsageEvents, trackableItems } from "@/db/schema"
+import type { db } from "@/db";
+import { apiKeys, trackableApiUsageEvents, trackableItems } from "@/db/schema";
+import { and, count, eq, inArray, lt, max } from "drizzle-orm";
+import type { Logger } from "pino";
 
 interface CleanupExpiredApiUsageInput {
-  now?: Date
+	db: typeof db;
+	logger: Logger;
+	now?: Date;
 }
 
 interface CleanupExpiredApiUsageResult {
-  scannedTrackables: number
-  affectedTrackables: number
-  deletedEvents: number
-  updatedApiKeys: number
+	scannedTrackables: number;
+	affectedTrackables: number;
+	deletedEvents: number;
+	updatedApiKeys: number;
 }
 
-type CleanupQueryRow = {
-  deleted_events: number
-  affected_trackables: number
-  updated_api_keys: number
+function getRetentionDays(
+	settings: (typeof trackableItems.$inferSelect)["settings"],
+) {
+	const retention = settings?.apiLogRetentionDays;
+
+	return typeof retention === "number" && retention > 0 ? retention : null;
 }
 
-const API_LOG_RETENTION_DAYS_SQL = sql`(${trackableItems.settings} ->> 'apiLogRetentionDays')::int`
-
-// `null` or a missing retention value means "never delete", so only numeric
-// retention windows participate in cleanup.
-const HAS_EXPIRING_RETENTION_SQL = sql`
-  jsonb_typeof(${trackableItems.settings} -> 'apiLogRetentionDays') = 'number'
-  and ${API_LOG_RETENTION_DAYS_SQL} > 0
-`
+function getRetentionCutoff(now: Date, retentionDays: number) {
+	const cutoff = new Date(now);
+	cutoff.setDate(cutoff.getDate() - retentionDays);
+	return cutoff;
+}
 
 export async function cleanupExpiredApiUsage(
-  input: CleanupExpiredApiUsageInput = {}
+	input: CleanupExpiredApiUsageInput,
 ): Promise<CleanupExpiredApiUsageResult> {
-  const now = input.now ?? new Date()
+	const database = input.db;
+	const logger = input.logger;
+	const now = input.now ?? new Date();
 
-  const [scannedTrackablesRow] = await db
-    .select({
-      count: count(trackableItems.id),
-    })
-    .from(trackableItems)
-    .where(
-      and(
-        eq(trackableItems.kind, "api_ingestion"),
-        HAS_EXPIRING_RETENTION_SQL
-      )
-    )
+	const trackables = await database
+		.select({
+			id: trackableItems.id,
+			name: trackableItems.name,
+			settings: trackableItems.settings,
+		})
+		.from(trackableItems)
+		.where(eq(trackableItems.kind, "api_ingestion"));
 
-  const cleanupResult = await db.execute<CleanupQueryRow>(sql`
-    with deleted_rows as (
-      delete from ${trackableApiUsageEvents} as usage_events
-      using ${trackableItems} as trackables
-      where trackables.id = usage_events.trackable_id
-        and trackables.kind = 'api_ingestion'
-        and jsonb_typeof(trackables.settings -> 'apiLogRetentionDays') = 'number'
-        and (trackables.settings ->> 'apiLogRetentionDays')::int > 0
-        and usage_events.occurred_at <= ${now}
-          - make_interval(
-            days => (trackables.settings ->> 'apiLogRetentionDays')::int
-          )
-      returning usage_events.trackable_id, usage_events.api_key_id
-    ),
-    affected_trackables as (
-      select distinct deleted_rows.trackable_id
-      from deleted_rows
-    ),
-    affected_api_keys as (
-      select distinct deleted_rows.api_key_id
-      from deleted_rows
-    ),
-    updated_trackables as (
-      update ${trackableItems} as trackables
-      set
-        api_usage_count = coalesce(stats.usage_count, 0),
-        last_api_usage_at = stats.last_occurred_at,
-        updated_at = ${now}
-      from affected_trackables
-      left join lateral (
-        select
-          count(*)::int as usage_count,
-          max(usage_events.occurred_at) as last_occurred_at
-        from ${trackableApiUsageEvents} as usage_events
-        where usage_events.trackable_id = affected_trackables.trackable_id
-      ) as stats on true
-      where trackables.id = affected_trackables.trackable_id
-      returning trackables.id
-    ),
-    updated_api_keys as (
-      update ${apiKeys} as keys
-      set
-        usage_count = coalesce(stats.usage_count, 0),
-        last_used_at = stats.last_used_at,
-        updated_at = ${now}
-      from affected_api_keys
-      left join lateral (
-        select
-          count(*)::int as usage_count,
-          max(usage_events.occurred_at) as last_used_at
-        from ${trackableApiUsageEvents} as usage_events
-        where usage_events.api_key_id = affected_api_keys.api_key_id
-      ) as stats on true
-      where keys.id = affected_api_keys.api_key_id
-      returning keys.id
-    )
-    select
-      coalesce((select count(*)::int from deleted_rows), 0) as deleted_events,
-      coalesce((select count(*)::int from updated_trackables), 0) as affected_trackables,
-      coalesce((select count(*)::int from updated_api_keys), 0) as updated_api_keys
-  `)
+	let affectedTrackables = 0;
+	let deletedEvents = 0;
+	let updatedApiKeys = 0;
 
-  const summary = cleanupResult.rows[0]
+	for (const trackable of trackables) {
+		const retentionDays = getRetentionDays(trackable.settings);
 
-  return {
-    scannedTrackables: Number(scannedTrackablesRow?.count) || 0,
-    affectedTrackables: Number(summary?.affected_trackables) || 0,
-    deletedEvents: Number(summary?.deleted_events) || 0,
-    updatedApiKeys: Number(summary?.updated_api_keys) || 0,
-  }
+		if (!retentionDays) {
+			continue;
+		}
+
+		const deletedRows = await database
+			.delete(trackableApiUsageEvents)
+			.where(
+				and(
+					eq(trackableApiUsageEvents.trackableId, trackable.id),
+					lt(
+						trackableApiUsageEvents.occurredAt,
+						getRetentionCutoff(now, retentionDays),
+					),
+				),
+			)
+			.returning({
+				id: trackableApiUsageEvents.id,
+				apiKeyId: trackableApiUsageEvents.apiKeyId,
+			});
+
+		if (deletedRows.length === 0) {
+			continue;
+		}
+
+		affectedTrackables += 1;
+		deletedEvents += deletedRows.length;
+
+		logger.info(
+			{
+				trackableId: trackable.id,
+				trackableName: trackable.name,
+				retentionDays,
+				deletedEvents: deletedRows.length,
+			},
+			`Cleared ${deletedRows.length} expired API usage logs.`,
+		);
+
+		const [trackableTotals] = await database
+			.select({
+				usageCount: count(trackableApiUsageEvents.id),
+				lastOccurredAt: max(trackableApiUsageEvents.occurredAt),
+			})
+			.from(trackableApiUsageEvents)
+			.where(eq(trackableApiUsageEvents.trackableId, trackable.id));
+
+		await database
+			.update(trackableItems)
+			.set({
+				apiUsageCount: Number(trackableTotals?.usageCount) || 0,
+				lastApiUsageAt: trackableTotals?.lastOccurredAt ?? null,
+				updatedAt: now,
+			})
+			.where(eq(trackableItems.id, trackable.id));
+
+		const affectedApiKeyIds = Array.from(
+			new Set(deletedRows.map((row) => row.apiKeyId)),
+		);
+
+		const apiKeyTotals = affectedApiKeyIds.length
+			? await database
+					.select({
+						apiKeyId: trackableApiUsageEvents.apiKeyId,
+						usageCount: count(trackableApiUsageEvents.id),
+						lastUsedAt: max(trackableApiUsageEvents.occurredAt),
+					})
+					.from(trackableApiUsageEvents)
+					.where(inArray(trackableApiUsageEvents.apiKeyId, affectedApiKeyIds))
+					.groupBy(trackableApiUsageEvents.apiKeyId)
+			: [];
+
+		const totalsByApiKeyId = new Map(
+			apiKeyTotals.map((row) => [
+				row.apiKeyId,
+				{
+					usageCount: Number(row.usageCount) || 0,
+					lastUsedAt: row.lastUsedAt ?? null,
+				},
+			]),
+		);
+
+		for (const apiKeyId of affectedApiKeyIds) {
+			const totals = totalsByApiKeyId.get(apiKeyId);
+
+			await database
+				.update(apiKeys)
+				.set({
+					usageCount: totals?.usageCount ?? 0,
+					lastUsedAt: totals?.lastUsedAt ?? null,
+					updatedAt: now,
+				})
+				.where(eq(apiKeys.id, apiKeyId));
+		}
+
+		updatedApiKeys += affectedApiKeyIds.length;
+	}
+
+	return {
+		scannedTrackables: trackables.length,
+		affectedTrackables,
+		deletedEvents,
+		updatedApiKeys,
+	};
 }

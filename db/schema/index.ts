@@ -13,7 +13,11 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm"
 import { apiKeys, trackableApiUsageEvents } from "@/db/schema/api-usage"
 import { batchJobLeases, batchJobs, batchJobRuns } from "@/db/schema/batch"
 import { workspaceSubscriptions } from "@/db/schema/subscriptions"
-import { workspaceMembers, workspaces } from "@/db/schema/team"
+import {
+  workspaceInvitations,
+  workspaceMembers,
+  workspaces,
+} from "@/db/schema/team"
 import {
   trackableAccessGrants,
   trackableFormAnswers,
@@ -33,6 +37,11 @@ export type NewWorkspace = InferInsertModel<typeof workspaces>
 
 export type WorkspaceMember = InferSelectModel<typeof workspaceMembers>
 export type NewWorkspaceMember = InferInsertModel<typeof workspaceMembers>
+
+export type WorkspaceInvitation = InferSelectModel<typeof workspaceInvitations>
+export type NewWorkspaceInvitation = InferInsertModel<
+  typeof workspaceInvitations
+>
 
 export type TrackableItem = InferSelectModel<typeof trackableItems>
 export type NewTrackableItem = InferInsertModel<typeof trackableItems>
@@ -84,5 +93,9 @@ export type NewBatchJobRun = InferInsertModel<typeof batchJobRuns>
 export type BatchJobLease = InferSelectModel<typeof batchJobLeases>
 export type NewBatchJobLease = InferInsertModel<typeof batchJobLeases>
 
-export type WorkspaceSubscription = InferSelectModel<typeof workspaceSubscriptions>
-export type NewWorkspaceSubscription = InferInsertModel<typeof workspaceSubscriptions>
+export type WorkspaceSubscription = InferSelectModel<
+  typeof workspaceSubscriptions
+>
+export type NewWorkspaceSubscription = InferInsertModel<
+  typeof workspaceSubscriptions
+>

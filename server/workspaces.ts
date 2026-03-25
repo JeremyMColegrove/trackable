@@ -5,7 +5,12 @@ import { and, eq, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users, workspaceMembers, workspaces } from "@/db/schema"
-import { userActiveWorkspaceCache, userMembershipsCache } from "@/server/redis/access-control-cache.repository"
+import {
+  userActiveWorkspaceCache,
+  userMembershipsCache,
+} from "@/server/redis/access-control-cache.repository"
+import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
+import { applyWorkspaceCreationSideEffects } from "@/server/workspace-creation-side-effects"
 
 
 export function buildDefaultWorkspaceName(
@@ -85,10 +90,16 @@ export async function createWorkspaceForUser(input: {
     return workspace
   })
 
-  await userMembershipsCache.delete(input.userId)
-  if (input.setActive ?? true) {
-    await userActiveWorkspaceCache.delete(input.userId)
-  }
+  await applyWorkspaceCreationSideEffects({
+    workspaceId: result.id,
+    userId: input.userId,
+    setActive: input.setActive ?? true,
+  }, {
+    ensureFreeWorkspaceSubscription: (workspaceId) =>
+      subscriptionService.ensureFreeWorkspaceSubscription(workspaceId),
+    clearMembershipsCache: (userId) => userMembershipsCache.delete(userId),
+    clearActiveWorkspaceCache: (userId) => userActiveWorkspaceCache.delete(userId),
+  })
 
   return result
 }

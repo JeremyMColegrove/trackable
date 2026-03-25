@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation"
+import { TeamPageClient } from "./team-page-client"
 
 export const dynamic = "force-dynamic"
 
 export default function TeamPage() {
-  notFound()
+  return <TeamPageClient />
 }

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server"
-import { and, desc, eq, gte, sum } from "drizzle-orm"
+import { and, desc, eq, gte, isNull, sum } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -91,6 +91,22 @@ export const dashboardRouter = createTRPCRouter({
       trackableItems,
       eq(trackableItems.workspaceId, activeWorkspace.workspaceId)
     )
+    const activeTrackablesCount = await db.$count(
+      trackableItems,
+      and(
+        eq(trackableItems.workspaceId, activeWorkspace.workspaceId),
+        isNull(trackableItems.archivedAt)
+      )
+    )
+
+    const activeSurveysCount = await db.$count(
+      trackableItems,
+      and(
+        eq(trackableItems.workspaceId, activeWorkspace.workspaceId),
+        eq(trackableItems.kind, "survey"),
+        isNull(trackableItems.archivedAt)
+      )
+    )
 
     const totals = submissionTotals[0]
     const totalSubmissions = Number(totals?.totalSubmissions) || 0
@@ -115,7 +131,10 @@ export const dashboardRouter = createTRPCRouter({
     }
 
     return {
+      activeTrackablesCount,
       trackablesCount,
+      activeSurveysCount,
+      recentLogsCount: recentUsageEvents.length,
       totalSubmissions,
       totalUsageTracks,
       submissionActivity,
@@ -142,6 +161,7 @@ export const dashboardRouter = createTRPCRouter({
         name: true,
         submissionCount: true,
         apiUsageCount: true,
+        updatedAt: true,
       },
       with: {
         workspace: {

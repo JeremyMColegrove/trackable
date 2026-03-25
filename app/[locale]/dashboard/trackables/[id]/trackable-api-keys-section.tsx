@@ -1,18 +1,16 @@
 "use client";
 
+import { useGT } from "gt-next";
 import { useMemo } from "react";
 import { ApiKeysTable } from "./api-keys-table";
-import { useTrackableDetails } from "./trackable-shell";
 import {
 	TrackablePageFrame,
-	TrackableNarrowContent,
-	TrackableSectionHeader,
 	UnsupportedPageState,
 } from "./components/trackable-page-frame";
-import { useGT } from "gt-next";
+import { useTrackableDetails } from "./trackable-shell";
 
 export function TrackableApiKeysSection() {
-    const gt = useGT();
+	const gt = useGT();
 	const trackable = useTrackableDetails();
 	const searchQuery = "";
 	const filteredApiKeys = useMemo(() => {
@@ -38,27 +36,31 @@ export function TrackableApiKeysSection() {
 
 	return (
 		<TrackablePageFrame
-			eyebrow="Current trackable"
 			title={gt("Connection")}
-			description={gt("Create, review, and revoke the connection keys that authorize log delivery for this trackable.")}
+			description={gt(
+				"Create, review, and revoke the connection keys that authorize log delivery for this trackable.",
+			)}
 		>
 			{trackable.kind !== "api_ingestion" ? (
 				<UnsupportedPageState
 					title={gt("Connection unavailable")}
 					description={gt("Only log trackables can manage connections.")}
 				/>
+			) : !trackable.permissions.canManageApiKeys ? (
+				<UnsupportedPageState
+					title={gt("Connection restricted")}
+					description={gt(
+						"You have view access to this trackable, but only editors can manage API keys.",
+					)}
+				/>
 			) : (
-				<TrackableNarrowContent>
-					<TrackableSectionHeader
-						title={gt("Connection")}
-						description={gt("Create and manage connection details used to send log events to this trackable.")}
-					/>
+				<>
 					<ApiKeysTable
 						data={filteredApiKeys}
 						trackableId={trackable.id}
 						trackableName={trackable.name}
 					/>
-				</TrackableNarrowContent>
+				</>
 			)}
 		</TrackablePageFrame>
 	);

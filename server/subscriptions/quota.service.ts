@@ -1,24 +1,29 @@
 import "server-only"
 
 import { TRPCError } from "@trpc/server"
-import { and, count, eq, gte, isNull } from "drizzle-orm"
+import { and, count, eq, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
-  trackableApiUsageEvents,
   trackableFormSubmissions,
   trackableItems,
   workspaceMembers,
 } from "@/db/schema"
-import { subscriptionService } from "@/server/subscriptions/subscription.service"
-import { areTiersUnlocked } from "@/server/subscriptions/tiers-unlocked"
+import {
+  getApiLogRateLimitMessage,
+  getSurveyResponseLimitMessage,
+  getTrackableLimitMessage,
+  getWorkspaceMemberLimitMessage,
+} from "@/lib/subscription-limit-messages"
+import { isSubscriptionEnforcementEnabled } from "@/lib/subscription-enforcement"
+import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
 import { CounterCacheRepository } from "@/server/redis/counter-cache.repository"
 
 const apiLogsRateLimitCache = new CounterCacheRepository("api-logs-rate-limit")
 
 export class QuotaService {
   async assertCanCreateTrackable(workspaceId: string) {
-    if (areTiersUnlocked()) {
+    if (!isSubscriptionEnforcementEnabled()) {
       return
     }
 
@@ -38,16 +43,16 @@ export class QuotaService {
         )
       )
 
-    if (result.count >= limits.maxTrackableItems) {
+    if (Number(result.count) >= limits.maxTrackableItems) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `You have reached the maximum of ${limits.maxTrackableItems} trackable items for your plan. Please upgrade to create more.`,
+        message: getTrackableLimitMessage(limits.maxTrackableItems),
       })
     }
   }
 
-  async assertCanSubmitResponse(trackableId: string) {
-    if (areTiersUnlocked()) {
+  async assertSurveyCanAcceptResponses(trackableId: string) {
+    if (!isSubscriptionEnforcementEnabled()) {
       return
     }
 
@@ -76,16 +81,20 @@ export class QuotaService {
       .from(trackableFormSubmissions)
       .where(eq(trackableFormSubmissions.trackableId, trackableId))
 
-    if (result.count >= limits.maxResponsesPerSurvey) {
+    if (Number(result.count) >= limits.maxResponsesPerSurvey) {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: `This survey has reached the maximum of ${limits.maxResponsesPerSurvey} responses for its plan. The workspace owner can upgrade to collect more.`,
+        code: "PRECONDITION_FAILED",
+        message: getSurveyResponseLimitMessage(limits.maxResponsesPerSurvey),
       })
     }
   }
 
+  async assertCanSubmitResponse(trackableId: string) {
+    await this.assertSurveyCanAcceptResponses(trackableId)
+  }
+
   async assertCanAddWorkspaceMember(workspaceId: string) {
-    if (areTiersUnlocked()) {
+    if (!isSubscriptionEnforcementEnabled()) {
       return
     }
 
@@ -105,33 +114,33 @@ export class QuotaService {
         )
       )
 
-    if (result.count >= limits.maxWorkspaceMembers) {
+    if (Number(result.count) >= limits.maxWorkspaceMembers) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `This workspace has reached the maximum of ${limits.maxWorkspaceMembers} members for its plan. Please upgrade to invite more.`,
+        message: getWorkspaceMemberLimitMessage(limits.maxWorkspaceMembers),
       })
     }
   }
 
   async assertCanLogApiUsage(workspaceId: string) {
-    if (areTiersUnlocked()) {
+    if (!isSubscriptionEnforcementEnabled()) {
       return
     }
 
     const limits = await subscriptionService.getWorkspaceLimits(workspaceId)
 
-    if (limits.maxApiLogsPerMinute === null) {
+    if (limits.maxApiLogsPerSecond === null) {
       return
     }
 
-    const currentMinute = Math.floor(Date.now() / 60000)
-    const counterKey = `${workspaceId}:${currentMinute}`
-    const count = await apiLogsRateLimitCache.incrementWindow(counterKey, 1, 60)
+    const currentSecond = Math.floor(Date.now() / 1000)
+    const counterKey = `${workspaceId}:${currentSecond}`
+    const count = await apiLogsRateLimitCache.incrementWindow(counterKey, 1, 2)
 
-    if (count > limits.maxApiLogsPerMinute) {
+    if (count > limits.maxApiLogsPerSecond) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `Rate limit exceeded: maximum ${limits.maxApiLogsPerMinute} API logs per minute for your plan. Please upgrade for higher limits.`,
+        message: getApiLogRateLimitMessage(limits.maxApiLogsPerSecond),
       })
     }
   }
@@ -139,7 +148,7 @@ export class QuotaService {
   async getEffectiveLogRetentionDays(
     workspaceId: string
   ): Promise<number | null> {
-    if (areTiersUnlocked()) {
+    if (!isSubscriptionEnforcementEnabled()) {
       return null
     }
 

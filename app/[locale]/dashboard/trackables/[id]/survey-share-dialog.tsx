@@ -1,9 +1,5 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Globe, Link2, Send } from "lucide-react";
-import { useMemo, useState } from "react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +12,12 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { useTRPC } from "@/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { T } from "gt-next";
+import { Check, Copy, Globe, Link2, Send } from "lucide-react";
+import { useMemo, useState } from "react";
 import { formatDateTime } from "./display-utils";
 import type { ShareLinkRow } from "./table-types";
-import { T } from "gt-next";
 
 function buildSurveyLink(token: string) {
 	if (typeof window === "undefined") {
@@ -118,35 +117,38 @@ export function SurveyShareDialog({
 		<Dialog>
 			<DialogTrigger asChild>
 				<Button
-					variant="outline"
+					variant="default"
 					type="button"
-					size="sm"
-					className="h-9 gap-2"
+					size="lg"
 					disabled={!hasForm}
 					title={
 						!hasForm ? "Create a form before sending the survey." : undefined
 					}
 				>
 					<Send className="size-4" />
-					
-                    					<T>Send Survey</T>
-                    				</Button>
+
+					<T>Send Survey</T>
+				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
-					<DialogTitle><T>Send survey</T></DialogTitle>
+					<DialogTitle>
+						<T>Send survey</T>
+					</DialogTitle>
 					<DialogDescription>
-						
-                        						<T>Turn the public survey link on when you are ready to share it, then
-                        						copy the link to send it out.</T>
-                        					</DialogDescription>
+						<T>
+							Turn the public survey link on when you are ready to share it,
+							then copy the link to send it out.
+						</T>
+					</DialogDescription>
 				</DialogHeader>
 
 				{!hasForm ? (
 					<div className="rounded-xl border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
-						
-                        						<T>Create a form first, then you can turn on a share link for it.</T>
-                        					</div>
+						<T>
+							Create a form first, then you can turn on a share link for it.
+						</T>
+					</div>
 				) : (
 					<div className="flex flex-col gap-4">
 						<div className="rounded-xl border bg-muted/20 p-4">
@@ -154,13 +156,16 @@ export function SurveyShareDialog({
 								<div className="flex flex-col gap-1">
 									<div className="flex items-center gap-2">
 										<Globe className="size-4 text-muted-foreground" />
-										<span className="font-medium"><T>Survey link</T></span>
+										<span className="font-medium">
+											<T>Survey link</T>
+										</span>
 										<Badge variant="outline">{linkIsOn ? "On" : "Off"}</Badge>
 									</div>
 									<p className="text-sm text-muted-foreground">
-										
-                                            										<T>Control whether respondents can open the shared survey.</T>
-                                            									</p>
+										<T>
+											Control whether respondents can open the shared survey.
+										</T>
+									</p>
 								</div>
 
 								<Button
@@ -181,7 +186,9 @@ export function SurveyShareDialog({
 						<div className="rounded-xl border bg-background p-4">
 							<div className="flex items-center gap-2 text-sm font-medium">
 								<Link2 className="size-4 text-muted-foreground" />
-								<span><T>Public form link</T></span>
+								<span>
+									<T>Public form link</T>
+								</span>
 							</div>
 
 							<div className="mt-3 break-all rounded-lg bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">

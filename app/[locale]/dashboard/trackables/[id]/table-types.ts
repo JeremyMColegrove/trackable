@@ -7,9 +7,11 @@ import type {
 } from "@/db/schema/types"
 import type {
   UsageEventFreshness,
+  UsageEventBuiltInColumnId,
   UsageEventSourceSnapshot,
   UsageEventTableColumn,
   UsageEventTableRow,
+  UsageEventVisibleColumnId,
 } from "@/lib/usage-event-search"
 
 export type TrackableDetails = {
@@ -17,6 +19,7 @@ export type TrackableDetails = {
   kind: TrackableKind
   name: string
   description: string | null
+  permissions: TrackablePermissions
   settings: TrackableSettings | null
   createdAt: string
   submissionCount: number
@@ -50,15 +53,29 @@ export type SubmissionRow = {
 export type UsageEventRow = UsageEventTableRow
 export type UsageHitRow = UsageEventRow["hits"][number]
 export type UsageEventColumn = UsageEventTableColumn
+export type UsageEventVisibleColumn =
+  | UsageEventColumn
+  | {
+      id: UsageEventVisibleColumnId
+      label: string
+      visible: boolean
+      field: string
+      kind: "computed"
+    }
 export type UsageEventTableData = {
   columns: UsageEventColumn[]
   rows: UsageEventRow[]
   totalMatchedEvents: number
   totalGroupedRows: number
   availableAggregateFields: string[]
+  maxLogsFound: boolean
   sourceSnapshot: UsageEventSourceSnapshot
 }
 export type UsageEventFreshnessState = UsageEventFreshness
+export type UsageEventBuiltInColumn = Extract<
+  UsageEventVisibleColumn,
+  { id: UsageEventBuiltInColumnId }
+>
 
 export type ApiKeyRow = {
   id: string
@@ -68,6 +85,14 @@ export type ApiKeyRow = {
   expiresAt: string | null
   trackableUsageCount: number
   lastUsedAt: string | null
+}
+
+export type TrackablePermissions = {
+  canManageTrackable: boolean
+  canManageResponses: boolean
+  canManageForm: boolean
+  canManageSettings: boolean
+  canManageApiKeys: boolean
 }
 
 export type AccessRole = "submit" | "view" | "manage"

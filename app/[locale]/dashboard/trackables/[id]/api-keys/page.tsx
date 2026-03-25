@@ -1,11 +1,5 @@
-import { TrackableApiKeysSection } from "../trackable-api-keys-section"
-
-export const dynamic = "force-dynamic"
-
-export function generateStaticParams() {
-  return []
-}
+import { TrackableApiKeysSection } from "../trackable-api-keys-section";
 
 export default function TrackableApiKeysPage() {
-  return <TrackableApiKeysSection />
+	return <TrackableApiKeysSection />;
 }

@@ -9,7 +9,8 @@ CREATE TYPE "public"."trackable_form_field_kind" AS ENUM('rating', 'checkboxes',
 CREATE TYPE "public"."trackable_form_status" AS ENUM('draft', 'published', 'archived');
 CREATE TYPE "public"."trackable_kind" AS ENUM('survey', 'api_ingestion');
 CREATE TYPE "public"."trackable_submission_source" AS ENUM('public_link', 'user_grant', 'email_grant');
-CREATE TYPE "public"."workspace_role" AS ENUM('owner', 'admin', 'member');
+CREATE TYPE "public"."workspace_invitation_status" AS ENUM('pending', 'accepted', 'rejected', 'revoked');
+CREATE TYPE "public"."workspace_role" AS ENUM('owner', 'admin', 'member', 'viewer');
 CREATE TABLE "api_keys" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"workspace_id" uuid NOT NULL,
@@ -96,6 +97,19 @@ CREATE TABLE "workspace_members" (
 	"revoked_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE "workspace_invitations" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"workspace_id" uuid NOT NULL,
+	"invited_user_id" text,
+	"invited_email" text,
+	"invited_by_user_id" text NOT NULL,
+	"role" "workspace_role" DEFAULT 'member' NOT NULL,
+	"status" "workspace_invitation_status" DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_invitations_target_check" CHECK (("workspace_invitations"."invited_user_id" is not null or "workspace_invitations"."invited_email" is not null))
 );
 
 CREATE TABLE "workspaces" (
@@ -217,6 +231,7 @@ CREATE TABLE "users" (
 	"display_name" text,
 	"image_url" text,
 	"active_workspace_id" uuid,
+	"has_admin_controls" boolean DEFAULT false NOT NULL,
 	"is_profile_private" boolean DEFAULT false NOT NULL,
 	"last_seen_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -233,6 +248,9 @@ ALTER TABLE "workspace_subscriptions" ADD CONSTRAINT "workspace_subscriptions_wo
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "workspace_invitations" ADD CONSTRAINT "workspace_invitations_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "workspace_invitations" ADD CONSTRAINT "workspace_invitations_invited_user_id_users_id_fk" FOREIGN KEY ("invited_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "workspace_invitations" ADD CONSTRAINT "workspace_invitations_invited_by_user_id_users_id_fk" FOREIGN KEY ("invited_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "trackable_access_grants" ADD CONSTRAINT "trackable_access_grants_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;
 ALTER TABLE "trackable_access_grants" ADD CONSTRAINT "trackable_access_grants_subject_user_id_users_id_fk" FOREIGN KEY ("subject_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
@@ -268,6 +286,11 @@ CREATE UNIQUE INDEX "workspace_subscriptions_ls_sub_idx" ON "workspace_subscript
 CREATE INDEX "workspace_members_workspace_idx" ON "workspace_members" USING btree ("workspace_id");
 CREATE INDEX "workspace_members_user_idx" ON "workspace_members" USING btree ("user_id");
 CREATE UNIQUE INDEX "workspace_members_workspace_user_idx" ON "workspace_members" USING btree ("workspace_id","user_id") WHERE "workspace_members"."revoked_at" is null;
+CREATE INDEX "workspace_invitations_workspace_idx" ON "workspace_invitations" USING btree ("workspace_id");
+CREATE INDEX "workspace_invitations_invited_user_idx" ON "workspace_invitations" USING btree ("invited_user_id");
+CREATE INDEX "workspace_invitations_invited_email_idx" ON "workspace_invitations" USING btree ("invited_email");
+CREATE UNIQUE INDEX "workspace_invitations_pending_user_idx" ON "workspace_invitations" USING btree ("workspace_id","invited_user_id") WHERE "workspace_invitations"."status" = 'pending' and "workspace_invitations"."invited_user_id" is not null;
+CREATE UNIQUE INDEX "workspace_invitations_pending_email_idx" ON "workspace_invitations" USING btree ("workspace_id","invited_email") WHERE "workspace_invitations"."status" = 'pending' and "workspace_invitations"."invited_email" is not null;
 CREATE UNIQUE INDEX "workspaces_slug_idx" ON "workspaces" USING btree ("slug");
 CREATE INDEX "trackable_access_grants_trackable_idx" ON "trackable_access_grants" USING btree ("trackable_id");
 CREATE UNIQUE INDEX "trackable_access_grants_trackable_user_idx" ON "trackable_access_grants" USING btree ("trackable_id","subject_user_id") WHERE "trackable_access_grants"."subject_user_id" is not null;

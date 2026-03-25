@@ -10,6 +10,7 @@ import { hasAuthenticatedSharedFormSubmission } from "@/lib/shared-form-submissi
 import { accessControlService } from "@/server/services/access-control.service"
 import { assertTrackableKind } from "@/server/services/project.service"
 import { sharedFormCache } from "@/server/redis/shared-form-cache.repository"
+import { quotaService } from "@/server/subscriptions/quota.service"
 
 export type AccessRole = "submit" | "view" | "manage"
 
@@ -59,6 +60,8 @@ export class ShareLinkService {
         message: "This shared form does not contain any fields yet.",
       })
     }
+
+    await quotaService.assertSurveyCanAcceptResponses(shareLink.trackable.id)
 
     const requiresAuthentication =
       shareLink.trackable.settings?.allowAnonymousSubmissions === false

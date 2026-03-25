@@ -2,6 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import type { TrackableFormSnapshot } from "@/db/schema/types";
 import {
@@ -27,12 +27,12 @@ import {
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { T, useGT } from "gt-next";
 import { Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FieldPreview } from "./components/field-preview";
 import { FIELD_TYPE_OPTIONS, getFieldIcon } from "./utils/form-field-utils";
-import { T, useGT } from "gt-next";
 
 export function FormBuilder({
 	trackableId,
@@ -45,7 +45,7 @@ export function FormBuilder({
 	trackableDescription: string | null;
 	activeForm: TrackableFormSnapshot | null;
 }) {
-    const gt = useGT();
+	const gt = useGT();
 	const addFieldTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
@@ -175,7 +175,7 @@ export function FormBuilder({
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="mx-auto flex w-full max-w-4xl items-center justify-end gap-2">
+			<div className="mx-auto flex w-full items-center justify-end gap-2">
 				<div className="mr-auto">
 					<div
 						className={cn(
@@ -194,9 +194,8 @@ export function FormBuilder({
 					onClick={resetDraft}
 					disabled={!isDirty || saveForm.isPending}
 				>
-					
-                    					<T>Reset</T>
-                    				</Button>
+					<T>Reset</T>
+				</Button>
 				<Button
 					type="button"
 					onClick={handleSave}
@@ -206,16 +205,15 @@ export function FormBuilder({
 				</Button>
 			</div>
 
-			<div className="mx-auto w-full max-w-4xl">
-				<div className="flex flex-col gap-8">
+			<div className="mx-auto w-full">
+				<div className="flex flex-col gap-8 pb-10">
 					<div className="flex flex-col gap-2">
 						<Label
 							htmlFor="form-title"
 							className="text-xs uppercase tracking-wide text-muted-foreground"
 						>
-							
-                            							<T>Form title</T>
-                            						</Label>
+							<T>Form title</T>
+						</Label>
 						<Input
 							id="form-title"
 							value={draft.title}
@@ -227,6 +225,12 @@ export function FormBuilder({
 								}))
 							}
 						/>
+						<Label
+							htmlFor="form-title"
+							className="text-xs uppercase tracking-wide text-muted-foreground"
+						>
+							<T>Description</T>
+						</Label>
 						<Textarea
 							value={draft.description ?? ""}
 							placeholder={gt("Your form description...")}
@@ -242,24 +246,23 @@ export function FormBuilder({
 
 					{draft.fields.length > 0
 						? draft.fields.map((field, index) => (
-								<div key={field.id} className="flex flex-col gap-8">
-									<FieldPreview
-										field={field}
-										index={index}
-										total={draft.fields.length}
-										onChange={(nextField) => updateField(index, nextField)}
-										onMove={moveField}
-										onRemove={removeField}
-									/>
-									{index < draft.fields.length - 1 ? (
-										<div className="border-b border-border/50" />
-									) : null}
-								</div>
+								<Card key={field.id}>
+									<CardHeader></CardHeader>
+									<CardContent>
+										<div className="flex flex-col gap-8">
+											<FieldPreview
+												field={field}
+												index={index}
+												total={draft.fields.length}
+												onChange={(nextField) => updateField(index, nextField)}
+												onMove={moveField}
+												onRemove={removeField}
+											/>
+										</div>
+									</CardContent>
+								</Card>
 							))
 						: null}
-
-					<Separator />
-
 					<ContextMenu>
 						<ContextMenuTrigger asChild>
 							<button
@@ -280,7 +283,9 @@ export function FormBuilder({
 								}}
 							>
 								<Plus className="size-4" />
-								<span><T>Click to add new form field</T></span>
+								<span>
+									<T>Click to add new form field</T>
+								</span>
 							</button>
 						</ContextMenuTrigger>
 						<ContextMenuContent>
@@ -298,14 +303,14 @@ export function FormBuilder({
 						</ContextMenuContent>
 					</ContextMenu>
 
-					<Button disabled type="button" className="self-start">
+					{/* <Button disabled type="button" className="self-start">
 						{draft.submitLabel ?? "Submit response"}
-					</Button>
-					{draft.successMessage ? (
+					</Button> */}
+					{/* {draft.successMessage ? (
 						<p className="text-sm text-muted-foreground">
 							{draft.successMessage}
 						</p>
-					) : null}
+					) : null} */}
 				</div>
 			</div>
 		</div>

@@ -67,7 +67,7 @@ export const trackablesRouter = createTRPCRouter({
         "view"
       )
 
-      const [events, sourceSnapshot, availableAggregateFields] =
+      const [eventResult, sourceSnapshot, availableAggregateFields] =
         await Promise.all([
           getTrackableUsageEvents(input),
           getTrackableUsageSourceSnapshot(input.trackableId),
@@ -75,7 +75,7 @@ export const trackablesRouter = createTRPCRouter({
         ])
 
       const tableResult = new UsageEventTableProcessor(
-        events.map((event) => ({
+        eventResult.logs.map((event) => ({
           id: event.id,
           occurredAt: event.occurredAt,
           payload: event.payload,
@@ -87,7 +87,8 @@ export const trackablesRouter = createTRPCRouter({
           },
         })),
         input,
-        sourceSnapshot
+        sourceSnapshot,
+        eventResult.maxLogsFound
       ).process()
 
       return {

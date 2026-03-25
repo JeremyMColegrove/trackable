@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc"
+import { assertAdminControlsEnabled } from "@/server/admin-controls"
 import { ensureDefaultBatchJobsRegistered } from "@/server/batch/jobs"
 import { batchJobRegistry } from "@/server/batch/registry"
 import {
@@ -21,6 +22,8 @@ export const batchRouter = createTRPCRouter({
     if (!ctx.auth.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" })
     }
+
+    await assertAdminControlsEnabled(ctx.auth.userId)
 
     const jobs = ensureDefaultBatchJobsRegistered()
 
@@ -43,7 +46,7 @@ export const batchRouter = createTRPCRouter({
         lastCompletedAt: record?.lastCompletedAt?.toISOString() ?? null,
         lastStatus: record?.lastStatus ?? null,
         lastSummary: record?.lastSummary ?? null,
-        schedulerEnabled: process.env.BATCH_SCHEDULER_ENABLED === "true",
+        schedulerEnabled: process.env.BATCH_SCHEDULER_ENABLED !== "false",
       }
     })
   }),
@@ -59,6 +62,8 @@ export const batchRouter = createTRPCRouter({
       if (!ctx.auth.userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
+
+      await assertAdminControlsEnabled(ctx.auth.userId)
 
       ensureDefaultBatchJobsRegistered()
       const job = batchJobRegistry.getByKey(input.key)
@@ -94,6 +99,8 @@ export const batchRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
 
+      await assertAdminControlsEnabled(ctx.auth.userId)
+
       ensureDefaultBatchJobsRegistered()
       const job = batchJobRegistry.getByKey(input.key)
 
@@ -117,6 +124,8 @@ export const batchRouter = createTRPCRouter({
       if (!ctx.auth.userId) {
         throw new TRPCError({ code: "UNAUTHORIZED" })
       }
+
+      await assertAdminControlsEnabled(ctx.auth.userId)
 
       ensureDefaultBatchJobsRegistered()
       const job = batchJobRegistry.getByKey(input.key)

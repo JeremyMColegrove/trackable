@@ -7,6 +7,8 @@ export const usageEventTimeRangeValues = [
   "last_1_hour",
   "last_24_hours",
   "last_7_days",
+  "last_30_days",
+  "last_90_days",
   "all_time",
   "custom",
 ] as const
@@ -18,12 +20,17 @@ export const usageEventSortFieldValues = [
 ] as const
 
 export const usageEventSortDirectionValues = ["asc", "desc"] as const
-export const usageEventLevelValues = [
-  "info",
-  "warn",
-  "error",
-  "debug",
+export const usageEventLevelValues = ["info", "warn", "error", "debug"] as const
+export const usageEventBuiltInColumnIdValues = [
+  "event",
+  "level",
+  "message",
+  "totalHits",
+  "lastOccurredAt",
+  "firstOccurredAt",
+  "percentage",
 ] as const
+export const usageEventComputedColumnPrefix = "k:"
 
 export const usageEventAggregationSchema = z.enum(usageEventAggregationValues)
 export const usageEventTimeRangeSchema = z.enum(usageEventTimeRangeValues)
@@ -32,6 +39,9 @@ export const usageEventSortDirectionSchema = z.enum(
   usageEventSortDirectionValues
 )
 export const usageEventLevelSchema = z.enum(usageEventLevelValues)
+export const usageEventBuiltInColumnIdSchema = z.enum(
+  usageEventBuiltInColumnIdValues
+)
 
 export const usageEventSourceSnapshotSchema = z.object({
   totalEventCount: z.number().int().min(0),
@@ -57,6 +67,7 @@ export const usageEventUrlStateSchema = z.object({
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
   limit: z.string().regex(/^\d+$/).optional(),
+  cols: z.string().trim().min(1).max(2_000).optional(),
 })
 
 export const usageEventTableApiKeySchema = z.object({
@@ -91,15 +102,7 @@ export const usageEventTableRowSchema = z.object({
 })
 
 export const usageEventTableColumnSchema = z.object({
-  id: z.enum([
-    "event",
-    "level",
-    "message",
-    "totalHits",
-    "lastOccurredAt",
-    "firstOccurredAt",
-    "percentage",
-  ]),
+  id: usageEventBuiltInColumnIdSchema,
   label: z.string(),
   visible: z.boolean(),
 })
@@ -110,6 +113,7 @@ export const usageEventTableResultSchema = z.object({
   totalMatchedEvents: z.number().int().min(0),
   totalGroupedRows: z.number().int().min(0),
   availableAggregateFields: z.array(z.string()),
+  maxLogsFound: z.boolean(),
   sourceSnapshot: usageEventSourceSnapshotSchema,
 })
 
@@ -126,6 +130,12 @@ export type UsageEventSortDirection = z.infer<
   typeof usageEventSortDirectionSchema
 >
 export type UsageEventLevel = z.infer<typeof usageEventLevelSchema>
+export type UsageEventBuiltInColumnId = z.infer<
+  typeof usageEventBuiltInColumnIdSchema
+>
+export type UsageEventVisibleColumnId =
+  | UsageEventBuiltInColumnId
+  | `${typeof usageEventComputedColumnPrefix}${string}`
 export type UsageEventSearchInput = z.infer<typeof usageEventSearchInputSchema>
 export type UsageEventUrlState = z.infer<typeof usageEventUrlStateSchema>
 export type UsageEventSourceSnapshot = z.infer<
@@ -137,6 +147,52 @@ export type UsageEventTableRow = z.infer<typeof usageEventTableRowSchema>
 export type UsageEventTableColumn = z.infer<typeof usageEventTableColumnSchema>
 export type UsageEventTableResult = z.infer<typeof usageEventTableResultSchema>
 export type UsageEventFreshness = z.infer<typeof usageEventFreshnessSchema>
+export type UsageEventPresetTimeRange = Exclude<
+  UsageEventTimeRange,
+  "all_time" | "custom"
+>
+
+export const usageEventPresetRangeDefinitions: Array<{
+  durationMs: number | null
+  label: string
+  range: UsageEventTimeRange
+}> = [
+  {
+    durationMs: 15 * 60 * 1000,
+    label: "Last 15 min",
+    range: "last_15_minutes",
+  },
+  {
+    durationMs: 60 * 60 * 1000,
+    label: "Last 1 hour",
+    range: "last_1_hour",
+  },
+  {
+    durationMs: 24 * 60 * 60 * 1000,
+    label: "Last 24 hours",
+    range: "last_24_hours",
+  },
+  {
+    durationMs: 7 * 24 * 60 * 60 * 1000,
+    label: "Last 7 days",
+    range: "last_7_days",
+  },
+  {
+    durationMs: 30 * 24 * 60 * 60 * 1000,
+    label: "Last 1 month",
+    range: "last_30_days",
+  },
+  {
+    durationMs: 90 * 24 * 60 * 60 * 1000,
+    label: "Last 3 months",
+    range: "last_90_days",
+  },
+  {
+    durationMs: null,
+    label: "All time",
+    range: "all_time",
+  },
+]
 
 export const defaultUsageEventUrlState = {
   q: "",
@@ -145,6 +201,7 @@ export const defaultUsageEventUrlState = {
   from: undefined,
   to: undefined,
   limit: "50",
+  cols: undefined,
 } as const satisfies UsageEventUrlState
 
 function coerceSingleValue(value: string | string[] | undefined) {
@@ -171,6 +228,7 @@ export function normalizeUsageEventUrlState(
           from: params.get("from") ?? undefined,
           to: params.get("to") ?? undefined,
           limit: params.get("limit") ?? undefined,
+          cols: params.get("cols") ?? undefined,
         }
       : {
           q: coerceSingleValue(params?.q),
@@ -179,6 +237,7 @@ export function normalizeUsageEventUrlState(
           from: coerceSingleValue(params?.from),
           to: coerceSingleValue(params?.to),
           limit: coerceSingleValue(params?.limit),
+          cols: coerceSingleValue(params?.cols),
         }
 
   const parsedUrlState = usageEventUrlStateSchema.safeParse(rawState)
@@ -198,6 +257,7 @@ export function normalizeUsageEventUrlState(
     limit: parsedUrlState.success
       ? (parsedUrlState.data.limit ?? defaultUsageEventUrlState.limit)
       : defaultUsageEventUrlState.limit,
+    cols: parsedUrlState.success ? parsedUrlState.data.cols : undefined,
   }
 
   return normalizedUrlState
@@ -215,31 +275,28 @@ export function resolveUsageEventTimeRange(urlState: UsageEventUrlState) {
   return defaultUsageEventUrlState.range
 }
 
-function getUsageEventPresetRange(
-  range: Exclude<UsageEventTimeRange, "all_time" | "custom">,
+export function getUsageEventPresetRange(
+  range: Exclude<UsageEventTimeRange, "custom">,
   now: Date
 ) {
-  switch (range) {
-    case "last_15_minutes":
-      return {
-        from: new Date(now.getTime() - 15 * 60 * 1000).toISOString(),
-        to: now.toISOString(),
-      }
-    case "last_1_hour":
-      return {
-        from: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
-        to: now.toISOString(),
-      }
-    case "last_24_hours":
-      return {
-        from: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-        to: now.toISOString(),
-      }
-    case "last_7_days":
-      return {
-        from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        to: now.toISOString(),
-      }
+  const preset = usageEventPresetRangeDefinitions.find(
+    (candidate) => candidate.range === range
+  )
+
+  if (!preset) {
+    return null
+  }
+
+  if (preset.durationMs === null) {
+    return {
+      from: new Date(0).toISOString(),
+      to: now.toISOString(),
+    }
+  }
+
+  return {
+    from: new Date(now.getTime() - preset.durationMs).toISOString(),
+    to: now.toISOString(),
   }
 }
 
@@ -258,7 +315,10 @@ export function buildUsageEventSearchInput(
             from: urlState.from ?? null,
             to: urlState.to ?? null,
           }
-        : getUsageEventPresetRange(selectedRange, now)
+        : (getUsageEventPresetRange(selectedRange, now) ?? {
+            from: null,
+            to: null,
+          })
 
   return usageEventSearchInputSchema.parse({
     trackableId,
@@ -302,5 +362,116 @@ export function buildUsageEventUrlSearchParams(urlState: UsageEventUrlState) {
     params.set("limit", limit)
   }
 
+  if (normalizedUrlState.cols?.trim()) {
+    params.set("cols", normalizedUrlState.cols.trim())
+  }
+
   return params
+}
+
+export function isUsageEventBuiltInColumnId(
+  value: string
+): value is UsageEventBuiltInColumnId {
+  return usageEventBuiltInColumnIdValues.includes(
+    value as UsageEventBuiltInColumnId
+  )
+}
+
+export function createUsageEventComputedColumnId(
+  field: string
+): UsageEventVisibleColumnId {
+  return `${usageEventComputedColumnPrefix}${field.trim()}`
+}
+
+export function isUsageEventComputedColumnId(
+  value: string
+): value is `${typeof usageEventComputedColumnPrefix}${string}` {
+  return value.startsWith(usageEventComputedColumnPrefix)
+}
+
+export function getUsageEventComputedColumnField(value: string): string | null {
+  if (!isUsageEventComputedColumnId(value)) {
+    return null
+  }
+
+  const field = value.slice(usageEventComputedColumnPrefix.length).trim()
+
+  if (!field || field.length > 100) {
+    return null
+  }
+
+  return field
+}
+
+export function parseUsageEventVisibleColumnIds(
+  value: string | null | undefined
+) {
+  if (!value?.trim()) {
+    return []
+  }
+
+  const columnIds: UsageEventVisibleColumnId[] = []
+  const seenColumnIds = new Set<UsageEventVisibleColumnId>()
+
+  for (const rawColumnId of value.split(",")) {
+    const decodedColumnId = decodeURIComponent(rawColumnId).trim()
+
+    if (!decodedColumnId) {
+      continue
+    }
+
+    if (isUsageEventBuiltInColumnId(decodedColumnId)) {
+      if (!seenColumnIds.has(decodedColumnId)) {
+        seenColumnIds.add(decodedColumnId)
+        columnIds.push(decodedColumnId)
+      }
+
+      continue
+    }
+
+    const computedField = getUsageEventComputedColumnField(decodedColumnId)
+
+    if (!computedField) {
+      continue
+    }
+
+    const computedColumnId = createUsageEventComputedColumnId(computedField)
+
+    if (seenColumnIds.has(computedColumnId)) {
+      continue
+    }
+
+    seenColumnIds.add(computedColumnId)
+    columnIds.push(computedColumnId)
+  }
+
+  return columnIds
+}
+
+export function stringifyUsageEventVisibleColumnIds(
+  columnIds: UsageEventVisibleColumnId[]
+) {
+  if (columnIds.length === 0) {
+    return undefined
+  }
+
+  return columnIds.map((columnId) => encodeURIComponent(columnId)).join(",")
+}
+
+export function buildAppliedUsageEventTimeRangeUrlState(
+  input: Pick<UsageEventSearchInput, "from" | "to">
+): Pick<UsageEventUrlState, "range" | "from" | "to"> {
+  if (!input.from && !input.to) {
+    return {
+      range: undefined,
+      from: undefined,
+      to: undefined,
+    }
+  }
+
+  return {
+    range: "custom",
+    from: input.from ?? undefined,
+    to: input.to ?? undefined,
+  }
 }

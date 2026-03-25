@@ -2,8 +2,8 @@ import "server-only"
 
 import superjson from "superjson"
 
-import { redis } from "./redis-client"
 import { logger } from "@/lib/logger"
+import { redis } from "./redis-client"
 
 export abstract class BaseCacheRepository<T> {
   protected constructor(

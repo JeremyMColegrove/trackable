@@ -4,14 +4,10 @@ import type {
   SubmissionMetadata,
   UsageEventPayload,
 } from "@/db/schema/types"
+import { formatTableTimestamp } from "@/lib/date-time"
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
   numeric: "auto",
-})
-
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
 })
 
 export function formatRelativeTime(value: string | null) {
@@ -29,23 +25,32 @@ export function formatRelativeTime(value: string | null) {
 
   const absMinutes = Math.round(absSeconds / 60)
   if (absMinutes < 60) {
-    return relativeTimeFormatter.format(Math.round(diffMs / (60 * 1000)), "minute")
+    return relativeTimeFormatter.format(
+      Math.round(diffMs / (60 * 1000)),
+      "minute"
+    )
   }
 
   const absHours = Math.round(absMinutes / 60)
   if (absHours < 24) {
-    return relativeTimeFormatter.format(Math.round(diffMs / (60 * 60 * 1000)), "hour")
+    return relativeTimeFormatter.format(
+      Math.round(diffMs / (60 * 60 * 1000)),
+      "hour"
+    )
   }
 
-  return relativeTimeFormatter.format(Math.round(diffMs / (24 * 60 * 60 * 1000)), "day")
+  return relativeTimeFormatter.format(
+    Math.round(diffMs / (24 * 60 * 60 * 1000)),
+    "day"
+  )
 }
 
 export function formatDateTime(value: string | null) {
-  if (!value) {
-    return "Never"
-  }
+  return formatTableTimestamp(value)
+}
 
-  return dateTimeFormatter.format(new Date(value))
+export function formatCompactDateTime(value: string | null) {
+  return formatTableTimestamp(value)
 }
 
 export function formatStatusLabel(value: string) {
@@ -91,9 +96,13 @@ export function formatFieldConfigSummary(config: FormFieldConfig) {
     case "checkboxes":
       return `${config.options.length} option${config.options.length === 1 ? "" : "s"}`
     case "notes":
-      return config.maxLength ? `Up to ${config.maxLength} characters` : "Free text"
+      return config.maxLength
+        ? `Up to ${config.maxLength} characters`
+        : "Free text"
     case "short_text":
-      return config.maxLength ? `Up to ${config.maxLength} characters` : "Single line"
+      return config.maxLength
+        ? `Up to ${config.maxLength} characters`
+        : "Single line"
     default:
       return "Configured field"
   }
@@ -126,12 +135,14 @@ export function formatMetadataEntries(metadata: SubmissionMetadata | null) {
   return Object.entries(metadata)
     .filter(([, value]) => value)
     .map(([key, value]) => ({
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase()),
+      label: key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (char) => char.toUpperCase()),
       value: String(value),
     }))
 }
 
-function formatUsageValue(value: unknown): string {
+export function formatUsageFieldValue(value: unknown): string {
   if (value === null || value === undefined) {
     return ""
   }
@@ -149,7 +160,10 @@ function formatUsageValue(value: unknown): string {
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry) => formatUsageValue(entry)).filter(Boolean).join(", ")
+    return value
+      .map((entry) => formatUsageFieldValue(entry))
+      .filter(Boolean)
+      .join(", ")
   }
 
   return JSON.stringify(value)
@@ -157,8 +171,10 @@ function formatUsageValue(value: unknown): string {
 
 export function formatUsagePayload(payload: UsageEventPayload) {
   return Object.entries(payload)
-    .filter(([key, value]) => key !== "name" && value !== null && value !== undefined)
-    .map(([key, value]) => `${key}: ${formatUsageValue(value)}`)
+    .filter(
+      ([key, value]) => key !== "name" && value !== null && value !== undefined
+    )
+    .map(([key, value]) => `${key}: ${formatUsageFieldValue(value)}`)
     .join("; ")
 }
 
