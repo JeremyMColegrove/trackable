@@ -350,48 +350,46 @@ function InviteMemberDialog({
 								<T>No users matched that search.</T>
 							</div>
 						) : (
-							<>
-								{results.map((user) => {
-									const label = getDisplayName(user);
+							results.map((user) => {
+								const label = getDisplayName(user);
 
-									return (
-										<div
-											key={user.id}
-											className="flex items-center justify-between gap-3 rounded-lg border p-3"
-										>
-											<div className="flex min-w-0 items-center gap-3">
-												<Avatar>
-													<AvatarImage
-														src={user.imageUrl ?? undefined}
-														alt={label}
-													/>
-													<AvatarFallback>{getInitials(label)}</AvatarFallback>
-												</Avatar>
-												<div className="min-w-0">
-													<p className="truncate font-medium">{label}</p>
-													<p className="truncate text-sm text-muted-foreground">
-														{user.primaryEmail}
-													</p>
-												</div>
+								return (
+									<div
+										key={user.id}
+										className="flex items-center justify-between gap-3 rounded-lg border p-3"
+									>
+										<div className="flex min-w-0 items-center gap-3">
+											<Avatar>
+												<AvatarImage
+													src={user.imageUrl ?? undefined}
+													alt={label}
+												/>
+												<AvatarFallback>{getInitials(label)}</AvatarFallback>
+											</Avatar>
+											<div className="min-w-0">
+												<p className="truncate font-medium">{label}</p>
+												<p className="truncate text-sm text-muted-foreground">
+													{user.primaryEmail}
+												</p>
 											</div>
-
-											<Button
-												type="button"
-												size="sm"
-												onClick={() =>
-													inviteMember.mutate({
-														invitedUserId: user.id,
-														role: selectedRole,
-													})
-												}
-												disabled={inviteMember.isPending}
-											>
-												<T>Invite</T>
-											</Button>
 										</div>
-									);
-								})}
-							</>
+
+										<Button
+											type="button"
+											size="sm"
+											onClick={() =>
+												inviteMember.mutate({
+													invitedUserId: user.id,
+													role: selectedRole,
+												})
+											}
+											disabled={inviteMember.isPending}
+										>
+											<T>Invite</T>
+										</Button>
+									</div>
+								);
+							})
 						)}
 					</div>
 				</div>
