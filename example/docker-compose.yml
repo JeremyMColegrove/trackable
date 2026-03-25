@@ -12,8 +12,6 @@ services:
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
       CLERK_WEBHOOK_SIGNING_SECRET: ${CLERK_WEBHOOK_SIGNING_SECRET}
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       ENABLE_SUBSCRIPTIONS: ${ENABLE_SUBSCRIPTIONS:-false}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
@@ -54,9 +52,9 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  cloudflared:
-      image: cloudflare/cloudflared:latest
-      container_name: cloudflared
-      command: tunnel --no-autoupdate run --token
-            eyJhIjoiMTI3YzM5Yzk5NTc0ZDIyODVhOGNhYTQ4N2M0ZmU2MWMiLCJ0IjoiYTM4MGVlNGYtOWVjZi00Yjg5LTgyYWItYzdjYjg1NDcxOGQ5IiwicyI6Ik5HRmtNV1JpWXpjdFpqRTJOaTAwTXpjM0xXRmxPVGt0TXpSaE5tTmpNV0UyTVRGbSJ9
-      restart: unless-stopped
+# options cloudflared container
+  # cloudflared:
+  #     image: cloudflare/cloudflared:latest
+  #     container_name: cloudflared
+  #     command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+  #     restart: unless-stopped
