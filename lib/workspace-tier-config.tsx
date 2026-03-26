@@ -1,171 +1,170 @@
-import type {
-	SubscriptionTier,
-	TierLimits,
-} from "@/server/subscriptions/types";
+import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
 
 export interface WorkspaceTierPlan {
-	tier: SubscriptionTier;
-	rank: number;
-	name: string;
-	mostPopular: boolean;
-	priceLabel: string;
-	priceInterval: string;
-	summary: string;
-	highlights: string[];
-	lemonSqueezyVariantId: string | null;
-	switchUrl: string | null;
-	manageUrl: string | null;
-	limits: TierLimits;
-	tone: "neutral" | "accent" | "strong";
+  tier: SubscriptionTier
+  rank: number
+  name: string
+  mostPopular: boolean
+  priceLabel: string
+  priceInterval: string
+  summary: string
+  highlights: string[]
+  lemonSqueezyVariantId: string | null
+  switchUrl: string | null
+  manageUrl: string | null
+  limits: TierLimits
+  tone: "neutral" | "accent" | "strong"
 }
 
+export const WORKSPACE_BILLING_ENABLED = false
+
 function formatUsageLimit(
-	value: number | null,
-	singularLabel: string | React.ReactNode,
-	pluralLabel: string | React.ReactNode,
+  value: number | null,
+  singularLabel: string | React.ReactNode,
+  pluralLabel: string | React.ReactNode
 ) {
-	return value === null
-		? `Unlimited ${pluralLabel}`
-		: `${value} ${value === 1 ? singularLabel : pluralLabel}`;
+  return value === null
+    ? `Unlimited ${pluralLabel}`
+    : `${value} ${value === 1 ? singularLabel : pluralLabel}`
 }
 
 function buildTierHighlights(limits: TierLimits): string[] {
-	return [
-		formatUsageLimit(
-			limits.maxWorkspaceMembers,
-			"workspace member",
-			"workspace members",
-		),
-		formatUsageLimit(
-			limits.maxTrackableItems,
-			"active trackable",
-			"active trackables",
-		),
-		formatUsageLimit(
-			limits.maxResponsesPerSurvey,
-			"response per survey",
-			"responses per survey",
-		),
-		formatUsageLimit(
-			limits.maxApiLogsPerMinute,
-			"API log per minute",
-			"API logs per minute",
-		),
-		limits.logRetentionDays === null
-			? "Unlimited API log retention"
-			: `${limits.logRetentionDays}-day API log retention`,
-	];
+  return [
+    formatUsageLimit(
+      limits.maxWorkspaceMembers,
+      "workspace member",
+      "workspace members"
+    ),
+    formatUsageLimit(
+      limits.maxTrackableItems,
+      "active trackable",
+      "active trackables"
+    ),
+    formatUsageLimit(
+      limits.maxResponsesPerSurvey,
+      "response per survey",
+      "responses per survey"
+    ),
+    formatUsageLimit(
+      limits.maxApiLogsPerMinute,
+      "API log per minute",
+      "API logs per minute"
+    ),
+    limits.logRetentionDays === null
+      ? "Unlimited API log retention"
+      : `${limits.logRetentionDays}-day API log retention`,
+  ]
 }
 
 const FREE_LIMITS: TierLimits = {
-	maxTrackableItems: 10,
-	maxResponsesPerSurvey: 100,
-	maxWorkspaceMembers: 5,
-	maxApiLogsPerMinute: 30,
-	logRetentionDays: 3,
-};
+  maxTrackableItems: 10,
+  maxResponsesPerSurvey: 100,
+  maxWorkspaceMembers: 5,
+  maxApiLogsPerMinute: 30,
+  logRetentionDays: 3,
+}
 
 const PLUS_LIMITS: TierLimits = {
-	maxTrackableItems: 100,
-	maxResponsesPerSurvey: null,
-	maxWorkspaceMembers: 100,
-	maxApiLogsPerMinute: 60,
-	logRetentionDays: 90,
-};
+  maxTrackableItems: 100,
+  maxResponsesPerSurvey: null,
+  maxWorkspaceMembers: 100,
+  maxApiLogsPerMinute: 60,
+  logRetentionDays: 90,
+}
 
 const PRO_LIMITS: TierLimits = {
-	maxTrackableItems: null,
-	maxResponsesPerSurvey: null,
-	maxWorkspaceMembers: null,
-	maxApiLogsPerMinute: 600,
-	logRetentionDays: null,
-};
+  maxTrackableItems: null,
+  maxResponsesPerSurvey: null,
+  maxWorkspaceMembers: null,
+  maxApiLogsPerMinute: 600,
+  logRetentionDays: null,
+}
 
 const WORKSPACE_TIER_PLAN_LIST: WorkspaceTierPlan[] = [
-	{
-		tier: "free",
-		rank: 0,
-		name: "Free",
-		mostPopular: false,
-		priceLabel: "$0",
-		priceInterval: "/workspace",
-		summary: "A clean starting point for new workspaces.",
-		highlights: buildTierHighlights(FREE_LIMITS),
-		lemonSqueezyVariantId: null,
-		switchUrl:
-			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
-		manageUrl: "https://store.trackables.org/billing",
-		limits: FREE_LIMITS,
-		tone: "neutral",
-	},
-	{
-		tier: "plus",
-		rank: 1,
-		name: "Plus",
-		mostPopular: true,
-		priceLabel: "$24",
-		priceInterval: "/workspace",
-		summary: "More room for growing teams and heavier usage.",
-		highlights: buildTierHighlights(PLUS_LIMITS),
-		lemonSqueezyVariantId: "12345",
-		switchUrl:
-			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
-		manageUrl: "https://store.trackables.org/billing",
-		limits: PLUS_LIMITS,
-		tone: "accent",
-	},
-	{
-		tier: "pro",
-		rank: 2,
-		name: "Pro",
-		mostPopular: false,
-		priceLabel: "$79",
-		priceInterval: "/workspace",
-		summary: "Expanded limits for high-volume workspaces.",
-		highlights: buildTierHighlights(PRO_LIMITS),
-		lemonSqueezyVariantId: "67890",
-		switchUrl:
-			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
-		manageUrl: "https://store.trackables.org/billing",
-		limits: PRO_LIMITS,
-		tone: "strong",
-	},
-];
+  {
+    tier: "free",
+    rank: 0,
+    name: "Free",
+    mostPopular: false,
+    priceLabel: "$0",
+    priceInterval: "/workspace",
+    summary: "A clean starting point for new workspaces.",
+    highlights: buildTierHighlights(FREE_LIMITS),
+    lemonSqueezyVariantId: null,
+    switchUrl:
+      "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
+    manageUrl: "https://store.trackables.org/billing",
+    limits: FREE_LIMITS,
+    tone: "neutral",
+  },
+  {
+    tier: "plus",
+    rank: 1,
+    name: "Plus",
+    mostPopular: true,
+    priceLabel: "$24",
+    priceInterval: "/workspace",
+    summary: "More room for growing teams and heavier usage.",
+    highlights: buildTierHighlights(PLUS_LIMITS),
+    lemonSqueezyVariantId: "12345",
+    switchUrl:
+      "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
+    manageUrl: "https://store.trackables.org/billing",
+    limits: PLUS_LIMITS,
+    tone: "accent",
+  },
+  {
+    tier: "pro",
+    rank: 2,
+    name: "Pro",
+    mostPopular: false,
+    priceLabel: "$79",
+    priceInterval: "/workspace",
+    summary: "Expanded limits for high-volume workspaces.",
+    highlights: buildTierHighlights(PRO_LIMITS),
+    lemonSqueezyVariantId: "67890",
+    switchUrl:
+      "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
+    manageUrl: "https://store.trackables.org/billing",
+    limits: PRO_LIMITS,
+    tone: "strong",
+  },
+]
 
 export const WORKSPACE_TIER_PLANS = WORKSPACE_TIER_PLAN_LIST.reduce(
-	(plans, plan) => {
-		plans[plan.tier] = plan;
-		return plans;
-	},
-	{} as Record<SubscriptionTier, WorkspaceTierPlan>,
-);
+  (plans, plan) => {
+    plans[plan.tier] = plan
+    return plans
+  },
+  {} as Record<SubscriptionTier, WorkspaceTierPlan>
+)
 
 export const WORKSPACE_TIER_ORDER = WORKSPACE_TIER_PLAN_LIST.map((plan) => plan)
-	.sort((left, right) => left.rank - right.rank)
-	.map((plan) => plan.tier);
+  .sort((left, right) => left.rank - right.rank)
+  .map((plan) => plan.tier)
 
 export function getWorkspaceTierPlans(): readonly WorkspaceTierPlan[] {
-	return [...WORKSPACE_TIER_PLAN_LIST].sort(
-		(left, right) => left.rank - right.rank,
-	);
+  return [...WORKSPACE_TIER_PLAN_LIST].sort(
+    (left, right) => left.rank - right.rank
+  )
 }
 
 export function getWorkspaceTierPlan(
-	tier: SubscriptionTier,
+  tier: SubscriptionTier
 ): WorkspaceTierPlan {
-	return WORKSPACE_TIER_PLANS[tier];
+  return WORKSPACE_TIER_PLANS[tier]
 }
 
 export function getTierLimits(tier: SubscriptionTier): TierLimits {
-	return WORKSPACE_TIER_PLANS[tier].limits;
+  return WORKSPACE_TIER_PLANS[tier].limits
 }
 
 export function resolveWorkspaceTierFromLemonSqueezyVariantId(
-	variantId: string,
+  variantId: string
 ): SubscriptionTier | null {
-	const matchingPlan = WORKSPACE_TIER_PLAN_LIST.find(
-		(plan) => plan.lemonSqueezyVariantId === variantId,
-	);
+  const matchingPlan = WORKSPACE_TIER_PLAN_LIST.find(
+    (plan) => plan.lemonSqueezyVariantId === variantId
+  )
 
-	return matchingPlan?.tier ?? null;
+  return matchingPlan?.tier ?? null
 }
