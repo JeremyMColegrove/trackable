@@ -184,7 +184,7 @@ test("formSubmissionColumns export the same submitter and submitted text shown i
   })
 
   assert.equal(submitterExport, "Ada Lovelace\nPublic link")
-  assert.equal(submittedExport, "Mar 24 12:34:56.789")
+  assert.equal(submittedExport, "Mar 24, 12:34 pm")
 })
 
 test("getUsageEventColumns exports the rendered event table text", () => {

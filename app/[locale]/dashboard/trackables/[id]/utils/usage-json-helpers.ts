@@ -74,6 +74,17 @@ export function buildGroupFilterQuery(field: string, value: unknown) {
 	return `${field}:${quoteLiqeString(JSON.stringify(value))}`;
 }
 
+export function buildGroupedUsageEventFilterQuery(usageEvent: UsageEventRow) {
+	if (
+		usageEvent.aggregation !== "payload_field" ||
+		!usageEvent.groupField
+	) {
+		return null;
+	}
+
+	return buildGroupFilterQuery(usageEvent.groupField, usageEvent.event);
+}
+
 export function quoteLiqeString(value: string) {
 	return `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
 }

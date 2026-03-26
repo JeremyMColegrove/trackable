@@ -36,7 +36,7 @@ interface DataTableProps<TData, TValue> {
   titleVariant?: "default" | "page"
   description?: React.ReactNode
   onRowClick?: (row: TData) => void
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   headerButton?: React.ReactNode
   exportOptions?: TableExportOptions
   showViewOptions?: boolean

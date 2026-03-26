@@ -208,7 +208,7 @@ export function UsageEventsPage() {
 
 		toast.warning(
 			gt(
-				"More than 10,000 logs were found, but only 10,000 logs are visible at a time. Try refining the search or query.",
+				"More than 1,000 rows matched this query. Refine the search or grouping to narrow the result.",
 			),
 		);
 	}, [gt, searchInput, usageEventTableQuery.data?.maxLogsFound]);

@@ -69,6 +69,7 @@ export type UsageEventTableData = {
   totalGroupedRows: number
   availableAggregateFields: string[]
   maxLogsFound: boolean
+  partialResults: boolean
   sourceSnapshot: UsageEventSourceSnapshot
 }
 export type UsageEventFreshnessState = UsageEventFreshness

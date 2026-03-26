@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import type { TrackableKind } from "@/db/schema/types";
-import { formatTableTimestamp } from "@/lib/date-time";
+import { formatUserTimestamp } from "@/lib/date-time";
 import {
 	getTrackableKindShortLabel,
 	getTrackableKindVisuals,
@@ -92,7 +92,7 @@ export const dashboardTrackableColumns: ColumnDef<DashboardTrackableRow>[] = [
 		cell: ({ row }) => (
 			<div className="text-sm text-muted-foreground">
 				{row.original.updatedAt ? (
-					formatTableTimestamp(row.original.updatedAt)
+					formatUserTimestamp(row.original.updatedAt)
 				) : (
 					<T>Unknown</T>
 				)}

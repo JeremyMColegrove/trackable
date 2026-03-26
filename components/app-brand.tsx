@@ -1,7 +1,7 @@
 "use client";
 
 import iosSmallIcon from "@/images/ios/AppIcon-20@3x.png";
-import { T, useGT } from "gt-next";
+import { useGT } from "gt-next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -28,7 +28,7 @@ export function AppBrand({
 				priority
 			/>
 			<span className={collapseTextOnMobile ? "hidden sm:inline" : undefined}>
-				<T>Trackables.</T>
+				Trackables.
 			</span>
 		</Link>
 	);

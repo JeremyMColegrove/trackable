@@ -1,12 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Plus } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -27,7 +20,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { T, useGT } from "gt-next";
+import { Copy, Plus } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const expirationPresetOptions = [
 	{ value: "never", label: "Never" },
@@ -136,30 +135,32 @@ export function CreateApiKeyDialog({
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
-				<Button variant="outline" size="sm" className="h-8 gap-2">
+				<Button variant="default" size="sm" className="h-8 gap-2">
 					<Plus className="size-4" />
-					
-                    					<T>Create API Key</T>
-                    				</Button>
+
+					<T>Create API Key</T>
+				</Button>
 			</DialogTrigger>
 			<DialogContent>
 				{createdKey ? (
 					<>
 						<DialogHeader>
-							<DialogTitle><T>API key created</T></DialogTitle>
+							<DialogTitle>
+								<T>API key created</T>
+							</DialogTitle>
 							<DialogDescription>
-								
-                                								<T>Copy this API key now. You will not be able to see it again.</T>
-                                							</DialogDescription>
+								<T>
+									Copy this API key now. You will not be able to see it again.
+								</T>
+							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-3">
 							<code className="block break-all rounded-md border bg-muted/50 p-3 font-mono text-sm">
 								{createdKey}
 							</code>
 							<p className="text-sm text-muted-foreground">
-								
-                                								<T>Store it somewhere secure before closing this dialog.</T>
-                                							</p>
+								<T>Store it somewhere secure before closing this dialog.</T>
+							</p>
 						</div>
 						<DialogFooter>
 							<Button
@@ -171,19 +172,19 @@ export function CreateApiKeyDialog({
 								{copied ? "Copied" : "Copy key"}
 							</Button>
 							<Button type="button" onClick={closeDialog}>
-								
-                                								<T>Done</T>
-                                							</Button>
+								<T>Done</T>
+							</Button>
 						</DialogFooter>
 					</>
 				) : (
 					<>
 						<DialogHeader>
-							<DialogTitle><T>Create API key</T></DialogTitle>
+							<DialogTitle>
+								<T>Create API key</T>
+							</DialogTitle>
 							<DialogDescription>
-								
-                                    								<T>Create an API key for sending logs to this trackable.</T>
-                                    							</DialogDescription>
+								<T>Create an API key for sending logs to this trackable.</T>
+							</DialogDescription>
 						</DialogHeader>
 						<Form {...form}>
 							<form
@@ -195,7 +196,9 @@ export function CreateApiKeyDialog({
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel><T>Name</T></FormLabel>
+											<FormLabel>
+												<T>Name</T>
+											</FormLabel>
 											<FormControl>
 												<Input
 													placeholder={gt("e.g. Production log key")}
@@ -212,7 +215,9 @@ export function CreateApiKeyDialog({
 									name="expirationPreset"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel><T>Expiration</T></FormLabel>
+											<FormLabel>
+												<T>Expiration</T>
+											</FormLabel>
 											<FormControl>
 												<select
 													{...field}
@@ -238,9 +243,8 @@ export function CreateApiKeyDialog({
 										onClick={closeDialog}
 										disabled={isSubmitting}
 									>
-										
-                                            										<T>Cancel</T>
-                                            									</Button>
+										<T>Cancel</T>
+									</Button>
 									<Button type="submit" disabled={isSubmitting}>
 										{createApiKey.isPending ? "Creating..." : "Create API Key"}
 									</Button>

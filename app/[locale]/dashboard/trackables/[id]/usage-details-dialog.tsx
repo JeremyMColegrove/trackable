@@ -14,7 +14,7 @@ import {
 import type { UsageEventUrlState } from "@/lib/usage-event-search";
 
 import {
-	formatDateTime,
+	formatCompactDateTime,
 	formatRelativeTime,
 } from "./display-utils";
 import { LogLevelBadge } from "./log-level-badge";
@@ -22,6 +22,7 @@ import type { UsageEventRow } from "./table-types";
 import { HighlightedJson } from "./components/highlighted-json";
 import {
 	buildGroupFilterQuery,
+	buildGroupedUsageEventFilterQuery,
 	buildSimilarLogsQuery,
 	formatPayloadJson,
 	getSourceLabel,
@@ -65,12 +66,7 @@ export function UsageDetailsDialog({
 
 	const prettyJson = combinedData ? formatPayloadJson(combinedData) : null;
 
-	const groupValue = isGroupedRow
-		? usageEvent.hits[0]?.payload[usageEvent.groupField!]
-		: undefined;
-	const groupFilterQuery = isGroupedRow
-		? buildGroupFilterQuery(usageEvent.groupField!, groupValue)
-		: null;
+	const groupFilterQuery = buildGroupedUsageEventFilterQuery(usageEvent);
 	const similarLogsQuery = buildSimilarLogsQuery(usageEvent, metadata);
 	const sourceLabel = getSourceLabel(usageEvent);
 
@@ -105,7 +101,7 @@ export function UsageDetailsDialog({
 					</SheetTitle>
 
 					<div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-						<span>{formatDateTime(usageEvent.lastOccurredAt)}</span>
+						<span>{formatCompactDateTime(usageEvent.lastOccurredAt)}</span>
 						<span className="text-border">•</span>
 						<span>
 							{isGroupedRow

@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { TrackableFormSnapshot } from "@/db/schema/types";
 import {
 	Dialog,
 	DialogContent,
@@ -17,6 +18,7 @@ import { T } from "gt-next";
 import { Check, Copy, Globe, Link2, Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatDateTime } from "./display-utils";
+import { hasConfiguredTrackableForm } from "./trackable-form-status";
 import type { ShareLinkRow } from "./table-types";
 
 function buildSurveyLink(token: string) {
@@ -33,14 +35,22 @@ function getSurveyLink(links: ShareLinkRow[]) {
 
 type SurveyShareDialogProps = {
 	trackableId: string;
-	activeForm: { id: string } | null;
+	activeForm: Pick<TrackableFormSnapshot, "id" | "fields"> | null;
 	shareLinks: ShareLinkRow[];
+	trigger?: React.ReactNode;
+	hideTrigger?: boolean;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 };
 
 export function SurveyShareDialog({
 	trackableId,
 	activeForm,
 	shareLinks,
+	trigger,
+	hideTrigger = false,
+	open,
+	onOpenChange,
 }: SurveyShareDialogProps) {
 	const [copied, setCopied] = useState(false);
 	const trpc = useTRPC();
@@ -51,7 +61,7 @@ export function SurveyShareDialog({
 
 	const surveyLink = useMemo(() => getSurveyLink(shareLinks), [shareLinks]);
 	const linkIsOn = Boolean(surveyLink && !surveyLink.revokedAt);
-	const hasForm = Boolean(activeForm);
+	const hasForm = hasConfiguredTrackableForm(activeForm);
 
 	async function refreshTrackable() {
 		await queryClient.invalidateQueries({
@@ -114,22 +124,28 @@ export function SurveyShareDialog({
 	}
 
 	return (
-		<Dialog>
-			<DialogTrigger asChild>
-				<Button
-					variant="default"
-					type="button"
-					size="lg"
-					disabled={!hasForm}
-					title={
-						!hasForm ? "Create a form before sending the survey." : undefined
-					}
-				>
-					<Send className="size-4" />
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			{!hideTrigger ? (
+				<DialogTrigger asChild>
+					{trigger ?? (
+						<Button
+							variant="default"
+							type="button"
+							size="lg"
+							disabled={!hasForm}
+							title={
+								!hasForm
+									? "Add at least one field before sharing the survey."
+									: undefined
+							}
+						>
+							<Send className="size-4" />
 
-					<T>Send Survey</T>
-				</Button>
-			</DialogTrigger>
+							<T>Send Survey</T>
+						</Button>
+					)}
+				</DialogTrigger>
+			) : null}
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
 					<DialogTitle>
@@ -146,7 +162,7 @@ export function SurveyShareDialog({
 				{!hasForm ? (
 					<div className="rounded-xl border border-dashed bg-muted/20 p-5 text-sm text-muted-foreground">
 						<T>
-							Create a form first, then you can turn on a share link for it.
+							Add your first field in the form builder before turning on sharing.
 						</T>
 					</div>
 				) : (

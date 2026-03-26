@@ -20,7 +20,7 @@
 - Security: https://trackables.org/security.txt
 
 ## Source
-- GitHub: https://github.com/JeremyMColegrove/trackable
+- GitHub: https://github.com/JeremyMColegrove/trackables
 
 ## Crawling guidance
 - The public marketing and legal pages are indexable.

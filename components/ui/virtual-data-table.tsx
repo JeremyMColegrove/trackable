@@ -79,7 +79,7 @@ interface VirtualDataTableProps<TData, TValue> {
   description?: React.ReactNode
   footer?: React.ReactNode
   onRowClick?: (row: TData) => void
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   headerButton?: React.ReactNode
   exportOptions?: TableExportOptions
 
@@ -264,7 +264,7 @@ interface VirtualizedTableContentProps<TData> {
   totalSize: number
   visibleColumnCount: number
   onRowClick?: (row: TData) => void
-  emptyMessage: string
+  emptyMessage: React.ReactNode
   stickyHeader: boolean
   estimateRowHeight: number
   classNames?: VirtualDataTableClassNames
@@ -291,7 +291,7 @@ function ContainerVirtualTable<TData>({
   estimateRowHeight: number
   overscan: number
   onRowClick?: (row: TData) => void
-  emptyMessage: string
+  emptyMessage: React.ReactNode
   stickyHeader: boolean
   classNames?: VirtualDataTableClassNames
   enableColumnResizing: boolean
@@ -340,7 +340,7 @@ function WindowVirtualTable<TData>({
   estimateRowHeight: number
   overscan: number
   onRowClick?: (row: TData) => void
-  emptyMessage: string
+  emptyMessage: React.ReactNode
   stickyHeader: boolean
   classNames?: VirtualDataTableClassNames
   enableColumnResizing: boolean

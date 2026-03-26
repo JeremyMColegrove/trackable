@@ -12,6 +12,7 @@ export interface WorkspaceTierPlan {
 	priceInterval: string;
 	summary: string;
 	highlights: string[];
+	lemonSqueezyVariantId: string | null;
 	switchUrl: string | null;
 	manageUrl: string | null;
 	limits: TierLimits;
@@ -59,7 +60,7 @@ function buildTierHighlights(limits: TierLimits): string[] {
 const FREE_LIMITS: TierLimits = {
 	maxTrackableItems: 10,
 	maxResponsesPerSurvey: 100,
-	maxWorkspaceMembers: 2,
+	maxWorkspaceMembers: 5,
 	maxApiLogsPerMinute: 30,
 	logRetentionDays: 3,
 };
@@ -90,6 +91,7 @@ const WORKSPACE_TIER_PLAN_LIST: WorkspaceTierPlan[] = [
 		priceInterval: "/workspace",
 		summary: "A clean starting point for new workspaces.",
 		highlights: buildTierHighlights(FREE_LIMITS),
+		lemonSqueezyVariantId: null,
 		switchUrl:
 			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
 		manageUrl: "https://store.trackables.org/billing",
@@ -105,6 +107,7 @@ const WORKSPACE_TIER_PLAN_LIST: WorkspaceTierPlan[] = [
 		priceInterval: "/workspace",
 		summary: "More room for growing teams and heavier usage.",
 		highlights: buildTierHighlights(PLUS_LIMITS),
+		lemonSqueezyVariantId: "12345",
 		switchUrl:
 			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
 		manageUrl: "https://store.trackables.org/billing",
@@ -120,6 +123,7 @@ const WORKSPACE_TIER_PLAN_LIST: WorkspaceTierPlan[] = [
 		priceInterval: "/workspace",
 		summary: "Expanded limits for high-volume workspaces.",
 		highlights: buildTierHighlights(PRO_LIMITS),
+		lemonSqueezyVariantId: "67890",
 		switchUrl:
 			"https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
 		manageUrl: "https://store.trackables.org/billing",
@@ -154,4 +158,14 @@ export function getWorkspaceTierPlan(
 
 export function getTierLimits(tier: SubscriptionTier): TierLimits {
 	return WORKSPACE_TIER_PLANS[tier].limits;
+}
+
+export function resolveWorkspaceTierFromLemonSqueezyVariantId(
+	variantId: string,
+): SubscriptionTier | null {
+	const matchingPlan = WORKSPACE_TIER_PLAN_LIST.find(
+		(plan) => plan.lemonSqueezyVariantId === variantId,
+	);
+
+	return matchingPlan?.tier ?? null;
 }

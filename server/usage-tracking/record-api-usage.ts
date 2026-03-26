@@ -9,7 +9,6 @@ import { db } from "@/db"
 import { apiKeys, trackableApiUsageEvents, trackableItems } from "@/db/schema"
 import type { UsageEventMetadata, UsageEventPayload } from "@/db/schema/types"
 import { hashApiKey } from "@/server/api-keys"
-import { apiLogCache } from "@/server/redis/api-log-cache.repository"
 import { apiKeyCache } from "@/server/redis/api-key-cache.repository"
 import { quotaService } from "@/server/subscriptions/quota.service"
 import { logger } from "@/lib/logger"
@@ -116,22 +115,6 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
       .where(eq(apiKeys.id, apiKey.id))
 
     return [usageEvent]
-  })
-
-  await apiLogCache.addLogToTrackable(project.id, {
-    id: createdUsageEvent.id,
-    trackableId: project.id,
-    apiKeyId: apiKey.id,
-    requestId,
-    occurredAt: createdUsageEvent.occurredAt,
-    payload: input.payload,
-    metadata: input.metadata ?? null,
-    apiKey: {
-      id: apiKey.id,
-      name: apiKey.name,
-      keyPrefix: apiKey.keyPrefix,
-      lastFour: apiKey.lastFour,
-    },
   })
 
   logger.info({

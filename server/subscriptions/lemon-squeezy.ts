@@ -1,3 +1,4 @@
+import { resolveWorkspaceTierFromLemonSqueezyVariantId } from "@/lib/workspace-tier-config"
 import { logger } from "@/lib/logger"
 import type {
   SubscriptionStatus,
@@ -34,26 +35,16 @@ export interface LemonSqueezySubscriptionSnapshot {
   currentPeriodEnd: Date | null
 }
 
-export function getLemonSqueezyVariantMap(
-  raw = process.env.LEMON_SQUEEZY_VARIANT_MAP
-): Record<string, SubscriptionTier> {
-  if (!raw) {
-    return {}
-  }
-
-  try {
-    return JSON.parse(raw) as Record<string, SubscriptionTier>
-  } catch (error) {
-    logger.error({ error }, "Invalid LEMON_SQUEEZY_VARIANT_MAP value")
-    throw new Error("Invalid LEMON_SQUEEZY_VARIANT_MAP value.")
-  }
-}
-
 export function resolveLemonSqueezyTier(
-  variantId: string,
-  map = getLemonSqueezyVariantMap()
+  variantId: string
 ): SubscriptionTier | null {
-  return map[variantId] ?? null
+  const tier = resolveWorkspaceTierFromLemonSqueezyVariantId(variantId)
+
+  if (tier === null) {
+    logger.warn({ variantId }, "Unknown Lemon Squeezy variant id")
+  }
+
+  return tier
 }
 
 export function mapLemonSqueezyStatus(

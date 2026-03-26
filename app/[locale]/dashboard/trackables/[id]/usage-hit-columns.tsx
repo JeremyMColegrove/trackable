@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 
 import {
-  formatDateTime,
+  formatCompactDateTime,
   formatUsagePayload,
   formatUsageUserAgent,
 } from "./display-utils"
@@ -18,7 +18,7 @@ export const usageHitColumns: ColumnDef<UsageHitRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Occurred At" />
     ),
-    cell: ({ row }) => formatDateTime(row.original.occurredAt),
+    cell: ({ row }) => formatCompactDateTime(row.original.occurredAt),
   },
   {
     id: "metadata",

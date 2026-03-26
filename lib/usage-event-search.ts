@@ -114,6 +114,7 @@ export const usageEventTableResultSchema = z.object({
   totalGroupedRows: z.number().int().min(0),
   availableAggregateFields: z.array(z.string()),
   maxLogsFound: z.boolean(),
+  partialResults: z.boolean(),
   sourceSnapshot: usageEventSourceSnapshotSchema,
 })
 

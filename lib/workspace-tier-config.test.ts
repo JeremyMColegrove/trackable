@@ -5,6 +5,7 @@ import {
   getTierLimits,
   getWorkspaceTierPlan,
   getWorkspaceTierPlans,
+  resolveWorkspaceTierFromLemonSqueezyVariantId,
 } from "@/lib/workspace-tier-config"
 
 test("workspace tier config exposes the enforced free-tier limits", () => {
@@ -20,6 +21,7 @@ test("workspace tier config exposes the enforced free-tier limits", () => {
 test("workspace tier plans expose highlights derived from enforced limits", () => {
   const freePlan = getWorkspaceTierPlan("free")
   const plusPlan = getWorkspaceTierPlan("plus")
+  const proPlan = getWorkspaceTierPlan("pro")
 
   assert.deepEqual(freePlan.highlights, [
     "2 workspace members",
@@ -30,5 +32,13 @@ test("workspace tier plans expose highlights derived from enforced limits", () =
   ])
 
   assert.equal(plusPlan.mostPopular, true)
+  assert.equal(plusPlan.lemonSqueezyVariantId, "12345")
+  assert.equal(proPlan.lemonSqueezyVariantId, "67890")
   assert.equal(getWorkspaceTierPlans()[0]?.tier, "free")
+})
+
+test("workspace tier config resolves Lemon Squeezy variant ids without env config", () => {
+  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("12345"), "plus")
+  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("67890"), "pro")
+  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("99999"), null)
 })

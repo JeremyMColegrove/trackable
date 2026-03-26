@@ -4,7 +4,10 @@ import type {
   SubmissionMetadata,
   UsageEventPayload,
 } from "@/db/schema/types"
-import { formatTableTimestamp } from "@/lib/date-time"
+import {
+  formatUserTimestamp,
+  formatUserTimestampWithSeconds,
+} from "@/lib/date-time"
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
   numeric: "auto",
@@ -46,11 +49,11 @@ export function formatRelativeTime(value: string | null) {
 }
 
 export function formatDateTime(value: string | null) {
-  return formatTableTimestamp(value)
+  return formatUserTimestamp(value)
 }
 
 export function formatCompactDateTime(value: string | null) {
-  return formatTableTimestamp(value)
+  return formatUserTimestampWithSeconds(value)
 }
 
 export function formatStatusLabel(value: string) {

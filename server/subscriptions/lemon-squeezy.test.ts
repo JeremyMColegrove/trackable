@@ -9,7 +9,9 @@ import {
 } from "@/server/subscriptions/lemon-squeezy"
 
 test("resolveLemonSqueezyTier returns null for unknown variants", () => {
-  assert.equal(resolveLemonSqueezyTier("999", { 123: "plus" }), null)
+  assert.equal(resolveLemonSqueezyTier("12345"), "plus")
+  assert.equal(resolveLemonSqueezyTier("67890"), "pro")
+  assert.equal(resolveLemonSqueezyTier("999"), null)
 })
 
 test("mapLemonSqueezyStatus normalizes Lemon Squeezy states", () => {

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
-import { formatTableTimestamp } from "@/lib/date-time"
+import { formatUserTimestamp } from "@/lib/date-time"
 import { useTRPC } from "@/trpc/client"
 import { T } from "gt-next";
 
@@ -38,7 +38,7 @@ const EMPTY_JOBS: Array<{
 }> = []
 
 function formatDateTime(value: string | null) {
-  return formatTableTimestamp(value)
+  return formatUserTimestamp(value)
 }
 
 function getStatusVariant(status: string | null) {

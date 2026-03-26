@@ -9,6 +9,10 @@ import {
   parseUsageEventVisibleColumnIds,
   stringifyUsageEventVisibleColumnIds,
 } from "@/lib/usage-event-search"
+import {
+  buildGroupFilterQuery,
+  buildGroupedUsageEventFilterQuery,
+} from "@/app/[locale]/dashboard/trackables/[id]/utils/usage-json-helpers"
 
 test("buildAppliedUsageEventTimeRangeUrlState preserves exact applied bounds", () => {
   assert.deepEqual(
@@ -71,5 +75,57 @@ test("usage event visible column parsing drops invalid and duplicate values", ()
       "event,event,invalid,k%3Aroute,k%3Aroute,k%3A%20"
     ),
     ["event", createUsageEventComputedColumnId("route")]
+  )
+})
+
+test("group filter query preserves grouped string values", () => {
+  assert.equal(buildGroupFilterQuery("event", "Docker 38"), 'event:"Docker 38"')
+})
+
+test("group filter query keeps the empty-group fallback", () => {
+  assert.equal(buildGroupFilterQuery("event", null), "-event:*")
+})
+
+test("grouped usage rows resolve a concrete filter from the row value", () => {
+  assert.equal(
+    buildGroupedUsageEventFilterQuery({
+      id: "event:Docker 38",
+      event: "Docker 38",
+      level: null,
+      message: null,
+      aggregation: "payload_field",
+      groupField: "event",
+      totalHits: 3,
+      lastOccurredAt: "2026-03-24T11:00:00.000Z",
+      firstOccurredAt: "2026-03-24T10:00:00.000Z",
+      percentage: 75,
+      apiKey: null,
+      apiKeyCount: 2,
+      apiKeys: [],
+      hits: [],
+    }),
+    'event:"Docker 38"'
+  )
+})
+
+test("grouped usage rows resolve the empty-group filter when the row value is null", () => {
+  assert.equal(
+    buildGroupedUsageEventFilterQuery({
+      id: "event:__empty__",
+      event: null,
+      level: null,
+      message: null,
+      aggregation: "payload_field",
+      groupField: "event",
+      totalHits: 1,
+      lastOccurredAt: "2026-03-24T11:00:00.000Z",
+      firstOccurredAt: "2026-03-24T10:00:00.000Z",
+      percentage: 25,
+      apiKey: null,
+      apiKeyCount: 1,
+      apiKeys: [],
+      hits: [],
+    }),
+    "-event:*"
   )
 })

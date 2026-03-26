@@ -28,6 +28,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatUserTimestamp } from "@/lib/date-time";
 import { isWorkspaceMemberLimitMessage } from "@/lib/subscription-limit-messages";
 import { getTierLimits } from "@/lib/workspace-tier-config";
 import type { SubscriptionTier } from "@/server/subscriptions/types";
@@ -101,9 +102,7 @@ function getDisplayName(member: {
 }
 
 function formatDateLabel(value: string) {
-	return new Intl.DateTimeFormat(undefined, {
-		dateStyle: "medium",
-	}).format(new Date(value));
+	return formatUserTimestamp(value);
 }
 
 function WorkspaceAccessDescription({ role }: { role: TeamAccessRow["role"] }) {

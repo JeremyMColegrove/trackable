@@ -148,7 +148,7 @@ function ConnectionGuide({ trackableName }: { trackableName: string }) {
 		`curl -X POST ${endpoint} \\`,
 		'  -H "Content-Type: application/json" \\',
 		'  -H "X-Api-Key: trk_live_your_connection_key" \\',
-		`  -d '{"trackable":${exampleName},"level":"info","message":"Request completed","service":"web"}'`,
+		`  -d '{"event":"Button pressed", "level":"info", "message":"Request completed"}'`,
 	].join("\n");
 
 	async function handleCopy(value: string, target: "endpoint" | "curl") {
@@ -174,7 +174,7 @@ function ConnectionGuide({ trackableName }: { trackableName: string }) {
 						onClick={() => void handleCopy(endpoint, "endpoint")}
 					>
 						<Copy className="size-3.5" />
-						{copiedValue === "endpoint" ? <T>"Copied"</T> : <T>"Copy"</T>}
+						{copiedValue === "endpoint" ? <T>Copied</T> : <T>Copy</T>}
 					</Button>
 				</div>
 				<pre className="overflow-x-auto rounded-md border bg-muted/30 p-3 font-mono text-xs text-foreground">

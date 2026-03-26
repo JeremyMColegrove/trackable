@@ -23,11 +23,9 @@ import { formSubmissionService } from "@/server/services/form-submission.service
 import { shareLinkService } from "@/server/services/share-link.service"
 import { apiKeyService } from "@/server/services/api-key.service"
 import {
-  getTrackableUsageAggregateFields,
   getTrackableUsageEvents,
   getTrackableUsageSourceSnapshot,
 } from "@/server/usage-tracking/usage-event-query"
-import { UsageEventTableProcessor } from "@/server/usage-tracking/usage-event-table-processor"
 
 const accessRoleSchema = z.enum(["submit", "view", "manage"])
 const trackableKindSchema = z.enum(["survey", "api_ingestion"])
@@ -67,34 +65,9 @@ export const trackablesRouter = createTRPCRouter({
         "view"
       )
 
-      const [eventResult, sourceSnapshot, availableAggregateFields] =
-        await Promise.all([
-          getTrackableUsageEvents(input),
-          getTrackableUsageSourceSnapshot(input.trackableId),
-          getTrackableUsageAggregateFields(input.trackableId),
-        ])
+      const sourceSnapshot = await getTrackableUsageSourceSnapshot(input.trackableId)
 
-      const tableResult = new UsageEventTableProcessor(
-        eventResult.logs.map((event) => ({
-          id: event.id,
-          occurredAt: event.occurredAt,
-          payload: event.payload,
-          metadata: event.metadata,
-          apiKey: {
-            id: event.apiKey.id,
-            name: event.apiKey.name,
-            maskedKey: `${event.apiKey.keyPrefix}...${event.apiKey.lastFour}`,
-          },
-        })),
-        input,
-        sourceSnapshot,
-        eventResult.maxLogsFound
-      ).process()
-
-      return {
-        ...tableResult,
-        availableAggregateFields,
-      }
+      return getTrackableUsageEvents(input, sourceSnapshot)
     }),
 
   getUsageEventFreshness: protectedProcedure
