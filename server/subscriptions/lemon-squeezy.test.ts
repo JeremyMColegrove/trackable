@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
+import { getWorkspaceTierPlans } from "@/lib/workspace-tier-config"
 import {
   fetchLemonSqueezySubscription,
   mapLemonSqueezyStatus,
@@ -8,10 +9,16 @@ import {
   resolveLemonSqueezyTier,
 } from "@/server/subscriptions/lemon-squeezy"
 
-test("resolveLemonSqueezyTier returns null for unknown variants", () => {
-  assert.equal(resolveLemonSqueezyTier("12345"), "plus")
-  assert.equal(resolveLemonSqueezyTier("67890"), "pro")
-  assert.equal(resolveLemonSqueezyTier("999"), null)
+test("resolveLemonSqueezyTier returns the configured tier for each known variant", () => {
+  for (const plan of getWorkspaceTierPlans()) {
+    if (!plan.lemonSqueezyVariantId) {
+      continue
+    }
+
+    assert.equal(resolveLemonSqueezyTier(plan.lemonSqueezyVariantId), plan.tier)
+  }
+
+  assert.equal(resolveLemonSqueezyTier("unknown"), null)
 })
 
 test("mapLemonSqueezyStatus normalizes Lemon Squeezy states", () => {

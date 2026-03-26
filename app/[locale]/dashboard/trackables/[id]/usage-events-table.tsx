@@ -18,7 +18,7 @@ import {
 	type UsageEventVisibleColumnId,
 } from "@/lib/usage-event-search";
 import { useGT, useLocale } from "gt-next";
-import { Plus } from "lucide-react";
+import { KeyRoundIcon, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { UsageEventTableData } from "./table-types";
 import { useTrackableDetails } from "./trackable-shell";
@@ -222,8 +222,9 @@ export function UsageEventsTable({
 			description={gt(
 				"Set up a connection first so this trackable can start receiving log events.",
 			)}
+			actionIcon={<KeyRoundIcon />}
 			actionHref={canManageConnection ? connectionHref : undefined}
-			actionLabel={canManageConnection ? gt("Open connection") : undefined}
+			actionLabel={canManageConnection ? gt("Open Connection") : undefined}
 		/>
 	);
 

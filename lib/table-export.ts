@@ -23,9 +23,14 @@ export type TableExportArtifact = {
   fileName: string
 }
 
-export type TableExportOptions = {
+export type TableExportOptions<TData> = {
   fileName: string
   format?: TableExportFormat
+  buildPayload?: (context: {
+    table: Table<TData>
+    rows: Row<TData>[]
+    fileName: string
+  }) => TableExportPayload
 }
 
 export interface TableExportFormatter {

@@ -340,7 +340,7 @@ export function UsageEventsPage() {
 			<TrackablePageFrame
 				title={gt("Logs")}
 				description={gt(
-					"Review raw API events, then aggregate them by a payload field when needed.",
+					"Review, filter, and export the logs you've collected.",
 				)}
 				search={
 					<div ref={searchSectionRef} className="flex flex-col gap-3">

@@ -81,7 +81,7 @@ interface VirtualDataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
   emptyMessage?: React.ReactNode
   headerButton?: React.ReactNode
-  exportOptions?: TableExportOptions
+  exportOptions?: TableExportOptions<TData>
 
   // Styling
   className?: string // Root className

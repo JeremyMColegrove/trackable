@@ -10,11 +10,13 @@ export function TrackableTableEmptyState({
 	actionHref,
 	actionLabel,
 	action,
+	actionIcon,
 }: {
 	title: string;
 	description: string;
 	actionHref?: string;
 	actionLabel?: string;
+	actionIcon?: React.ReactNode;
 	action?: React.ReactNode;
 }) {
 	return (
@@ -29,7 +31,10 @@ export function TrackableTableEmptyState({
 			{action ? action : null}
 			{!action && actionHref && actionLabel ? (
 				<Button asChild size="lg" className="mt-1">
-					<Link href={actionHref}>{actionLabel}</Link>
+					<Link href={actionHref}>
+						{actionIcon}
+						{actionLabel}
+					</Link>
 				</Button>
 			) : null}
 		</div>

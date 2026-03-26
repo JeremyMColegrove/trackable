@@ -38,7 +38,7 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
   emptyMessage?: React.ReactNode
   headerButton?: React.ReactNode
-  exportOptions?: TableExportOptions
+  exportOptions?: TableExportOptions<TData>
   showViewOptions?: boolean
   initialPageSize?: number
   fillHeight?: boolean
@@ -117,6 +117,7 @@ export function DataTable<TData, TValue>({
                   rows={getDataTableExportRows(table)}
                   fileName={exportOptions.fileName}
                   format={exportOptions.format}
+                  buildPayload={exportOptions.buildPayload}
                 />
               ) : null}
               {showViewOptions ? <DataTableViewOptions table={table} /> : null}

@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { useGT, useLocale } from "gt-next";
+import { LayoutTemplateIcon, SendIcon } from "lucide-react";
 import { useState } from "react";
 import { ActivityDetailsDialog } from "./activity-details-dialog";
+import { buildFormSubmissionExportPayload } from "./form-submission-export";
 import { formSubmissionColumns } from "./form-submission-columns";
 import { SurveyShareDialog } from "./survey-share-dialog";
 import type { ShareLinkRow, SubmissionRow } from "./table-types";
@@ -45,6 +47,7 @@ export function FormSubmissionsTable({
 			description={gt(
 				"Build the form first so people have something to submit.",
 			)}
+			actionIcon={<LayoutTemplateIcon />}
 			actionHref={canManageForm ? formBuilderHref : undefined}
 			actionLabel={canManageForm ? gt("Open Form Builder") : undefined}
 		/>
@@ -62,7 +65,8 @@ export function FormSubmissionsTable({
 						className="mt-1"
 						onClick={() => setShareDialogOpen(true)}
 					>
-						{gt("Open sharing")}
+						<SendIcon />
+						{gt("Send Survey")}
 					</Button>
 				) : undefined
 			}
@@ -88,6 +92,11 @@ export function FormSubmissionsTable({
 				headerButton={headerButton}
 				exportOptions={{
 					fileName: exportFileName,
+					buildPayload: ({ rows, fileName }) =>
+						buildFormSubmissionExportPayload({
+							fileName,
+							submissions: rows.map((row) => row.original),
+						}),
 				}}
 				onRowClick={setSelectedSubmission}
 				emptyMessage={emptyState}

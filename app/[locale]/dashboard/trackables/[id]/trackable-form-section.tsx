@@ -42,15 +42,13 @@ export function TrackableFormSection() {
 					)}
 				/>
 			) : (
-				<>
-					<FormBuilder
-						key={trackable.activeForm?.id ?? "empty-form"}
-						trackableId={trackable.id}
-						trackableName={trackable.name}
-						trackableDescription={trackable.description}
-						activeForm={trackable.activeForm}
-					/>
-				</>
+				<FormBuilder
+					key={trackable.activeForm?.id ?? "empty-form"}
+					trackableId={trackable.id}
+					trackableName={trackable.name}
+					trackableDescription={trackable.description}
+					activeForm={trackable.activeForm}
+				/>
 			)}
 		</TrackablePageFrame>
 	);

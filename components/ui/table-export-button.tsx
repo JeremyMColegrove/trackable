@@ -23,19 +23,31 @@ export function TableExportButton<TData>({
   rows,
   fileName,
   format = "csv",
+  buildPayload,
 }: {
   table: Table<TData>
   rows: Row<TData>[]
   fileName: string
   format?: TableExportFormat
+  buildPayload?: (context: {
+    table: Table<TData>
+    rows: Row<TData>[]
+    fileName: string
+  }) => ReturnType<typeof buildTableExportPayload<TData>>
 }) {
   const gt = useGT()
   function handleExport() {
-    const payload = buildTableExportPayload({
-      table,
-      rows,
-      fileName,
-    })
+    const payload =
+      buildPayload?.({
+        table,
+        rows,
+        fileName,
+      }) ??
+      buildTableExportPayload({
+        table,
+        rows,
+        fileName,
+      })
 
     tableExportService.export(payload, format)
   }

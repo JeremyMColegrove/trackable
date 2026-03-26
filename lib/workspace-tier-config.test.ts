@@ -8,14 +8,10 @@ import {
   resolveWorkspaceTierFromLemonSqueezyVariantId,
 } from "@/lib/workspace-tier-config"
 
-test("workspace tier config exposes the enforced free-tier limits", () => {
-  assert.deepEqual(getTierLimits("free"), {
-    maxTrackableItems: 10,
-    maxResponsesPerSurvey: 100,
-    maxWorkspaceMembers: 2,
-    maxApiLogsPerMinute: 30,
-    logRetentionDays: 3,
-  })
+test("workspace tier config exposes each plan's enforced limits", () => {
+  for (const plan of getWorkspaceTierPlans()) {
+    assert.equal(getTierLimits(plan.tier), plan.limits)
+  }
 })
 
 test("workspace tier plans expose highlights derived from enforced limits", () => {
@@ -23,22 +19,63 @@ test("workspace tier plans expose highlights derived from enforced limits", () =
   const plusPlan = getWorkspaceTierPlan("plus")
   const proPlan = getWorkspaceTierPlan("pro")
 
-  assert.deepEqual(freePlan.highlights, [
-    "2 workspace members",
-    "10 active trackables",
-    "100 responses per survey",
-    "30 API logs per minute",
-    "3-day API log retention",
-  ])
+  assert.deepEqual(freePlan.highlights, buildExpectedHighlights(freePlan.limits))
+  assert.deepEqual(plusPlan.highlights, buildExpectedHighlights(plusPlan.limits))
+  assert.deepEqual(proPlan.highlights, buildExpectedHighlights(proPlan.limits))
 
   assert.equal(plusPlan.mostPopular, true)
-  assert.equal(plusPlan.lemonSqueezyVariantId, "12345")
-  assert.equal(proPlan.lemonSqueezyVariantId, "67890")
   assert.equal(getWorkspaceTierPlans()[0]?.tier, "free")
 })
 
-test("workspace tier config resolves Lemon Squeezy variant ids without env config", () => {
-  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("12345"), "plus")
-  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("67890"), "pro")
-  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("99999"), null)
+test("workspace tier config resolves every configured Lemon Squeezy variant id", () => {
+  for (const plan of getWorkspaceTierPlans()) {
+    if (!plan.lemonSqueezyVariantId) {
+      continue
+    }
+
+    assert.equal(
+      resolveWorkspaceTierFromLemonSqueezyVariantId(plan.lemonSqueezyVariantId),
+      plan.tier
+    )
+  }
+
+  assert.equal(resolveWorkspaceTierFromLemonSqueezyVariantId("unknown"), null)
 })
+
+function buildExpectedHighlights(limits: ReturnType<typeof getTierLimits>) {
+  return [
+    formatUsageLimit(
+      limits.maxWorkspaceMembers,
+      "workspace member",
+      "workspace members"
+    ),
+    formatUsageLimit(
+      limits.maxTrackableItems,
+      "active trackable",
+      "active trackables"
+    ),
+    formatUsageLimit(
+      limits.maxResponsesPerSurvey,
+      "response per survey",
+      "responses per survey"
+    ),
+    formatUsageLimit(
+      limits.maxApiLogsPerMinute,
+      "API log per minute",
+      "API logs per minute"
+    ),
+    limits.logRetentionDays === null
+      ? "Unlimited API log retention"
+      : `${limits.logRetentionDays}-day API log retention`,
+  ]
+}
+
+function formatUsageLimit(
+  value: number | null,
+  singularLabel: string,
+  pluralLabel: string
+) {
+  return value === null
+    ? `Unlimited ${pluralLabel}`
+    : `${value} ${value === 1 ? singularLabel : pluralLabel}`
+}

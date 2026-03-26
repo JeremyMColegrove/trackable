@@ -3,6 +3,7 @@ import test from "node:test"
 import type { Column, Row, Table } from "@tanstack/react-table"
 
 import { formSubmissionColumns } from "@/app/[locale]/dashboard/trackables/[id]/form-submission-columns"
+import { buildFormSubmissionExportPayload } from "@/app/[locale]/dashboard/trackables/[id]/form-submission-export"
 import {
   getUsageEventColumns,
   resolveUsageEventVisibleColumns,
@@ -185,6 +186,205 @@ test("formSubmissionColumns export the same submitter and submitted text shown i
 
   assert.equal(submitterExport, "Ada Lovelace\nPublic link")
   assert.equal(submittedExport, "Mar 24, 12:34 pm")
+})
+
+test("buildFormSubmissionExportPayload flattens submissions into version-aware field columns", () => {
+  const submissions: SubmissionRow[] = [
+    {
+      id: "submission-1",
+      createdAt: "2026-03-24T12:34:56.789-05:00",
+      source: "public_link",
+      submitterLabel: "Anonymous",
+      metadata: null,
+      submissionSnapshot: {
+        form: {
+          id: "form-1",
+          version: 1,
+          title: "Feedback",
+          description: null,
+          status: "published",
+          submitLabel: null,
+          successMessage: null,
+          fields: [
+            {
+              id: "field-1",
+              key: "rating",
+              kind: "rating",
+              label: "How do you rate this thing?",
+              description: null,
+              required: true,
+              position: 0,
+              config: {
+                kind: "rating",
+                scale: 5,
+              },
+            },
+            {
+              id: "field-2",
+              key: "name",
+              kind: "short_text",
+              label: "What is your name?",
+              description: null,
+              required: false,
+              position: 1,
+              config: {
+                kind: "short_text",
+              },
+            },
+          ],
+        },
+        answers: [
+          {
+            fieldId: "field-1",
+            fieldKey: "rating",
+            fieldKind: "rating",
+            fieldLabel: "How do you rate this thing?",
+            value: {
+              kind: "rating",
+              value: 4,
+            },
+          },
+          {
+            fieldId: "field-2",
+            fieldKey: "name",
+            fieldKind: "short_text",
+            fieldLabel: "What is your name?",
+            value: {
+              kind: "short_text",
+              value: "Sam Harnety",
+            },
+          },
+        ],
+      },
+    },
+    {
+      id: "submission-2",
+      createdAt: "2026-03-25T08:00:00.000-05:00",
+      source: "public_link",
+      submitterLabel: "Ada",
+      metadata: null,
+      submissionSnapshot: {
+        form: {
+          id: "form-2",
+          version: 2,
+          title: "Feedback",
+          description: null,
+          status: "published",
+          submitLabel: null,
+          successMessage: null,
+          fields: [
+            {
+              id: "field-3",
+              key: "rating",
+              kind: "rating",
+              label: "How strongly would you recommend this thing?",
+              description: null,
+              required: true,
+              position: 0,
+              config: {
+                kind: "rating",
+                scale: 10,
+              },
+            },
+            {
+              id: "field-4",
+              key: "name",
+              kind: "short_text",
+              label: "What is your name?",
+              description: null,
+              required: false,
+              position: 1,
+              config: {
+                kind: "short_text",
+              },
+            },
+          ],
+        },
+        answers: [
+          {
+            fieldId: "field-3",
+            fieldKey: "rating",
+            fieldKind: "rating",
+            fieldLabel: "How strongly would you recommend this thing?",
+            value: {
+              kind: "rating",
+              value: 9,
+            },
+          },
+          {
+            fieldId: "field-4",
+            fieldKey: "name",
+            fieldKind: "short_text",
+            fieldLabel: "What is your name?",
+            value: {
+              kind: "short_text",
+              value: "Ada",
+            },
+          },
+        ],
+      },
+    },
+  ]
+
+  assert.deepEqual(
+    buildFormSubmissionExportPayload({
+      fileName: "responses.csv",
+      submissions,
+    }),
+    {
+      fileName: "responses.csv",
+      columns: [
+        { id: "submittedAt", label: "Submitted At" },
+        { id: "submittedBy", label: "Submitted By" },
+        {
+          id: `${"rating"}:${JSON.stringify({
+            kind: "rating",
+            label: "How do you rate this thing?",
+            description: null,
+            required: true,
+            config: {
+              kind: "rating",
+              scale: 5,
+            },
+          })}`,
+          label: "How do you rate this thing? (v1)",
+        },
+        {
+          id: `${"rating"}:${JSON.stringify({
+            kind: "rating",
+            label: "How strongly would you recommend this thing?",
+            description: null,
+            required: true,
+            config: {
+              kind: "rating",
+              scale: 10,
+            },
+          })}`,
+          label: "How strongly would you recommend this thing? (v2)",
+        },
+        {
+          id: `${"name"}:${JSON.stringify({
+            kind: "short_text",
+            label: "What is your name?",
+            description: null,
+            required: false,
+            config: {
+              kind: "short_text",
+            },
+          })}`,
+          label: "What is your name?",
+        },
+      ],
+      rows: [
+        {
+          values: ["Mar 24, 12:34 pm", "Anonymous", "4", "", "Sam Harnety"],
+        },
+        {
+          values: ["Mar 25, 8:00 am", "Ada", "", "9", "Ada"],
+        },
+      ],
+    }
+  )
 })
 
 test("getUsageEventColumns exports the rendered event table text", () => {
