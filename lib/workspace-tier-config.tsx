@@ -1,4 +1,9 @@
 import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
+import {
+  getLimitsForTier,
+  getSubscriptionPlan,
+  resolveTierFromVariantId,
+} from "@/lib/subscription-plans"
 
 export interface WorkspaceTierPlan {
   tier: SubscriptionTier
@@ -56,77 +61,47 @@ function buildTierHighlights(limits: TierLimits): string[] {
   ]
 }
 
-const FREE_LIMITS: TierLimits = {
-  maxTrackableItems: 10,
-  maxResponsesPerSurvey: 100,
-  maxWorkspaceMembers: 5,
-  maxApiLogsPerMinute: 30,
-  logRetentionDays: 3,
-}
-
-const PLUS_LIMITS: TierLimits = {
-  maxTrackableItems: 100,
-  maxResponsesPerSurvey: null,
-  maxWorkspaceMembers: 100,
-  maxApiLogsPerMinute: 60,
-  logRetentionDays: 90,
-}
-
-const PRO_LIMITS: TierLimits = {
-  maxTrackableItems: null,
-  maxResponsesPerSurvey: null,
-  maxWorkspaceMembers: null,
-  maxApiLogsPerMinute: 600,
-  logRetentionDays: null,
-}
-
 const WORKSPACE_TIER_PLAN_LIST: WorkspaceTierPlan[] = [
   {
+    ...getSubscriptionPlan("free"),
     tier: "free",
-    rank: 0,
     name: "Free",
     mostPopular: false,
     priceLabel: "$0",
     priceInterval: "/workspace",
     summary: "A clean starting point for new workspaces.",
-    highlights: buildTierHighlights(FREE_LIMITS),
-    lemonSqueezyVariantId: null,
+    highlights: buildTierHighlights(getLimitsForTier("free")),
     switchUrl:
       "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
     manageUrl: "https://store.trackables.org/billing",
-    limits: FREE_LIMITS,
     tone: "neutral",
   },
   {
+    ...getSubscriptionPlan("plus"),
     tier: "plus",
-    rank: 1,
     name: "Plus",
     mostPopular: true,
     priceLabel: "$24",
     priceInterval: "/workspace",
     summary: "More room for growing teams and heavier usage.",
-    highlights: buildTierHighlights(PLUS_LIMITS),
-    lemonSqueezyVariantId: "12345",
+    highlights: buildTierHighlights(getLimitsForTier("plus")),
     switchUrl:
       "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
     manageUrl: "https://store.trackables.org/billing",
-    limits: PLUS_LIMITS,
     tone: "accent",
   },
   {
+    ...getSubscriptionPlan("pro"),
     tier: "pro",
-    rank: 2,
     name: "Pro",
     mostPopular: false,
     priceLabel: "$79",
     priceInterval: "/workspace",
     summary: "Expanded limits for high-volume workspaces.",
-    highlights: buildTierHighlights(PRO_LIMITS),
-    lemonSqueezyVariantId: "67890",
+    highlights: buildTierHighlights(getLimitsForTier("pro")),
     switchUrl:
       "https://store.trackables.org/checkout/buy/500a54dd-0570-4265-a2a3-d09adacd156a",
     manageUrl: "https://store.trackables.org/billing",
-    limits: PRO_LIMITS,
     tone: "strong",
   },
 ]
@@ -156,15 +131,11 @@ export function getWorkspaceTierPlan(
 }
 
 export function getTierLimits(tier: SubscriptionTier): TierLimits {
-  return WORKSPACE_TIER_PLANS[tier].limits
+  return getLimitsForTier(tier)
 }
 
 export function resolveWorkspaceTierFromLemonSqueezyVariantId(
   variantId: string
 ): SubscriptionTier | null {
-  const matchingPlan = WORKSPACE_TIER_PLAN_LIST.find(
-    (plan) => plan.lemonSqueezyVariantId === variantId
-  )
-
-  return matchingPlan?.tier ?? null
+  return resolveTierFromVariantId(variantId)
 }

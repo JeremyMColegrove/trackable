@@ -7,14 +7,7 @@ import type {
   WorkspaceSubscriptionUpsertInput,
 } from "@/server/subscriptions/types"
 
-export interface WorkspaceSubscriptionRepository {
-  findByWorkspaceId(workspaceId: string): Promise<WorkspaceSubscriptionState | null>
-  upsert(input: WorkspaceSubscriptionUpsertInput): Promise<void>
-}
-
-export class DrizzleWorkspaceSubscriptionRepository
-  implements WorkspaceSubscriptionRepository
-{
+export class WorkspaceSubscriptionRepository {
   async findByWorkspaceId(
     workspaceId: string
   ): Promise<WorkspaceSubscriptionState | null> {
@@ -62,4 +55,4 @@ export class DrizzleWorkspaceSubscriptionRepository
 }
 
 export const workspaceSubscriptionRepository =
-  new DrizzleWorkspaceSubscriptionRepository()
+  new WorkspaceSubscriptionRepository()

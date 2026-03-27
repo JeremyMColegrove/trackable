@@ -1,104 +1,109 @@
-import { getTierLimits } from "@/lib/workspace-tier-config";
-import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository";
+import { getLimitsForTier } from "@/lib/subscription-plans"
+import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
 import type {
-	SubscriptionTier,
-	TierLimits,
-	WorkspaceSubscriptionState,
-	WorkspaceSubscriptionUpsertInput,
-} from "@/server/subscriptions/types";
+  ResolvedSubscriptionState,
+  SubscriptionTier,
+  TierLimits,
+  WorkspaceSubscriptionState,
+  WorkspaceSubscriptionUpsertInput,
+} from "@/server/subscriptions/types"
 
 export class SubscriptionService {
-	constructor(
-		private readonly repository: WorkspaceSubscriptionRepository,
-		private readonly subscriptionEnforcementEnabled: () => boolean,
-	) {}
+  constructor(
+    private readonly repository: WorkspaceSubscriptionRepository,
+    private readonly subscriptionEnforcementEnabled: () => boolean
+  ) {}
 
-	async ensureFreeWorkspaceSubscription(
-		workspaceId: string,
-	): Promise<WorkspaceSubscriptionState> {
-		if (!this.subscriptionEnforcementEnabled()) {
-			return this.buildSubscriptionsDisabledState(workspaceId);
-		}
+  async ensureWorkspaceSubscription(
+    workspaceId: string
+  ): Promise<WorkspaceSubscriptionState> {
+    if (!this.subscriptionEnforcementEnabled()) {
+      return this.buildSubscriptionsDisabledState(workspaceId)
+    }
 
-		const existing = await this.repository.findByWorkspaceId(workspaceId);
+    const existing = await this.repository.findByWorkspaceId(workspaceId)
 
-		if (existing) {
-			return existing;
-		}
+    if (existing) {
+      return existing
+    }
 
-		const freeSubscription: WorkspaceSubscriptionUpsertInput = {
-			workspaceId,
-			lemonSqueezySubscriptionId: null,
-			lemonSqueezyCustomerId: null,
-			variantId: null,
-			tier: "free",
-			status: "active",
-			currentPeriodEnd: null,
-		};
+    const freeSubscription = this.buildFreeSubscriptionState(workspaceId)
 
-		await this.repository.upsert(freeSubscription);
+    await this.repository.upsert(freeSubscription)
 
-		return freeSubscription;
-	}
+    return freeSubscription
+  }
 
-	async getWorkspaceSubscription(
-		workspaceId: string,
-	): Promise<WorkspaceSubscriptionState> {
-		if (!this.subscriptionEnforcementEnabled()) {
-			return this.buildSubscriptionsDisabledState(workspaceId);
-		}
+  async getState(workspaceId: string): Promise<ResolvedSubscriptionState> {
+    if (!this.subscriptionEnforcementEnabled()) {
+      return this.buildResolvedState(
+        this.buildSubscriptionsDisabledState(workspaceId)
+      )
+    }
 
-		const existing = await this.repository.findByWorkspaceId(workspaceId);
+    const subscription = await this.ensureWorkspaceSubscription(workspaceId)
 
-		if (existing) {
-			return existing;
-		}
+    return this.buildResolvedState(subscription)
+  }
 
-		return this.ensureFreeWorkspaceSubscription(workspaceId);
-	}
+  async getWorkspaceTier(workspaceId: string): Promise<SubscriptionTier> {
+    if (!this.subscriptionEnforcementEnabled()) {
+      return "pro"
+    }
 
-	async upsertWorkspaceSubscription(input: WorkspaceSubscriptionUpsertInput) {
-		if (!this.subscriptionEnforcementEnabled()) {
-			return;
-		}
+    const state = await this.getState(workspaceId)
+    return state.effectiveTier
+  }
 
-		await this.repository.upsert(input);
-	}
+  async getWorkspaceLimits(workspaceId: string): Promise<TierLimits> {
+    if (!this.subscriptionEnforcementEnabled()) {
+      return getLimitsForTier("pro")
+    }
 
-	async getWorkspaceTier(workspaceId: string): Promise<SubscriptionTier> {
-		if (!this.subscriptionEnforcementEnabled()) {
-			return "pro";
-		}
+    const state = await this.getState(workspaceId)
+    return state.limits
+  }
 
-		const subscription = await this.getWorkspaceSubscription(workspaceId);
+  private buildSubscriptionsDisabledState(
+    workspaceId: string
+  ): WorkspaceSubscriptionState {
+    return {
+      workspaceId,
+      lemonSqueezySubscriptionId: null,
+      lemonSqueezyCustomerId: null,
+      variantId: null,
+      tier: "pro",
+      status: "active",
+      currentPeriodEnd: null,
+    }
+  }
 
-		if (subscription.status !== "active") {
-			return "free";
-		}
+  private buildFreeSubscriptionState(
+    workspaceId: string
+  ): WorkspaceSubscriptionUpsertInput {
+    return {
+      workspaceId,
+      lemonSqueezySubscriptionId: null,
+      lemonSqueezyCustomerId: null,
+      variantId: null,
+      tier: "free",
+      status: "active",
+      currentPeriodEnd: null,
+    }
+  }
 
-		return subscription.tier;
-	}
+  private buildResolvedState(
+    subscription: WorkspaceSubscriptionState
+  ): ResolvedSubscriptionState {
+    const effectiveTier =
+      subscription.status === "active" ? subscription.tier : "free"
 
-	async getWorkspaceLimits(workspaceId: string): Promise<TierLimits> {
-		if (!this.subscriptionEnforcementEnabled()) {
-			return getTierLimits("pro");
-		}
-
-		const tier = await this.getWorkspaceTier(workspaceId);
-		return getTierLimits(tier);
-	}
-
-	private buildSubscriptionsDisabledState(
-		workspaceId: string,
-	): WorkspaceSubscriptionState {
-		return {
-			workspaceId,
-			lemonSqueezySubscriptionId: null,
-			lemonSqueezyCustomerId: null,
-			variantId: null,
-			tier: "pro",
-			status: "active",
-			currentPeriodEnd: null,
-		};
-	}
+    return {
+      ...subscription,
+      planTier: subscription.tier,
+      effectiveTier,
+      limits: getLimitsForTier(effectiveTier),
+      isFree: effectiveTier === "free",
+    }
+  }
 }

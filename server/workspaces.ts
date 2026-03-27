@@ -12,7 +12,6 @@ import {
 import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
 import { applyWorkspaceCreationSideEffects } from "@/server/workspace-creation-side-effects"
 
-
 export function buildDefaultWorkspaceName(
   _displayName: string | null,
   _email: string
@@ -90,16 +89,20 @@ export async function createWorkspaceForUser(input: {
     return workspace
   })
 
-  await applyWorkspaceCreationSideEffects({
-    workspaceId: result.id,
-    userId: input.userId,
-    setActive: input.setActive ?? true,
-  }, {
-    ensureFreeWorkspaceSubscription: (workspaceId) =>
-      subscriptionService.ensureFreeWorkspaceSubscription(workspaceId),
-    clearMembershipsCache: (userId) => userMembershipsCache.delete(userId),
-    clearActiveWorkspaceCache: (userId) => userActiveWorkspaceCache.delete(userId),
-  })
+  await applyWorkspaceCreationSideEffects(
+    {
+      workspaceId: result.id,
+      userId: input.userId,
+      setActive: input.setActive ?? true,
+    },
+    {
+      ensureWorkspaceSubscription: (workspaceId) =>
+        subscriptionService.ensureWorkspaceSubscription(workspaceId),
+      clearMembershipsCache: (userId) => userMembershipsCache.delete(userId),
+      clearActiveWorkspaceCache: (userId) =>
+        userActiveWorkspaceCache.delete(userId),
+    }
+  )
 
   return result
 }
@@ -143,7 +146,7 @@ export async function createDefaultWorkspaceForUser(input: {
           updatedAt: new Date(),
         })
         .where(eq(users.id, input.userId))
-        
+
       await userActiveWorkspaceCache.delete(input.userId)
     }
 

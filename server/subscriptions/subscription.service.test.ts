@@ -1,20 +1,14 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import {
-  SubscriptionService,
-} from "@/server/subscriptions/subscription.service"
-import type {
-  WorkspaceSubscriptionRepository,
-} from "@/server/subscriptions/subscription.repository"
+import { getLimitsForTier } from "@/lib/subscription-plans"
+import { SubscriptionService } from "@/server/subscriptions/subscription.service"
 import type {
   WorkspaceSubscriptionState,
   WorkspaceSubscriptionUpsertInput,
 } from "@/server/subscriptions/types"
 
-class InMemoryWorkspaceSubscriptionRepository
-  implements WorkspaceSubscriptionRepository
-{
+class InMemoryWorkspaceSubscriptionRepository {
   private readonly subscriptions = new Map<string, WorkspaceSubscriptionState>()
 
   async findByWorkspaceId(workspaceId: string) {
@@ -22,7 +16,7 @@ class InMemoryWorkspaceSubscriptionRepository
   }
 
   async upsert(input: WorkspaceSubscriptionUpsertInput) {
-    this.subscriptions.set(input.workspaceId, input)
+    this.subscriptions.set(input.workspaceId, { ...input })
   }
 }
 
@@ -35,13 +29,38 @@ function createService(
   }
 }
 
-test("ensureFreeWorkspaceSubscription creates a free subscription row for new workspaces", async () => {
+test("ensureWorkspaceSubscription inserts a free row when one is missing", async () => {
   const { repository, service } = createService()
 
-  await service.ensureFreeWorkspaceSubscription("workspace-1")
+  const subscription = await service.ensureWorkspaceSubscription("workspace-1")
 
-  assert.deepEqual(await repository.findByWorkspaceId("workspace-1"), {
+  assert.deepEqual(subscription, {
     workspaceId: "workspace-1",
+    lemonSqueezySubscriptionId: null,
+    lemonSqueezyCustomerId: null,
+    variantId: null,
+    tier: "free",
+    status: "active",
+    currentPeriodEnd: null,
+  })
+  assert.deepEqual(
+    await repository.findByWorkspaceId("workspace-1"),
+    subscription
+  )
+})
+
+test("getState resolves missing rows as free and repairs the local row", async () => {
+  const { repository, service } = createService()
+
+  const state = await service.getState("workspace-2")
+
+  assert.equal(state.planTier, "free")
+  assert.equal(state.effectiveTier, "free")
+  assert.equal(state.status, "active")
+  assert.equal(state.isFree, true)
+  assert.deepEqual(state.limits, getLimitsForTier("free"))
+  assert.deepEqual(await repository.findByWorkspaceId("workspace-2"), {
+    workspaceId: "workspace-2",
     lemonSqueezySubscriptionId: null,
     lemonSqueezyCustomerId: null,
     variantId: null,
@@ -51,57 +70,106 @@ test("ensureFreeWorkspaceSubscription creates a free subscription row for new wo
   })
 })
 
-test("getWorkspaceTier returns free for new workspaces without a subscription row", async () => {
-  const { service } = createService()
-
-  assert.equal(await service.getWorkspaceTier("workspace-2"), "free")
-})
-
-test("getWorkspaceTier returns the paid tier for active workspace subscriptions", async () => {
+test("getState preserves paid plan tier and limits for active subscriptions", async () => {
   const { repository, service } = createService()
 
   await repository.upsert({
     workspaceId: "workspace-3",
-    lemonSqueezySubscriptionId: "sub_123",
-    lemonSqueezyCustomerId: "cus_123",
-    variantId: "variant_plus",
+    lemonSqueezySubscriptionId: "sub_plus",
+    lemonSqueezyCustomerId: "cus_plus",
+    variantId: "12345",
     tier: "plus",
     status: "active",
     currentPeriodEnd: new Date("2026-05-01T00:00:00.000Z"),
   })
 
-  assert.equal(await service.getWorkspaceTier("workspace-3"), "plus")
+  const state = await service.getState("workspace-3")
+
+  assert.equal(state.planTier, "plus")
+  assert.equal(state.effectiveTier, "plus")
+  assert.equal(state.isFree, false)
+  assert.deepEqual(state.limits, getLimitsForTier("plus"))
 })
 
-test("getWorkspaceTier falls back to free when the stored subscription is inactive", async () => {
+test("getState falls back to free limits when the stored subscription is inactive", async () => {
   const { repository, service } = createService()
 
   await repository.upsert({
     workspaceId: "workspace-4",
-    lemonSqueezySubscriptionId: "sub_456",
-    lemonSqueezyCustomerId: "cus_456",
-    variantId: "variant_pro",
+    lemonSqueezySubscriptionId: "sub_pro",
+    lemonSqueezyCustomerId: "cus_pro",
+    variantId: "67890",
     tier: "pro",
-    status: "past_due",
-    currentPeriodEnd: null,
+    status: "expired",
+    currentPeriodEnd: new Date("2026-05-10T00:00:00.000Z"),
   })
 
-  assert.equal(await service.getWorkspaceTier("workspace-4"), "free")
+  const state = await service.getState("workspace-4")
+
+  assert.equal(state.planTier, "pro")
+  assert.equal(state.effectiveTier, "free")
+  assert.equal(state.status, "expired")
+  assert.equal(state.isFree, true)
+  assert.deepEqual(state.limits, getLimitsForTier("free"))
 })
 
-test("subscriptions disabled mode exposes full access without persisting rows", async () => {
-  const repository = new InMemoryWorkspaceSubscriptionRepository()
-  const service = new SubscriptionService(repository, () => false)
+test("getWorkspaceTier and getWorkspaceLimits resolve each tier consistently", async () => {
+  const { repository, service } = createService()
 
-  assert.equal(await service.getWorkspaceTier("workspace-5"), "pro")
-  assert.deepEqual(await service.getWorkspaceSubscription("workspace-5"), {
-    workspaceId: "workspace-5",
+  await repository.upsert({
+    workspaceId: "workspace-free",
     lemonSqueezySubscriptionId: null,
     lemonSqueezyCustomerId: null,
     variantId: null,
+    tier: "free",
+    status: "active",
+    currentPeriodEnd: null,
+  })
+  await repository.upsert({
+    workspaceId: "workspace-plus",
+    lemonSqueezySubscriptionId: "sub_plus",
+    lemonSqueezyCustomerId: "cus_plus",
+    variantId: "12345",
+    tier: "plus",
+    status: "active",
+    currentPeriodEnd: null,
+  })
+  await repository.upsert({
+    workspaceId: "workspace-pro",
+    lemonSqueezySubscriptionId: "sub_pro",
+    lemonSqueezyCustomerId: "cus_pro",
+    variantId: "67890",
     tier: "pro",
     status: "active",
     currentPeriodEnd: null,
   })
+
+  assert.equal(await service.getWorkspaceTier("workspace-free"), "free")
+  assert.equal(await service.getWorkspaceTier("workspace-plus"), "plus")
+  assert.equal(await service.getWorkspaceTier("workspace-pro"), "pro")
+  assert.deepEqual(
+    await service.getWorkspaceLimits("workspace-free"),
+    getLimitsForTier("free")
+  )
+  assert.deepEqual(
+    await service.getWorkspaceLimits("workspace-plus"),
+    getLimitsForTier("plus")
+  )
+  assert.deepEqual(
+    await service.getWorkspaceLimits("workspace-pro"),
+    getLimitsForTier("pro")
+  )
+})
+
+test("disabled billing exposes pro access without persisting rows", async () => {
+  const repository = new InMemoryWorkspaceSubscriptionRepository()
+  const service = new SubscriptionService(repository, () => false)
+
+  const state = await service.getState("workspace-5")
+
+  assert.equal(state.planTier, "pro")
+  assert.equal(state.effectiveTier, "pro")
+  assert.equal(state.isFree, false)
+  assert.deepEqual(state.limits, getLimitsForTier("pro"))
   assert.equal(await repository.findByWorkspaceId("workspace-5"), null)
 })

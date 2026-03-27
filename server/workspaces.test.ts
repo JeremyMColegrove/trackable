@@ -13,7 +13,7 @@ test("workspace creation side effects initialize a free subscription and clear c
       setActive: true,
     },
     {
-      ensureFreeWorkspaceSubscription: async (workspaceId) => {
+      ensureWorkspaceSubscription: async (workspaceId) => {
         calls.push(`subscription:${workspaceId}`)
       },
       clearMembershipsCache: async (userId) => {

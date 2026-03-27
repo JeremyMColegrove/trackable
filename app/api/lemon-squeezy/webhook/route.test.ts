@@ -2,208 +2,287 @@ import assert from "node:assert/strict"
 import { createHmac } from "node:crypto"
 import test from "node:test"
 
-import { processLemonSqueezyWebhook } from "@/server/subscriptions/process-lemon-squeezy-webhook"
-import type { LemonSqueezySubscriptionSnapshot } from "@/server/subscriptions/lemon-squeezy"
-import type { WorkspaceSubscriptionUpsertInput } from "@/server/subscriptions/types"
+import { LemonSqueezySyncService } from "@/server/subscriptions/lemon-squeezy-sync.service"
+import { LemonSqueezyWebhookHandler } from "@/server/subscriptions/lemon-squeezy-webhook-handler"
+import type { WorkspaceSubscriptionState } from "@/server/subscriptions/types"
 
 const webhookSecret = "secret"
+
+class InMemoryWorkspaceSubscriptionRepository {
+  private readonly subscriptions = new Map<string, WorkspaceSubscriptionState>()
+
+  async findByWorkspaceId(workspaceId: string) {
+    return this.subscriptions.get(workspaceId) ?? null
+  }
+
+  async upsert(input: WorkspaceSubscriptionState) {
+    this.subscriptions.set(input.workspaceId, { ...input })
+  }
+}
 
 function createSignature(body: string) {
   return createHmac("sha256", webhookSecret).update(body).digest("hex")
 }
 
-function createDependencies() {
-  const upsertCalls: WorkspaceSubscriptionUpsertInput[] = []
+function createWebhookPayload(input: {
+  eventName: string
+  subscriptionId?: string
+  workspaceId?: string
+}) {
+  return JSON.stringify({
+    meta: {
+      event_name: input.eventName,
+      custom_data:
+        typeof input.workspaceId === "string"
+          ? {
+              workspace_id: input.workspaceId,
+            }
+          : {},
+    },
+    data: input.subscriptionId
+      ? {
+          id: input.subscriptionId,
+          type: "subscriptions",
+        }
+      : {},
+  })
+}
 
+function createSubscriptionApiResponse(input: {
+  subscriptionId: string
+  customerId?: string | null
+  variantId: string
+  status: string
+  renewsAt?: string | null
+  endsAt?: string | null
+}) {
   return {
-    upsertCalls,
-    dependencies: {
-      verifyWebhook: (rawBody: string, signature: string, secret: string) =>
-        createHmac("sha256", secret).update(rawBody).digest("hex") === signature,
-      fetchSubscription: async (
-        subscriptionId: string
-      ): Promise<LemonSqueezySubscriptionSnapshot> => ({
-        lemonSqueezySubscriptionId: subscriptionId,
-        lemonSqueezyCustomerId: "cus_default",
-        variantId: "variant_plus",
-        status: "active" as const,
-        currentPeriodEnd: new Date("2026-05-01T00:00:00.000Z"),
-      }),
-      resolveTier: (variantId: string) =>
-        variantId === "variant_plus" ? "plus" : variantId === "variant_pro" ? "pro" : null,
-      upsertWorkspaceSubscription: async (
-        input: WorkspaceSubscriptionUpsertInput
-      ) => {
-        upsertCalls.push(input)
+    data: {
+      id: input.subscriptionId,
+      type: "subscriptions",
+      attributes: {
+        customer_id: input.customerId ?? null,
+        variant_id: input.variantId,
+        status: input.status,
+        renews_at: input.renewsAt ?? null,
+        ends_at: input.endsAt ?? null,
       },
     },
   }
 }
 
-test("webhook returns 400 when the signature is invalid", async () => {
-  const { dependencies } = createDependencies()
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: "{}",
-      signature: "not-a-valid-signature",
-      webhookSecret,
-      subscriptionsEnabled: true,
-    },
-    dependencies
+function createHandler(options?: {
+  subscriptionsEnabled?: boolean
+  payloadFactory?: () => ReturnType<typeof createSubscriptionApiResponse>
+}) {
+  const repository = new InMemoryWorkspaceSubscriptionRepository()
+  const syncService = new LemonSqueezySyncService(
+    repository,
+    async () =>
+      new Response(
+        JSON.stringify(
+          options?.payloadFactory?.() ??
+            createSubscriptionApiResponse({
+              subscriptionId: "sub_123",
+              customerId: "cus_123",
+              variantId: "12345",
+              status: "active",
+              renewsAt: "2026-05-01T00:00:00.000Z",
+            })
+        )
+      ),
+    "test-key"
   )
+
+  const handler = new LemonSqueezyWebhookHandler({
+    subscriptionsEnabled: () => options?.subscriptionsEnabled ?? true,
+    webhookSecret: () => webhookSecret,
+    verifyWebhook: (rawBody, signature, secret) =>
+      createHmac("sha256", secret).update(rawBody).digest("hex") === signature,
+    syncService,
+  })
+
+  return {
+    repository,
+    handler,
+  }
+}
+
+test("webhook returns 400 when the signature is invalid", async () => {
+  const { handler } = createHandler()
+
+  const response = await handler.handle({
+    rawBody: "{}",
+    signature: "not-a-valid-signature",
+  })
 
   assert.equal(response.status, 400)
 })
 
 test("webhook returns 404 when subscription enforcement is disabled", async () => {
-  const { dependencies } = createDependencies()
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: "{}",
-      signature: "not-a-valid-signature",
-      webhookSecret,
-      subscriptionsEnabled: false,
-    },
-    dependencies
-  )
+  const { handler } = createHandler({ subscriptionsEnabled: false })
+
+  const response = await handler.handle({
+    rawBody: "{}",
+    signature: "not-a-valid-signature",
+  })
 
   assert.equal(response.status, 404)
 })
 
 test("webhook returns 400 when workspace_id is missing", async () => {
-  const body = JSON.stringify({
-    meta: {
-      event_name: "subscription_updated",
-      custom_data: {},
-    },
-    data: {
-      id: "sub_123",
-    },
+  const body = createWebhookPayload({
+    eventName: "subscription_updated",
+    subscriptionId: "sub_123",
   })
+  const { handler } = createHandler()
 
-  const { dependencies } = createDependencies()
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: body,
-      signature: createSignature(body),
-      webhookSecret,
-      subscriptionsEnabled: true,
-    },
-    dependencies
-  )
+  const response = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
+  })
 
   assert.equal(response.status, 400)
 })
 
-test("webhook fetches Lemon Squeezy state and upserts the workspace subscription", async () => {
-  const { dependencies, upsertCalls } = createDependencies()
-  dependencies.fetchSubscription = async () => ({
-    lemonSqueezySubscriptionId: "sub_123",
-    lemonSqueezyCustomerId: "cus_123",
-    variantId: "variant_plus",
-    status: "active",
-    currentPeriodEnd: new Date("2026-05-01T00:00:00.000Z"),
+test("webhook returns 400 when the subscription id is missing", async () => {
+  const body = createWebhookPayload({
+    eventName: "subscription_updated",
+    workspaceId: "workspace-123",
   })
-  const body = JSON.stringify({
-    meta: {
-      event_name: "subscription_updated",
-      custom_data: {
-        workspace_id: "workspace-123",
-      },
-    },
-    data: {
-      id: "sub_123",
-    },
+  const { handler } = createHandler()
+
+  const response = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
   })
 
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: body,
-      signature: createSignature(body),
-      webhookSecret,
-      subscriptionsEnabled: true,
-    },
-    dependencies
-  )
+  assert.equal(response.status, 400)
+})
+
+test("webhook syncs fresh Lemon Squeezy data even when the webhook payload is partial", async () => {
+  const body = createWebhookPayload({
+    eventName: "subscription_updated",
+    subscriptionId: "sub_partial",
+    workspaceId: "workspace-partial",
+  })
+  const { handler, repository } = createHandler({
+    payloadFactory: () =>
+      createSubscriptionApiResponse({
+        subscriptionId: "sub_partial",
+        customerId: "cus_partial",
+        variantId: "12345",
+        status: "active",
+        renewsAt: "2026-05-01T00:00:00.000Z",
+      }),
+  })
+
+  const response = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
+  })
 
   assert.equal(response.status, 200)
-  assert.equal(upsertCalls.length, 1)
-  assert.deepEqual(upsertCalls[0], {
-    workspaceId: "workspace-123",
-    lemonSqueezySubscriptionId: "sub_123",
-    lemonSqueezyCustomerId: "cus_123",
-    variantId: "variant_plus",
+  assert.deepEqual(await repository.findByWorkspaceId("workspace-partial"), {
+    workspaceId: "workspace-partial",
+    lemonSqueezySubscriptionId: "sub_partial",
+    lemonSqueezyCustomerId: "cus_partial",
+    variantId: "12345",
     tier: "plus",
     status: "active",
     currentPeriodEnd: new Date("2026-05-01T00:00:00.000Z"),
   })
 })
 
-test("webhook fails safely for unknown Lemon Squeezy variants", async () => {
-  const { dependencies } = createDependencies()
-  dependencies.fetchSubscription = async () => ({
-    lemonSqueezySubscriptionId: "sub_999",
-    lemonSqueezyCustomerId: "cus_999",
-    variantId: "variant_unknown",
+test("webhook updates existing local state and remains idempotent across repeated events", async () => {
+  const body = createWebhookPayload({
+    eventName: "subscription_updated",
+    subscriptionId: "sub_repeat",
+    workspaceId: "workspace-repeat",
+  })
+  const { handler, repository } = createHandler({
+    payloadFactory: () =>
+      createSubscriptionApiResponse({
+        subscriptionId: "sub_repeat",
+        customerId: "cus_repeat",
+        variantId: "67890",
+        status: "cancelled",
+        endsAt: "2026-06-01T00:00:00.000Z",
+      }),
+  })
+
+  await repository.upsert({
+    workspaceId: "workspace-repeat",
+    lemonSqueezySubscriptionId: "sub_repeat",
+    lemonSqueezyCustomerId: "cus_old",
+    variantId: "12345",
+    tier: "plus",
     status: "active",
-    currentPeriodEnd: null,
-  })
-  const body = JSON.stringify({
-    meta: {
-      event_name: "subscription_updated",
-      custom_data: {
-        workspace_id: "workspace-999",
-      },
-    },
-    data: {
-      id: "sub_999",
-    },
+    currentPeriodEnd: new Date("2026-04-01T00:00:00.000Z"),
   })
 
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: body,
-      signature: createSignature(body),
-      webhookSecret,
-      subscriptionsEnabled: true,
-    },
-    dependencies
-  )
+  const first = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
+  })
+  const second = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
+  })
 
-  assert.equal(response.status, 500)
+  assert.equal(first.status, 200)
+  assert.equal(second.status, 200)
+  assert.deepEqual(await repository.findByWorkspaceId("workspace-repeat"), {
+    workspaceId: "workspace-repeat",
+    lemonSqueezySubscriptionId: "sub_repeat",
+    lemonSqueezyCustomerId: "cus_repeat",
+    variantId: "67890",
+    tier: "pro",
+    status: "cancelled",
+    currentPeriodEnd: new Date("2026-06-01T00:00:00.000Z"),
+  })
 })
 
-test("webhook persists inactive subscription statuses from Lemon Squeezy", async () => {
-  const { dependencies, upsertCalls } = createDependencies()
-  dependencies.fetchSubscription = async () => ({
-    lemonSqueezySubscriptionId: "sub_456",
-    lemonSqueezyCustomerId: "cus_456",
-    variantId: "variant_pro",
-    status: "paused",
-    currentPeriodEnd: new Date("2026-05-10T00:00:00.000Z"),
+test("webhook fails safely for unknown variants and leaves local state unchanged", async () => {
+  const body = createWebhookPayload({
+    eventName: "subscription_updated",
+    subscriptionId: "sub_unknown",
+    workspaceId: "workspace-unknown",
   })
-  const body = JSON.stringify({
-    meta: {
-      event_name: "subscription_paused",
-      custom_data: {
-        workspace_id: "workspace-456",
-      },
-    },
-    data: {
-      id: "sub_456",
-    },
+  const { handler, repository } = createHandler({
+    payloadFactory: () =>
+      createSubscriptionApiResponse({
+        subscriptionId: "sub_unknown",
+        customerId: "cus_unknown",
+        variantId: "variant_unknown",
+        status: "active",
+        renewsAt: "2026-07-01T00:00:00.000Z",
+      }),
   })
 
-  const response = await processLemonSqueezyWebhook(
-    {
-      rawBody: body,
-      signature: createSignature(body),
-      webhookSecret,
-      subscriptionsEnabled: true,
-    },
-    dependencies
-  )
+  await repository.upsert({
+    workspaceId: "workspace-unknown",
+    lemonSqueezySubscriptionId: "sub_unknown",
+    lemonSqueezyCustomerId: "cus_existing",
+    variantId: "12345",
+    tier: "plus",
+    status: "active",
+    currentPeriodEnd: new Date("2026-04-01T00:00:00.000Z"),
+  })
 
-  assert.equal(response.status, 200)
-  assert.equal(upsertCalls[0]?.status, "paused")
+  const response = await handler.handle({
+    rawBody: body,
+    signature: createSignature(body),
+  })
+
+  assert.equal(response.status, 500)
+  assert.deepEqual(await repository.findByWorkspaceId("workspace-unknown"), {
+    workspaceId: "workspace-unknown",
+    lemonSqueezySubscriptionId: "sub_unknown",
+    lemonSqueezyCustomerId: "cus_existing",
+    variantId: "12345",
+    tier: "plus",
+    status: "active",
+    currentPeriodEnd: new Date("2026-04-01T00:00:00.000Z"),
+  })
 })

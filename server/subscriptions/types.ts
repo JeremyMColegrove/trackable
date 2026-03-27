@@ -29,4 +29,11 @@ export interface WorkspaceSubscriptionState {
   currentPeriodEnd: Date | null
 }
 
+export interface ResolvedSubscriptionState extends WorkspaceSubscriptionState {
+  planTier: SubscriptionTier
+  effectiveTier: SubscriptionTier
+  limits: TierLimits
+  isFree: boolean
+}
+
 export type WorkspaceSubscriptionUpsertInput = WorkspaceSubscriptionState
