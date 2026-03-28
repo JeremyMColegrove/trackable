@@ -6,7 +6,7 @@
 	"scripts": {
 		"seo": "node --import tsx scripts/generate-discovery-files.ts",
 		"translation": "npm run translate",
-		"docker:prepare": "npm run seo && npm run translation",
+		"docker:prepare": "npm run seo && npm run translation && npm run db:generate",
 		"predev": "npm run seo",
 		"prebuild": "npm run seo",
 		"dev": "next dev --turbopack",
@@ -25,6 +25,8 @@
 		"translate": "npx gt generate && npm run translate:update",
 		"translate:update": "node scripts/update-gt-translations.js",
 		"typecheck": "tsc --noEmit",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
 		"db:publish": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
 		"db:sql": "npx drizzle-kit export > ./example/init.sql"
@@ -51,6 +53,7 @@
 		"clsx": "^2.1.1",
 		"cron": "^4.4.0",
 		"dotenv": "^17.3.1",
+		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.1",
 		"gt-next": "^6.14.3",
 		"gt-node": "^0.4.3",
@@ -88,7 +91,6 @@
 		"@types/pg": "^8.18.0",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
-		"drizzle-kit": "^0.31.10",
 		"eslint": "^9.39.4",
 		"eslint-config-next": "16.1.7",
 		"google-translate-api-x": "^10.7.2",
