@@ -1,6 +1,6 @@
 services:
   trackables:
-    image: jeremycolegrove/trackables:arm64
+    image: jeremycolegrove/trackables:latest
     container_name: trackables
     depends_on:
       postgres:
@@ -28,7 +28,7 @@ services:
       POSTGRES_PASSWORD: "peanutbutter"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U superman -d trackables"]
       interval: 10s

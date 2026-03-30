@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773858159402,
-      "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773890667620,
-      "tag": "0001_massive_magma",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773900000000,
-      "tag": "0002_form_description",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773905000000,
-      "tag": "0003_workspace_first",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1773943200000,
-      "tag": "0004_batch_framework",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1774202400000,
-      "tag": "0005_admin_controls",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1774375200000,
-      "tag": "0006_workspace_invitations",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1774435200000,
-      "tag": "0007_workspace_subscriptions",
+      "when": 1774675859218,
+      "tag": "0000_bumpy_ronan",
       "breakpoints": true
     }
   ]
