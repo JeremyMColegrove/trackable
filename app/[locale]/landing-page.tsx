@@ -25,7 +25,7 @@ const landingCardClassName =
 
 export async function LandingPage() {
 	return (
-		<main className="flex min-h-svh flex-col bg-background selection:bg-primary/10 [&>section:nth-of-type(odd)]:bg-primary-foreground [&>section:nth-of-type(even)]:bg-muted/30">
+		<main className="flex min-h-svh flex-col bg-background selection:bg-muted/20 [&>section:nth-of-type(odd)]:bg-background [&>section:nth-of-type(even)]:bg-muted/20">
 			<header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
 				<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
 					<AppBrand className="text-lg font-bold tracking-tight" />
