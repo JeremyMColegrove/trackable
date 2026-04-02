@@ -21,11 +21,7 @@ export function TrackableFormSection() {
 			)}
 			headerActions={
 				trackable.kind === "survey" && trackable.permissions.canManageForm ? (
-					<SurveyShareDialog
-						trackableId={trackable.id}
-						activeForm={trackable.activeForm}
-						shareLinks={trackable.shareSettings.shareLinks}
-					/>
+					<SurveyShareDialog />
 				) : null
 			}
 		>
@@ -46,7 +42,6 @@ export function TrackableFormSection() {
 					key={trackable.activeForm?.id ?? "empty-form"}
 					trackableId={trackable.id}
 					trackableName={trackable.name}
-					trackableDescription={trackable.description}
 					activeForm={trackable.activeForm}
 				/>
 			)}

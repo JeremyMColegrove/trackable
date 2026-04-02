@@ -3,55 +3,28 @@ import {
   isApiLogRateLimitMessage,
   isApiPayloadSizeLimitMessage,
 } from "@/lib/subscription-limit-messages"
+import { logger } from "@/lib/logger"
 import { recordApiUsage } from "@/server/usage-tracking/record-api-usage"
+import {
+  buildUsageRequestMetadata,
+  getUsageClientIdentity,
+  normalizeUsageRequestId,
+  parseUsagePayload,
+} from "@/server/usage-tracking/usage-request-security"
 
-function buildRequestMetadata(request: Request) {
-  const metadata: Record<string, string> = {}
+export const runtime = "nodejs"
 
-  const contentType = request.headers.get("content-type")?.trim()
-  const userAgent = request.headers.get("user-agent")?.trim()
-  const forwardedFor = request.headers.get("x-forwarded-for")?.trim()
+function createUsageResponse(
+  body: Record<string, unknown>,
+  init?: ResponseInit
+) {
+  const headers = new Headers(init?.headers)
+  headers.set("Cache-Control", "no-store")
 
-  if (contentType) {
-    metadata.contentType = contentType
-  }
-
-  if (userAgent) {
-    metadata.userAgent = userAgent
-  }
-
-  if (forwardedFor) {
-    metadata.forwardedFor = forwardedFor
-  }
-
-  return Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null
-}
-
-async function parseUsagePayload(request: Request) {
-  const rawBody = await request.text()
-  const payloadSizeBytes = Buffer.byteLength(rawBody, "utf8")
-  let body: unknown
-
-  try {
-    body = JSON.parse(rawBody)
-  } catch {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Request body must be valid JSON.",
-    })
-  }
-
-  if (!body || Array.isArray(body) || typeof body !== "object") {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Request body must be a JSON object.",
-    })
-  }
-
-  return {
-    payload: body as Record<string, unknown>,
-    payloadSizeBytes,
-  }
+  return Response.json(body, {
+    ...init,
+    headers,
+  })
 }
 
 function getErrorStatus(error: TRPCError) {
@@ -65,24 +38,28 @@ function getErrorStatus(error: TRPCError) {
 
   return error.code === "BAD_REQUEST"
     ? 400
-    : error.code === "UNAUTHORIZED"
-      ? 401
-      : error.code === "FORBIDDEN"
-        ? 403
-        : error.code === "NOT_FOUND"
-          ? 404
-          : error.code === "CONFLICT"
-            ? 409
-            : error.code === "PRECONDITION_FAILED"
-              ? 412
-              : 500
+    : error.code === "PAYLOAD_TOO_LARGE"
+      ? 413
+      : error.code === "UNAUTHORIZED"
+        ? 401
+        : error.code === "FORBIDDEN"
+          ? 403
+          : error.code === "NOT_FOUND"
+            ? 404
+            : error.code === "CONFLICT"
+              ? 409
+              : error.code === "PRECONDITION_FAILED"
+                ? 412
+                : error.code === "TOO_MANY_REQUESTS"
+                  ? 429
+                  : 500
 }
 
 export async function POST(request: Request) {
   const apiKey = request.headers.get("x-api-key")?.trim()
 
   if (!apiKey) {
-    return Response.json(
+    return createUsageResponse(
       { error: 'Missing "X-Api-Key" header.' },
       { status: 401 }
     )
@@ -90,35 +67,39 @@ export async function POST(request: Request) {
 
   try {
     const { payload, payloadSizeBytes } = await parseUsagePayload(request)
+    const requestMetadata = buildUsageRequestMetadata(request)
 
     const usageEvent = await recordApiUsage({
       apiKey,
       payload,
       payloadSizeBytes,
-      requestId: request.headers.get("x-request-id"),
-      metadata: buildRequestMetadata(request),
+      clientIdentity: getUsageClientIdentity(request.headers),
+      requestId: normalizeUsageRequestId(request.headers.get("x-request-id")),
+      metadata: requestMetadata,
     })
 
-    return Response.json({
+    return createUsageResponse({
       ok: true,
       usageEvent,
     })
   } catch (error) {
     if (error instanceof TRPCError) {
-      return Response.json(
+      return createUsageResponse(
         { error: error.message },
         {
           status: getErrorStatus(error),
-          headers: isApiLogRateLimitMessage(error.message)
-            ? { "Retry-After": "60" }
-            : undefined,
+          headers:
+            isApiLogRateLimitMessage(error.message) ||
+            error.code === "TOO_MANY_REQUESTS"
+              ? { "Retry-After": "60" }
+              : undefined,
         }
       )
     }
 
-    console.error("Failed to record API usage", error)
+    logger.error({ err: error }, "Failed to record API usage")
 
-    return Response.json(
+    return createUsageResponse(
       { error: "Failed to record API usage." },
       { status: 500 }
     )
@@ -126,8 +107,13 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return Response.json(
+  return createUsageResponse(
     { error: "Use POST with a JSON object body." },
-    { status: 405 }
+    {
+      status: 405,
+      headers: {
+        Allow: "POST",
+      },
+    }
   )
 }

@@ -1,5 +1,5 @@
 import { resolveTierFromVariantId } from "@/lib/subscription-plans"
-import { logger } from "@/lib/logger"
+import { getLogger } from "@/lib/logger"
 import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
 import type {
   SubscriptionStatus,
@@ -41,6 +41,8 @@ export interface LemonSqueezySyncInput {
   workspaceId: string
   subscriptionId: string
 }
+
+const logger = getLogger("lemon-squeezy-sync")
 
 export class LemonSqueezySyncService {
   constructor(
@@ -119,7 +121,7 @@ export class LemonSqueezySyncService {
     const tier = resolveTierFromVariantId(variantId)
 
     if (!tier) {
-      logger.warn({ variantId }, "Unknown Lemon Squeezy variant id")
+      logger.warn({ variantId }, "Unknown Lemon Squeezy variant id.")
       throw new Error("Unknown Lemon Squeezy variant id.")
     }
 

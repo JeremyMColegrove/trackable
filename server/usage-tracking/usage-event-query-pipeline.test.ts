@@ -1,15 +1,12 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import type {
-  UsageEventSearchInput,
-  UsageEventSourceSnapshot,
-} from "@/lib/usage-event-search"
-import { UsageEventQueryPipeline } from "@/server/usage-tracking/usage-event-query-pipeline"
 import {
-  normalizeDateValue,
-  quoteSqlStringLiteral,
-} from "@/server/usage-tracking/usage-event-query.shared"
+  type UsageEventSearchInput,
+  type UsageEventSourceSnapshot,
+} from "@/lib/usage-event-search"
+import { USAGE_EVENT_PAGE_SIZE } from "@/server/usage-tracking/usage-event-config"
+import { UsageEventQueryPipeline } from "@/server/usage-tracking/usage-event-query-pipeline"
 import type {
   UsageEventExecutionPlan,
   UsageEventGroupedRow,
@@ -29,7 +26,8 @@ function createSearchInput(
     dir: "desc",
     from: null,
     to: null,
-    limit: 50,
+    cursor: null,
+    pageSize: USAGE_EVENT_PAGE_SIZE,
     ...overrides,
   }
 }
@@ -46,22 +44,27 @@ function createEvent(index: number, payload: Record<string, unknown> = {}) {
     id: `00000000-0000-4000-8000-${index.toString().padStart(12, "0")}`,
     occurredAt: new Date(Date.UTC(2026, 2, 26, 12, 0, index)),
     payload,
-    metadata: null,
+    metadata:
+      index === 0 ? { route: "/billing", userAgent: "Mozilla/5.0" } : null,
     apiKey: {
       id: "223e4567-e89b-42d3-a456-426614174000",
       name: "Primary key",
       maskedKey: "trk_test...1234",
     },
-  }
+  } satisfies UsageEventRecord
 }
 
 class FakeUsageEventSqlRepository implements UsageEventSqlRepositoryContract {
   constructor(
     private readonly state: {
-      availablePayloads?: Array<Record<string, unknown>>
+      availableFields?: string[]
       countFlatRows?: number
       flatRows?: UsageEventRecord[]
+      flatHasMore?: boolean
+      flatNextCursor?: string | null
       groupedRows?: {
+        hasMore?: boolean
+        nextCursor?: string | null
         rows: UsageEventGroupedRow[]
         totalGroupedRows: number
         totalMatchedEvents: number
@@ -77,30 +80,20 @@ class FakeUsageEventSqlRepository implements UsageEventSqlRepositoryContract {
   async fetchAvailableAggregateFields(plan: UsageEventExecutionPlan) {
     void plan
     return {
-      payloads:
-        this.state.availablePayloads ??
-        this.state.flatRows?.map((row) => row.payload) ??
-        [],
+      fields: this.state.availableFields ?? [],
     }
   }
 
-  async fetchFlatRows(
-    plan: UsageEventExecutionPlan,
-    options?: { limit?: number }
-  ) {
+  async fetchFlatRows(plan: UsageEventExecutionPlan) {
     void plan
-    const rows = this.state.flatRows ?? []
-
     return {
-      rows:
-        typeof options?.limit === "number" ? rows.slice(0, options.limit) : rows,
+      hasMore: this.state.flatHasMore ?? false,
+      nextCursor: this.state.flatNextCursor ?? null,
+      rows: this.state.flatRows ?? [],
     }
   }
 
-  async fetchGroupedRows(
-    plan: UsageEventExecutionPlan,
-    options?: { limit?: number }
-  ) {
+  async fetchGroupedRowsPage(plan: UsageEventExecutionPlan) {
     void plan
     const groupedRows = this.state.groupedRows ?? {
       rows: [],
@@ -109,101 +102,68 @@ class FakeUsageEventSqlRepository implements UsageEventSqlRepositoryContract {
     }
 
     return {
-      ...groupedRows,
-      rows:
-        typeof options?.limit === "number"
-          ? groupedRows.rows.slice(0, options.limit)
-          : groupedRows.rows,
+      hasMore: groupedRows.hasMore ?? false,
+      nextCursor: groupedRows.nextCursor ?? null,
+      rows: groupedRows.rows,
+    }
+  }
+
+  async fetchGroupedTotals(plan: UsageEventExecutionPlan) {
+    void plan
+    const groupedRows = this.state.groupedRows ?? {
+      rows: [],
+      totalGroupedRows: 0,
+      totalMatchedEvents: 0,
+    }
+
+    return {
+      totalGroupedRows: groupedRows.totalGroupedRows,
+      totalMatchedEvents: groupedRows.totalMatchedEvents,
     }
   }
 }
 
-test("UsageEventQueryPipeline marks flat SQL results as overflow only after final filtering", async () => {
+test("UsageEventQueryPipeline preserves exact totals and pagination state for flat results", async () => {
   const pipeline = new UsageEventQueryPipeline(
     undefined,
     undefined,
     new FakeUsageEventSqlRepository({
-      countFlatRows: 1_001,
-      flatRows: [createEvent(0, { event: "signup" })],
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      query: "event:signup",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.equal(result.maxLogsFound, true)
-  assert.equal(result.partialResults, false)
-  assert.equal(result.totalMatchedEvents, 1_001)
-  assert.equal(result.rows.length, 1)
-})
-
-test("UsageEventQueryPipeline keeps fallback results exact after in-memory filtering", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
+      availableFields: ["event", "level", "route"],
+      countFlatRows: 250,
+      flatHasMore: true,
+      flatNextCursor: "cursor-2",
       flatRows: [
-        createEvent(0, { event: "signup", route: "/billing" }),
-        createEvent(1, { event: "signup", route: "/settings" }),
+        createEvent(0, { event: "signup", level: "info", route: "/billing" }),
+        createEvent(1, { event: "login", level: "info", route: "/dashboard" }),
       ],
     })
   )
 
   const result = await pipeline.execute(
-    createSearchInput({
-      query: "event:signup AND route:/billing/",
-    }),
+    createSearchInput(),
     createSourceSnapshot()
   )
 
-  assert.equal(result.maxLogsFound, false)
-  assert.equal(result.partialResults, true)
-  assert.equal(result.totalMatchedEvents, 1)
-  assert.equal(result.rows.length, 1)
-  assert.equal(result.rows[0]?.event, "signup")
+  assert.equal(result.totalMatchedEvents, 250)
+  assert.equal(result.totalGroupedRows, 250)
+  assert.equal(result.hasMore, true)
+  assert.equal(result.nextCursor, "cursor-2")
+  assert.deepEqual(result.availableAggregateFields, ["event", "level", "route"])
+  assert.deepEqual(result.rows[0]?.hits[0]?.metadata, {
+    route: "/billing",
+    userAgent: "Mozilla/5.0",
+  })
 })
 
-test("UsageEventQueryPipeline reports exact grouped fallback totals after regex filtering", async () => {
+test("UsageEventQueryPipeline preserves grouped totals and percentages without client-side trimming", async () => {
   const pipeline = new UsageEventQueryPipeline(
     undefined,
     undefined,
     new FakeUsageEventSqlRepository({
-      flatRows: [
-        createEvent(0, { event: "signup", route: "/billing" }),
-        createEvent(1, { event: "signup", route: "/billing" }),
-        createEvent(2, { event: "signup", route: "/settings" }),
-      ],
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      aggregation: "payload_field",
-      aggregateField: "route",
-      query: "event:signup AND route:/billing/",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.equal(result.partialResults, true)
-  assert.equal(result.totalMatchedEvents, 2)
-  assert.equal(result.totalGroupedRows, 1)
-  assert.equal(result.rows[0]?.event, "/billing")
-  assert.equal(result.rows[0]?.totalHits, 2)
-  assert.equal(result.rows[0]?.percentage, 100)
-})
-
-test("UsageEventQueryPipeline applies the row cap to grouped final output", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      availablePayloads: [{ route: "/billing" }],
+      availableFields: ["event", "route"],
       groupedRows: {
+        hasMore: true,
+        nextCursor: "group-cursor-2",
         rows: [
           {
             apiKeys: [
@@ -215,57 +175,13 @@ test("UsageEventQueryPipeline applies the row cap to grouped final output", asyn
             ],
             firstOccurredAt: new Date("2026-03-26T09:00:00.000Z"),
             groupValue: "/billing",
-            id: "route:/billing",
+            id: 'route:"/billing"',
             lastOccurredAt: new Date("2026-03-26T10:00:00.000Z"),
-            totalHits: 2,
+            totalHits: 7,
           },
         ],
-        totalGroupedRows: 1_001,
-        totalMatchedEvents: 2_500,
-      },
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      aggregation: "payload_field",
-      aggregateField: "route",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.equal(result.maxLogsFound, true)
-  assert.equal(result.partialResults, false)
-  assert.equal(result.totalGroupedRows, 1_001)
-  assert.equal(result.totalMatchedEvents, 2_500)
-})
-
-test("UsageEventQueryPipeline preserves grouped sort by total hits", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      groupedRows: {
-        rows: [
-          {
-            apiKeys: [],
-            firstOccurredAt: new Date("2026-03-26T07:00:00.000Z"),
-            groupValue: "/settings",
-            id: "route:/settings",
-            lastOccurredAt: new Date("2026-03-26T08:00:00.000Z"),
-            totalHits: 2,
-          },
-          {
-            apiKeys: [],
-            firstOccurredAt: new Date("2026-03-26T09:00:00.000Z"),
-            groupValue: "/billing",
-            id: "route:/billing",
-            lastOccurredAt: new Date("2026-03-26T10:00:00.000Z"),
-            totalHits: 5,
-          },
-        ],
-        totalGroupedRows: 2,
-        totalMatchedEvents: 7,
+        totalGroupedRows: 42,
+        totalMatchedEvents: 10,
       },
     })
   )
@@ -275,15 +191,17 @@ test("UsageEventQueryPipeline preserves grouped sort by total hits", async () =>
       aggregation: "payload_field",
       aggregateField: "route",
       sort: "totalHits",
-      dir: "desc",
     }),
     createSourceSnapshot()
   )
 
+  assert.equal(result.totalGroupedRows, 42)
+  assert.equal(result.totalMatchedEvents, 10)
+  assert.equal(result.hasMore, true)
+  assert.equal(result.nextCursor, "group-cursor-2")
   assert.equal(result.rows[0]?.event, "/billing")
-  assert.equal(result.rows[0]?.totalHits, 5)
-  assert.equal(result.rows[0]?.percentage, 71.4)
-  assert.equal(result.rows[1]?.percentage, 28.6)
+  assert.equal(result.rows[0]?.totalHits, 7)
+  assert.equal(result.rows[0]?.percentage, 70)
 })
 
 test("UsageEventQueryPipeline keeps grouped rows with null aggregate values", async () => {
@@ -291,13 +209,14 @@ test("UsageEventQueryPipeline keeps grouped rows with null aggregate values", as
     undefined,
     undefined,
     new FakeUsageEventSqlRepository({
+      availableFields: ["event"],
       groupedRows: {
         rows: [
           {
             apiKeys: [],
             firstOccurredAt: new Date("2026-03-26T09:00:00.000Z"),
             groupValue: null,
-            id: "event:__empty__",
+            id: "event:__missing__",
             lastOccurredAt: new Date("2026-03-26T10:00:00.000Z"),
             totalHits: 3,
           },
@@ -317,129 +236,5 @@ test("UsageEventQueryPipeline keeps grouped rows with null aggregate values", as
   )
 
   assert.equal(result.rows[0]?.event, null)
-  assert.equal(result.rows[0]?.id, "event:__empty__")
-})
-
-test("UsageEventQueryPipeline sorts flat rows by event name", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      countFlatRows: 2,
-      flatRows: [
-        createEvent(0, { event: "signup" }),
-        createEvent(1, { event: "billing" }),
-      ],
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      query: "",
-      sort: "event",
-      dir: "asc",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.equal(result.partialResults, false)
-  assert.equal(result.rows[0]?.event, "billing")
-  assert.equal(result.rows[1]?.event, "signup")
-})
-
-test("UsageEventQueryPipeline trims visible flat rows to the requested limit while keeping exact totals", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      countFlatRows: 3,
-      flatRows: [
-        createEvent(0, { event: "alpha" }),
-        createEvent(1, { event: "beta" }),
-        createEvent(2, { event: "gamma" }),
-      ],
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      limit: 2,
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.equal(result.rows.length, 2)
-  assert.equal(result.totalMatchedEvents, 3)
-  assert.equal(result.totalGroupedRows, 3)
-})
-
-test("UsageEventQueryPipeline derives aggregate fields from the final fallback-filtered payloads", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      flatRows: [
-        createEvent(0, { event: "signup", route: "/billing", level: "info" }),
-        createEvent(1, { event: "signup", feature: "beta" }),
-      ],
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      query: "route:/billing/",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.deepEqual(result.availableAggregateFields, ["event", "level", "route"])
-})
-
-test("UsageEventQueryPipeline keeps aggregate fields from SQL-visible payloads in grouped SQL mode", async () => {
-  const pipeline = new UsageEventQueryPipeline(
-    undefined,
-    undefined,
-    new FakeUsageEventSqlRepository({
-      availablePayloads: [
-        { event: "signup", route: "/billing" },
-        { event: "login", level: "info" },
-      ],
-      groupedRows: {
-        rows: [
-          {
-            apiKeys: [],
-            firstOccurredAt: new Date("2026-03-26T09:00:00.000Z"),
-            groupValue: "signup",
-            id: "event:signup",
-            lastOccurredAt: new Date("2026-03-26T10:00:00.000Z"),
-            totalHits: 2,
-          },
-        ],
-        totalGroupedRows: 1,
-        totalMatchedEvents: 2,
-      },
-    })
-  )
-
-  const result = await pipeline.execute(
-    createSearchInput({
-      aggregation: "payload_field",
-      aggregateField: "event",
-    }),
-    createSourceSnapshot()
-  )
-
-  assert.deepEqual(result.availableAggregateFields, ["event", "level", "route"])
-})
-
-test("quoteSqlStringLiteral escapes payload keys for raw grouped SQL", () => {
-  assert.equal(quoteSqlStringLiteral("event"), "'event'")
-  assert.equal(quoteSqlStringLiteral("user'name"), "'user''name'")
-})
-
-test("normalizeDateValue converts aggregate timestamp strings to Date", () => {
-  const normalized = normalizeDateValue("2026-03-26T10:00:00.000Z")
-
-  assert.ok(normalized instanceof Date)
-  assert.equal(normalized.toISOString(), "2026-03-26T10:00:00.000Z")
+  assert.equal(result.rows[0]?.id, "event:__missing__")
 })

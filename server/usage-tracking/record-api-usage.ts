@@ -11,6 +11,8 @@ import type { UsageEventMetadata, UsageEventPayload } from "@/db/schema/types"
 import { hashApiKey } from "@/server/api-keys"
 import { apiKeyCache } from "@/server/redis/api-key-cache.repository"
 import { quotaService } from "@/server/subscriptions/quota.service"
+import { usageIngressRateLimitService } from "@/server/usage-tracking/usage-ingress-rate-limit.service"
+import { webhookTriggerService } from "@/server/webhooks/webhook-trigger.service.singleton"
 import { logger } from "@/lib/logger"
 
 interface RecordApiUsageInput {
@@ -18,6 +20,7 @@ interface RecordApiUsageInput {
   payload: UsageEventPayload
   payloadSizeBytes?: number
   metadata?: UsageEventMetadata | null
+  clientIdentity?: string | null
   requestId?: string | null
 }
 
@@ -25,11 +28,21 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
   const keyPrefix = input.apiKey.slice(0, 20)
   const secretHash = hashApiKey(input.apiKey)
   const now = new Date()
+  const usageEventId = randomUUID()
 
   const validationData = await apiKeyCache.getValidation(keyPrefix, secretHash)
 
   if (!validationData) {
-    logger.warn({ keyPrefix }, "Invalid API key during usage recording.")
+    if (input.clientIdentity) {
+      await usageIngressRateLimitService.recordInvalidApiKeyAttempt(
+        input.clientIdentity
+      )
+    }
+
+    logger.warn(
+      { clientIdentity: input.clientIdentity ?? "anonymous" },
+      "Invalid API key during usage recording."
+    )
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Invalid API key.",
@@ -82,6 +95,10 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
 
   const occurredAt = new Date()
   const requestId = input.requestId?.trim() || randomUUID()
+  const metadata = {
+    ...(input.metadata ?? {}),
+    logId: usageEventId,
+  }
 
   try {
     await quotaService.assertApiPayloadSize(
@@ -106,12 +123,13 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
     const [usageEvent] = await tx
       .insert(trackableApiUsageEvents)
       .values({
+        id: usageEventId,
         trackableId: project.id,
         apiKeyId: apiKey.id,
         requestId,
         occurredAt,
         payload: input.payload,
-        metadata: input.metadata ?? null,
+        metadata,
       })
       .returning({
         id: trackableApiUsageEvents.id,
@@ -148,6 +166,26 @@ export async function recordApiUsage(input: RecordApiUsageInput) {
     },
     "Recorded API usage successfully."
   )
+
+  try {
+    await webhookTriggerService.handleUsageEventRecorded({
+      id: createdUsageEvent.id,
+      occurredAt,
+      trackableId: project.id,
+      workspaceId: apiKey.workspaceId,
+    })
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        apiKeyId: apiKey.id,
+        trackableId: project.id,
+        requestId,
+        eventId: createdUsageEvent.id,
+      },
+      "Webhook processing failed after recording API usage."
+    )
+  }
 
   return {
     id: createdUsageEvent.id,

@@ -93,6 +93,11 @@ export class BatchJobRunner {
         })
       }
 
+      getBatchLogger({
+        jobKey: jobRecord.key,
+        trigger,
+      }).warn({ status: "skipped" }, "Skipped batch job run because the job is disabled.")
+
       return {
         status: "skipped" as const,
         summary: "Job is disabled.",
@@ -112,6 +117,11 @@ export class BatchJobRunner {
           summary: "Job is already running.",
         })
       }
+
+      getBatchLogger({
+        jobKey: jobRecord.key,
+        trigger,
+      }).warn({ status: "skipped" }, "Skipped batch job run because another run already holds the lease.")
 
       return {
         status: "skipped" as const,
@@ -143,7 +153,13 @@ export class BatchJobRunner {
     const abortController = new AbortController()
     const timeoutId = setTimeout(() => abortController.abort(), job.timeoutMs)
 
-    logger.info({ schedule: job.schedule }, "Starting batch job run.")
+    logger.info(
+      {
+        schedule: job.schedule,
+        timeoutMs: job.timeoutMs,
+      },
+      "Starting batch job run."
+    )
 
     try {
       const result = batchJobResultSchema.parse(
@@ -169,12 +185,19 @@ export class BatchJobRunner {
         metadata: result.metadata,
       })
 
-      logger.info({ status: result.status }, "Completed batch job run.")
+      logger.info(
+        {
+          status: result.status,
+          durationMs: completedAt.getTime() - startedAt.getTime(),
+        },
+        "Completed batch job run."
+      )
 
       return result
     } catch (error) {
       const completedAt = new Date()
       const errorDetails = serializeError(error)
+      const durationMs = completedAt.getTime() - startedAt.getTime()
 
       await completeBatchJobRun({
         job: jobRecord,
@@ -182,11 +205,18 @@ export class BatchJobRunner {
         status: "failed",
         summary: errorDetails.message,
         completedAt,
-        durationMs: completedAt.getTime() - startedAt.getTime(),
+        durationMs,
         errorDetails,
       })
 
-      logger.error({ error: errorDetails }, "Batch job run failed.")
+      logger.error(
+        {
+          error: errorDetails,
+          status: "failed",
+          durationMs,
+        },
+        "Batch job run failed."
+      )
 
       return {
         status: "failed" as const,

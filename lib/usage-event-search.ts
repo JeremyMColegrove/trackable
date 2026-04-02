@@ -48,6 +48,8 @@ export const usageEventSourceSnapshotSchema = z.object({
   latestOccurredAt: z.string().datetime().nullable(),
 })
 
+export const usageEventMetadataSchema = z.record(z.string(), z.unknown())
+
 export const usageEventSearchInputSchema = z.object({
   trackableId: z.string().uuid(),
   query: z.string().trim().max(500).default(""),
@@ -57,7 +59,20 @@ export const usageEventSearchInputSchema = z.object({
   dir: usageEventSortDirectionSchema.default("desc"),
   from: z.string().datetime().nullable().default(null),
   to: z.string().datetime().nullable().default(null),
-  limit: z.number().int().min(1).max(200).default(50),
+  cursor: z.string().trim().min(1).nullable().default(null),
+  pageSize: z.number().int().min(1).optional(),
+})
+
+export const usageEventContextInputSchema = z.object({
+  trackableId: z.string().uuid(),
+  eventId: z.string().uuid(),
+  before: z.number().int().min(0).max(100).default(5),
+  after: z.number().int().min(0).max(100).default(5),
+})
+
+export const usageEventContextBoundsSchema = z.object({
+  from: z.string().datetime().nullable(),
+  to: z.string().datetime().nullable(),
 })
 
 export const usageEventUrlStateSchema = z.object({
@@ -67,6 +82,8 @@ export const usageEventUrlStateSchema = z.object({
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
   limit: z.string().regex(/^\d+$/).optional(),
+  sort: usageEventSortFieldSchema.optional(),
+  dir: usageEventSortDirectionSchema.optional(),
   cols: z.string().trim().min(1).max(2_000).optional(),
 })
 
@@ -80,7 +97,7 @@ export const usageHitRowSchema = z.object({
   id: z.string().uuid(),
   occurredAt: z.string().datetime(),
   payload: z.record(z.string(), z.unknown()),
-  metadata: z.string().nullable(),
+  metadata: usageEventMetadataSchema.nullable(),
   apiKey: usageEventTableApiKeySchema,
 })
 
@@ -113,8 +130,8 @@ export const usageEventTableResultSchema = z.object({
   totalMatchedEvents: z.number().int().min(0),
   totalGroupedRows: z.number().int().min(0),
   availableAggregateFields: z.array(z.string()),
-  maxLogsFound: z.boolean(),
-  partialResults: z.boolean(),
+  hasMore: z.boolean(),
+  nextCursor: z.string().nullable(),
   sourceSnapshot: usageEventSourceSnapshotSchema,
 })
 
@@ -130,6 +147,8 @@ export type UsageEventSortField = z.infer<typeof usageEventSortFieldSchema>
 export type UsageEventSortDirection = z.infer<
   typeof usageEventSortDirectionSchema
 >
+export type UsageEventContextInput = z.infer<typeof usageEventContextInputSchema>
+export type UsageEventContextBounds = z.infer<typeof usageEventContextBoundsSchema>
 export type UsageEventLevel = z.infer<typeof usageEventLevelSchema>
 export type UsageEventBuiltInColumnId = z.infer<
   typeof usageEventBuiltInColumnIdSchema
@@ -201,7 +220,8 @@ export const defaultUsageEventUrlState = {
   range: "all_time",
   from: undefined,
   to: undefined,
-  limit: "50",
+  sort: "lastOccurredAt",
+  dir: "desc",
   cols: undefined,
 } as const satisfies UsageEventUrlState
 
@@ -229,6 +249,8 @@ export function normalizeUsageEventUrlState(
           from: params.get("from") ?? undefined,
           to: params.get("to") ?? undefined,
           limit: params.get("limit") ?? undefined,
+          sort: params.get("sort") ?? undefined,
+          dir: params.get("dir") ?? undefined,
           cols: params.get("cols") ?? undefined,
         }
       : {
@@ -238,6 +260,8 @@ export function normalizeUsageEventUrlState(
           from: coerceSingleValue(params?.from),
           to: coerceSingleValue(params?.to),
           limit: coerceSingleValue(params?.limit),
+          sort: coerceSingleValue(params?.sort),
+          dir: coerceSingleValue(params?.dir),
           cols: coerceSingleValue(params?.cols),
         }
 
@@ -255,9 +279,12 @@ export function normalizeUsageEventUrlState(
       : defaultUsageEventUrlState.range,
     from: parsedUrlState.success ? parsedUrlState.data.from : undefined,
     to: parsedUrlState.success ? parsedUrlState.data.to : undefined,
-    limit: parsedUrlState.success
-      ? (parsedUrlState.data.limit ?? defaultUsageEventUrlState.limit)
-      : defaultUsageEventUrlState.limit,
+    sort: parsedUrlState.success
+      ? (parsedUrlState.data.sort ?? defaultUsageEventUrlState.sort)
+      : defaultUsageEventUrlState.sort,
+    dir: parsedUrlState.success
+      ? (parsedUrlState.data.dir ?? defaultUsageEventUrlState.dir)
+      : defaultUsageEventUrlState.dir,
     cols: parsedUrlState.success ? parsedUrlState.data.cols : undefined,
   }
 
@@ -326,18 +353,20 @@ export function buildUsageEventSearchInput(
     query: urlState.q ?? defaultUsageEventUrlState.q,
     aggregation: aggregateField ? "payload_field" : "none",
     aggregateField,
-    sort: "lastOccurredAt",
-    dir: "desc",
+    sort:
+      !aggregateField && urlState.sort === "totalHits"
+        ? "lastOccurredAt"
+        : (urlState.sort ?? defaultUsageEventUrlState.sort),
+    dir: urlState.dir ?? defaultUsageEventUrlState.dir,
     from: resolvedRange.from,
     to: resolvedRange.to,
-    limit: Number(urlState.limit ?? defaultUsageEventUrlState.limit),
+    cursor: null,
   })
 }
 
 export function buildUsageEventUrlSearchParams(urlState: UsageEventUrlState) {
   const normalizedUrlState = normalizeUsageEventUrlState(urlState)
   const params = new URLSearchParams()
-  const limit = normalizedUrlState.limit ?? defaultUsageEventUrlState.limit
 
   if (normalizedUrlState.q?.trim()) {
     params.set("q", normalizedUrlState.q.trim())
@@ -359,8 +388,18 @@ export function buildUsageEventUrlSearchParams(urlState: UsageEventUrlState) {
     params.set("to", normalizedUrlState.to)
   }
 
-  if (limit !== defaultUsageEventUrlState.limit) {
-    params.set("limit", limit)
+  if (
+    normalizedUrlState.sort &&
+    normalizedUrlState.sort !== defaultUsageEventUrlState.sort
+  ) {
+    params.set("sort", normalizedUrlState.sort)
+  }
+
+  if (
+    normalizedUrlState.dir &&
+    normalizedUrlState.dir !== defaultUsageEventUrlState.dir
+  ) {
+    params.set("dir", normalizedUrlState.dir)
   }
 
   if (normalizedUrlState.cols?.trim()) {

@@ -5,38 +5,31 @@ import {
   type ImplicitFieldToken,
   type LiqeQuery,
   parse,
-  test,
 } from "liqe"
 
 import type { UsageEventSearchInput } from "@/lib/usage-event-search"
 import type {
-  ParsedUsageEventSearch,
   UsageEventParserOutput,
   UsageEventQueryExpression,
   UsageEventQueryValue,
-  UsageEventRecord,
 } from "@/server/usage-tracking/usage-event-query.types"
 
 export class UsageEventSearchParser {
   parse(input: UsageEventSearchInput): UsageEventParserOutput {
     const normalizedQuery = input.query.trim()
-    const liqeQuery = normalizedQuery ? this.parseLiqeQuery(normalizedQuery) : null
+    const liqeQuery = normalizedQuery
+      ? this.parseLiqeQuery(normalizedQuery)
+      : null
     const expression = liqeQuery
       ? this.normalizeExpression(liqeQuery)
       : ({ kind: "empty" } satisfies UsageEventQueryExpression)
 
-    const parsedSearch: ParsedUsageEventSearch = {
+    return {
       aggregateField: input.aggregateField,
       expression,
       input,
-      normalizedQuery,
-      matchesRecord: (record) =>
-        liqeQuery ? test(liqeQuery, buildSearchableSubject(record)) : true,
-    }
-
-    return {
-      ...parsedSearch,
       liqeQuery,
+      normalizedQuery,
     }
   }
 
@@ -61,7 +54,7 @@ export class UsageEventSearchParser {
       case "Tag":
         return this.normalizeTagExpression(
           query.field,
-          query.operator.operator,
+          getTagOperator(query),
           query.expression
         )
       default:
@@ -75,7 +68,11 @@ export class UsageEventSearchParser {
     expression: ExpressionToken
   ): UsageEventQueryExpression {
     const fieldPath =
-      field.type === "Field" ? (field.path ? [...field.path] : [field.name]) : null
+      field.type === "Field"
+        ? field.path
+          ? [...field.path]
+          : [field.name]
+        : null
 
     switch (expression.type) {
       case "EmptyExpression":
@@ -85,6 +82,7 @@ export class UsageEventSearchParser {
           kind: "comparison",
           fieldPath,
           operator: mapComparisonOperator(operator),
+          quoted: expression.quoted,
           value: expression.value as UsageEventQueryValue,
         }
       case "RangeExpression":
@@ -111,10 +109,19 @@ export class UsageEventSearchParser {
     try {
       return parse(query)
     } catch (error) {
+      const normalizedRegexQuery = stripRegexNoOpFlags(query)
+
+      if (normalizedRegexQuery !== query) {
+        try {
+          return parse(normalizedRegexQuery)
+        } catch {
+          // Fall through to the original error for a stable user-facing message.
+        }
+      }
+
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message:
-          error instanceof Error ? error.message : "Invalid liqe query.",
+        message: error instanceof Error ? error.message : "Invalid liqe query.",
       })
     }
   }
@@ -125,6 +132,7 @@ function mapComparisonOperator(
 ) {
   switch (operator) {
     case ":":
+      return "match"
     case ":=":
       return "eq"
     case ":>":
@@ -140,23 +148,94 @@ function mapComparisonOperator(
   }
 }
 
-function buildSearchableSubject(event: UsageEventRecord) {
-  return {
-    ...event.payload,
-    occurredAt: event.occurredAt.toISOString(),
-    apiKey: event.apiKey,
-    metadata: parseMetadata(event.metadata),
-  }
+function getTagOperator(query: Extract<LiqeQuery, { type: "Tag" }>) {
+  return query.operator?.operator ?? ":"
 }
 
-function parseMetadata(metadata: string | null) {
-  if (!metadata) return null
+function stripRegexNoOpFlags(query: string) {
+  let result = ""
+  let index = 0
+  let activeQuote: "'" | '"' | null = null
 
-  try {
-    return JSON.parse(metadata) as unknown
-  } catch {
-    return metadata
+  while (index < query.length) {
+    const character = query[index]
+
+    if (activeQuote) {
+      result += character
+
+      if (character === "\\" && index + 1 < query.length) {
+        result += query[index + 1]
+        index += 2
+        continue
+      }
+
+      if (character === activeQuote) {
+        activeQuote = null
+      }
+
+      index += 1
+      continue
+    }
+
+    if (character === "'" || character === '"') {
+      activeQuote = character
+      result += character
+      index += 1
+      continue
+    }
+
+    if (character !== "/") {
+      result += character
+      index += 1
+      continue
+    }
+
+    let closingSlashIndex = index + 1
+    let escaped = false
+
+    while (closingSlashIndex < query.length) {
+      const regexCharacter = query[closingSlashIndex]
+
+      if (escaped) {
+        escaped = false
+        closingSlashIndex += 1
+        continue
+      }
+
+      if (regexCharacter === "\\") {
+        escaped = true
+        closingSlashIndex += 1
+        continue
+      }
+
+      if (regexCharacter === "/") {
+        break
+      }
+
+      closingSlashIndex += 1
+    }
+
+    if (closingSlashIndex >= query.length || query[closingSlashIndex] !== "/") {
+      result += character
+      index += 1
+      continue
+    }
+
+    let flagIndex = closingSlashIndex + 1
+
+    while (flagIndex < query.length && /[a-z]/i.test(query[flagIndex] ?? "")) {
+      flagIndex += 1
+    }
+
+    const flags = query.slice(closingSlashIndex + 1, flagIndex)
+    const normalizedFlags = flags.replaceAll("o", "").replaceAll("O", "")
+
+    result +=
+      query.slice(index, closingSlashIndex + 1) + normalizedFlags
+    index = flagIndex
   }
+
+  return result
 }
 
 function assertNever(value: never): never {

@@ -2,8 +2,10 @@
 
 set -eu
 
+umask 027
+
 echo "Running Drizzle migrations..."
-npm run db:migrate
+node ./scripts/run-migrations.mjs
 
 echo "Starting standalone server..."
 exec node server.js

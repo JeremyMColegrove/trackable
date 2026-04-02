@@ -3,6 +3,7 @@ import "server-only"
 import superjson from "superjson"
 
 import { logger } from "@/lib/logger"
+import { fingerprintValue } from "@/lib/log-sanitization"
 import { redis } from "./redis-client"
 
 export abstract class BaseCacheRepository<T> {
@@ -17,6 +18,13 @@ export abstract class BaseCacheRepository<T> {
 
   protected getIndexKey(indexName: string, value: string): string {
     return `${this.prefix}:idx:${indexName}:${value}`
+  }
+
+  protected getLogContext(id: string) {
+    return {
+      cacheNamespace: this.prefix,
+      cacheKeyFingerprint: fingerprintValue(id),
+    }
   }
 
   /**
@@ -37,10 +45,13 @@ export abstract class BaseCacheRepository<T> {
 
     try {
       const parsed = superjson.parse(data) as T
-      logger.info({ cacheKey: key }, "Cache HIT")
+      logger.info(this.getLogContext(id), "Cache HIT")
       return parsed
     } catch (err) {
-      logger.error({ cacheKey: key, error: err }, "Failed to parse cache entry")
+      logger.error(
+        { ...this.getLogContext(id), error: err },
+        "Failed to parse cache entry"
+      )
       return null
     }
   }
@@ -58,8 +69,11 @@ export abstract class BaseCacheRepository<T> {
     const start = Date.now()
     const fallbackData = await this.fetchFallback(id)
     const durationMs = Date.now() - start
-    
-    logger.debug({ cacheKey: this.getKey(id), durationMs, hasData: fallbackData !== null }, "Cache fallback executed")
+
+    logger.debug(
+      { ...this.getLogContext(id), durationMs, hasData: fallbackData !== null },
+      "Cache fallback executed"
+    )
 
     if (fallbackData !== null) {
       await this.set(id, fallbackData)
@@ -87,27 +101,43 @@ export abstract class BaseCacheRepository<T> {
         hits++
         return superjson.parse(data) as T
       } catch (err) {
-        logger.error({ cacheKey: keys[idx], error: err }, "Failed to parse mget cache entry")
+        logger.error(
+          { ...this.getLogContext(ids[idx] ?? ""), error: err },
+          "Failed to parse mget cache entry"
+        )
         misses++
         return null
       }
     })
 
-    logger.debug({ prefix: this.prefix, keysCount: keys.length, hits, misses }, "Cache MGET completed")
+    logger.debug(
+      { prefix: this.prefix, keysCount: keys.length, hits, misses },
+      "Cache MGET completed"
+    )
     return entities
   }
 
   /**
    * Set an entity in the cache.
    */
-  async set(id: string, entity: T, ttlSeconds: number = this.defaultTtlSeconds): Promise<void> {
+  async set(
+    id: string,
+    entity: T,
+    ttlSeconds: number = this.defaultTtlSeconds
+  ): Promise<void> {
     const data = superjson.stringify(entity)
     const key = this.getKey(id)
     try {
       await redis.set(key, data, "EX", ttlSeconds)
-      logger.debug({ cacheKey: key, ttlSeconds }, "Cache SET completed")
+      logger.debug(
+        { ...this.getLogContext(id), ttlSeconds },
+        "Cache SET completed"
+      )
     } catch (err) {
-      logger.error({ cacheKey: key, error: err }, "Cache SET failed")
+      logger.error(
+        { ...this.getLogContext(id), error: err },
+        "Cache SET failed"
+      )
       throw err
     }
   }
@@ -124,7 +154,10 @@ export abstract class BaseCacheRepository<T> {
   ): Promise<T | null> {
     const current = await this.get(id)
     if (!current) {
-      logger.debug({ cacheKey: this.getKey(id) }, "Cache UPDATE aborted (entity not found)")
+      logger.debug(
+        this.getLogContext(id),
+        "Cache UPDATE aborted (entity not found)"
+      )
       return null
     }
 
@@ -139,7 +172,7 @@ export abstract class BaseCacheRepository<T> {
   async delete(id: string): Promise<void> {
     const key = this.getKey(id)
     await redis.del(key)
-    logger.debug({ cacheKey: key }, "Cache DELETE completed")
+    logger.debug(this.getLogContext(id), "Cache DELETE completed")
   }
 
   // --- Secondary Index Mapping (Sets) ---
@@ -147,14 +180,22 @@ export abstract class BaseCacheRepository<T> {
   /**
    * Add an entity ID to a secondary index.
    */
-  async addToIndex(indexName: string, value: string, id: string): Promise<void> {
+  async addToIndex(
+    indexName: string,
+    value: string,
+    id: string
+  ): Promise<void> {
     await redis.sadd(this.getIndexKey(indexName, value), id)
   }
 
   /**
    * Remove an entity ID from a secondary index.
    */
-  async removeFromIndex(indexName: string, value: string, id: string): Promise<void> {
+  async removeFromIndex(
+    indexName: string,
+    value: string,
+    id: string
+  ): Promise<void> {
     await redis.srem(this.getIndexKey(indexName, value), id)
   }
 
@@ -165,7 +206,14 @@ export abstract class BaseCacheRepository<T> {
     const indexKey = this.getIndexKey(indexName, value)
     const ids = await redis.smembers(indexKey)
     if (ids.length === 0) {
-      logger.debug({ indexKey }, "Cache INDEX search returned empty")
+      logger.debug(
+        {
+          cacheNamespace: this.prefix,
+          cacheIndex: indexName,
+          cacheIndexFingerprint: fingerprintValue(value),
+        },
+        "Cache INDEX search returned empty"
+      )
       return []
     }
 

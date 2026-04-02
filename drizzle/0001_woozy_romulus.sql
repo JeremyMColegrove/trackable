@@ -1,0 +1,1 @@
+ALTER TABLE "trackable_api_usage_events" ALTER COLUMN "metadata" SET DATA TYPE jsonb;

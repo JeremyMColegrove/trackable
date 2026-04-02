@@ -25,6 +25,10 @@ import {
 	normalizeEditableForm,
 } from "@/lib/project-form-builder";
 import { cn } from "@/lib/utils";
+import {
+	createTrackableFormPreviewId,
+	storeTrackableFormPreview,
+} from "@/lib/trackable-form-preview";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { T, useGT } from "gt-next";
@@ -37,12 +41,10 @@ import { FIELD_TYPE_OPTIONS, getFieldIcon } from "./utils/form-field-utils";
 export function FormBuilder({
 	trackableId,
 	trackableName,
-	trackableDescription,
 	activeForm,
 }: {
 	trackableId: string;
 	trackableName: string;
-	trackableDescription: string | null;
 	activeForm: TrackableFormSnapshot | null;
 }) {
 	const gt = useGT();
@@ -167,6 +169,27 @@ export function FormBuilder({
 		});
 	}
 
+	function handlePreview() {
+		try {
+			const previewId = createTrackableFormPreviewId();
+
+			storeTrackableFormPreview({
+				previewId,
+				trackableId,
+				form: normalizedDraft,
+			});
+
+			const nextUrl = `/trackables/${trackableId}/preview?previewId=${encodeURIComponent(
+				previewId,
+			)}`;
+			window.open(nextUrl, "_blank", "noopener,noreferrer");
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "Unable to open preview.",
+			);
+		}
+	}
+
 	const validationMessage = validationResult.success
 		? isDirty
 			? "Unsaved changes ready for the next version."
@@ -188,6 +211,14 @@ export function FormBuilder({
 						{validationMessage}
 					</div>
 				</div>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={handlePreview}
+					disabled={saveForm.isPending}
+				>
+					<T>Preview</T>
+				</Button>
 				<Button
 					type="button"
 					variant="outline"

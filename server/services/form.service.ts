@@ -189,6 +189,65 @@ export class FormService {
 
     return savedForm
   }
+
+  async getPreview(trackableId: string, userId: string) {
+    const trackable = await accessControlService.assertTrackableAccess(
+      trackableId,
+      userId,
+      "manage"
+    )
+
+    assertTrackableKind(
+      trackable.kind,
+      "survey",
+      "Only survey trackables can preview forms."
+    )
+
+    const trackableRecord = await db.query.trackableItems.findFirst({
+      where: eq(trackableItems.id, trackable.id),
+      columns: {
+        id: true,
+        name: true,
+        description: true,
+      },
+      with: {
+        activeForm: {
+          with: {
+            fields: true,
+          },
+        },
+      },
+    })
+
+    if (!trackableRecord) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Trackable not found.",
+      })
+    }
+
+    return {
+      trackable: {
+        id: trackableRecord.id,
+        name: trackableRecord.name,
+        description: trackableRecord.description,
+      },
+      form: trackableRecord.activeForm
+        ? {
+            id: trackableRecord.activeForm.id,
+            version: trackableRecord.activeForm.version,
+            title: trackableRecord.activeForm.title,
+            description: trackableRecord.activeForm.description,
+            status: trackableRecord.activeForm.status,
+            submitLabel: trackableRecord.activeForm.submitLabel,
+            successMessage: trackableRecord.activeForm.successMessage,
+            fields: [...trackableRecord.activeForm.fields].sort(
+              (left, right) => left.position - right.position
+            ),
+          }
+        : null,
+    }
+  }
 }
 
 export const formService = new FormService()

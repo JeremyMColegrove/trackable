@@ -1,7 +1,11 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import type { UsageEventSearchInput } from "@/lib/usage-event-search"
+import {
+  type UsageEventSearchInput,
+} from "@/lib/usage-event-search"
+import { USAGE_EVENT_PAGE_SIZE } from "@/server/usage-tracking/usage-event-config"
+import type { UsageEventQueryExpression } from "@/server/usage-tracking/usage-event-query.types"
 import { UsageEventSearchParser } from "@/server/usage-tracking/usage-event-search-parser"
 
 function createSearchInput(
@@ -16,84 +20,250 @@ function createSearchInput(
     dir: "desc",
     from: null,
     to: null,
-    limit: 50,
+    cursor: null,
+    pageSize: USAGE_EVENT_PAGE_SIZE,
     ...overrides,
   }
 }
 
-test("UsageEventSearchParser normalizes explicit field comparisons", () => {
-  const parser = new UsageEventSearchParser()
-  const result = parser.parse(
-    createSearchInput({
-      query: 'event:signup AND apiKey.name:"Primary key"',
-    })
-  )
+function comparisonExpression(
+  fieldPath: string[] | null,
+  value: string | number | boolean | null,
+  options?: {
+    operator?: "match" | "eq" | "gt" | "gte" | "lt" | "lte"
+    quoted?: boolean
+  }
+): UsageEventQueryExpression {
+  return {
+    kind: "comparison",
+    fieldPath,
+    operator: options?.operator ?? "match",
+    quoted: options?.quoted ?? false,
+    value,
+  }
+}
 
-  assert.deepEqual(result.expression, {
-    kind: "logical",
-    operator: "and",
-    left: {
-      kind: "comparison",
-      fieldPath: ["event"],
-      operator: "eq",
-      value: "signup",
+function rangeExpression(
+  fieldPath: string[] | null,
+  min: number,
+  max: number,
+  options?: { minInclusive?: boolean; maxInclusive?: boolean }
+): UsageEventQueryExpression {
+  return {
+    kind: "range",
+    fieldPath,
+    min,
+    minInclusive: options?.minInclusive ?? true,
+    max,
+    maxInclusive: options?.maxInclusive ?? true,
+  }
+}
+
+test("UsageEventSearchParser normalizes the supported Liqe syntax matrix", () => {
+  const parser = new UsageEventSearchParser()
+  const cases: Array<{
+    query: string
+    expected: UsageEventQueryExpression
+  }> = [
+    {
+      query: "foo",
+      expected: comparisonExpression(null, "foo"),
     },
-    right: {
-      kind: "comparison",
-      fieldPath: ["apiKey", "name"],
-      operator: "eq",
-      value: "Primary key",
+    {
+      query: "'foo'",
+      expected: comparisonExpression(null, "foo", { quoted: true }),
     },
-  })
-})
-
-test("UsageEventSearchParser preserves regex expressions for fallback evaluation", () => {
-  const parser = new UsageEventSearchParser()
-  const result = parser.parse(
-    createSearchInput({
-      query: "route:/billing/",
-    })
-  )
-
-  assert.deepEqual(result.expression, {
-    kind: "regex",
-    fieldPath: ["route"],
-    value: "/billing/",
-  })
-})
-
-test("UsageEventSearchParser normalizes NOT and range expressions", () => {
-  const parser = new UsageEventSearchParser()
-  const result = parser.parse(
-    createSearchInput({
-      query: "NOT event:signup AND duration:[1 TO 5]",
-    })
-  )
-
-  assert.deepEqual(result.expression, {
-    kind: "logical",
-    operator: "and",
-    left: {
-      kind: "not",
-      operand: {
-        kind: "comparison",
-        fieldPath: ["event"],
-        operator: "eq",
-        value: "signup",
+    {
+      query: '"foo"',
+      expected: comparisonExpression(null, "foo", { quoted: true }),
+    },
+    {
+      query: "name:foo",
+      expected: comparisonExpression(["name"], "foo"),
+    },
+    {
+      query: "'full name':foo",
+      expected: comparisonExpression(["full name"], "foo"),
+    },
+    {
+      query: '"full name":foo',
+      expected: comparisonExpression(["full name"], "foo"),
+    },
+    {
+      query: "name.first:foo",
+      expected: comparisonExpression(["name", "first"], "foo"),
+    },
+    {
+      query: "name:/foo/",
+      expected: {
+        kind: "regex",
+        fieldPath: ["name"],
+        value: "/foo/",
       },
     },
-    right: {
-      kind: "range",
-      fieldPath: ["duration"],
-      min: 1,
-      minInclusive: true,
-      max: 5,
-      maxInclusive: true,
+    {
+      query: "name:/foo/o",
+      expected: {
+        kind: "regex",
+        fieldPath: ["name"],
+        value: "/foo/",
+      },
     },
-  })
+    {
+      query: "name:foo*bar",
+      expected: comparisonExpression(["name"], "foo*bar"),
+    },
+    {
+      query: "name:foo?bar",
+      expected: comparisonExpression(["name"], "foo?bar"),
+    },
+    {
+      query: "member:true",
+      expected: comparisonExpression(["member"], true),
+    },
+    {
+      query: "member:false",
+      expected: comparisonExpression(["member"], false),
+    },
+    {
+      query: "member:null",
+      expected: comparisonExpression(["member"], null),
+    },
+    {
+      query: "height:=100",
+      expected: comparisonExpression(["height"], 100, { operator: "eq" }),
+    },
+    {
+      query: "height:>100",
+      expected: comparisonExpression(["height"], 100, { operator: "gt" }),
+    },
+    {
+      query: "height:>=100",
+      expected: comparisonExpression(["height"], 100, { operator: "gte" }),
+    },
+    {
+      query: "height:<100",
+      expected: comparisonExpression(["height"], 100, { operator: "lt" }),
+    },
+    {
+      query: "height:<=100",
+      expected: comparisonExpression(["height"], 100, { operator: "lte" }),
+    },
+    {
+      query: "height:[100 TO 200]",
+      expected: rangeExpression(["height"], 100, 200),
+    },
+    {
+      query: "height:{100 TO 200}",
+      expected: rangeExpression(["height"], 100, 200, {
+        minInclusive: false,
+        maxInclusive: false,
+      }),
+    },
+    {
+      query: "name:foo AND height:=100",
+      expected: {
+        kind: "logical",
+        operator: "and",
+        left: comparisonExpression(["name"], "foo"),
+        right: comparisonExpression(["height"], 100, { operator: "eq" }),
+      },
+    },
+    {
+      query: "name:foo OR name:bar",
+      expected: {
+        kind: "logical",
+        operator: "or",
+        left: comparisonExpression(["name"], "foo"),
+        right: comparisonExpression(["name"], "bar"),
+      },
+    },
+    {
+      query: "NOT foo",
+      expected: {
+        kind: "not",
+        operand: comparisonExpression(null, "foo"),
+      },
+    },
+    {
+      query: "-foo",
+      expected: {
+        kind: "not",
+        operand: comparisonExpression(null, "foo"),
+      },
+    },
+    {
+      query: "NOT foo:bar",
+      expected: {
+        kind: "not",
+        operand: comparisonExpression(["foo"], "bar"),
+      },
+    },
+    {
+      query: "-foo:bar",
+      expected: {
+        kind: "not",
+        operand: comparisonExpression(["foo"], "bar"),
+      },
+    },
+    {
+      query: "name:foo AND NOT (bio:bar OR bio:baz)",
+      expected: {
+        kind: "logical",
+        operator: "and",
+        left: comparisonExpression(["name"], "foo"),
+        right: {
+          kind: "not",
+          operand: {
+            kind: "logical",
+            operator: "or",
+            left: comparisonExpression(["bio"], "bar"),
+            right: comparisonExpression(["bio"], "baz"),
+          },
+        },
+      },
+    },
+    {
+      query: "name:foo height:=100",
+      expected: {
+        kind: "logical",
+        operator: "and",
+        left: comparisonExpression(["name"], "foo"),
+        right: comparisonExpression(["height"], 100, { operator: "eq" }),
+      },
+    },
+    {
+      query: "name:foo AND (bio:bar OR bio:baz)",
+      expected: {
+        kind: "logical",
+        operator: "and",
+        left: comparisonExpression(["name"], "foo"),
+        right: {
+          kind: "logical",
+          operator: "or",
+          left: comparisonExpression(["bio"], "bar"),
+          right: comparisonExpression(["bio"], "baz"),
+        },
+      },
+    },
+  ]
+
+  for (const testCase of cases) {
+    const result = parser.parse(
+      createSearchInput({
+        query: testCase.query,
+      })
+    )
+
+    assert.deepEqual(
+      result.expression,
+      testCase.expected,
+      `Unexpected normalized expression for query ${testCase.query}`
+    )
+  }
 })
 
-test("UsageEventSearchParser preserves nested field paths for fallback evaluation", () => {
+test("UsageEventSearchParser keeps nested metadata paths for SQL compilation", () => {
   const parser = new UsageEventSearchParser()
   const result = parser.parse(
     createSearchInput({
@@ -104,48 +274,10 @@ test("UsageEventSearchParser preserves nested field paths for fallback evaluatio
   assert.deepEqual(result.expression, {
     kind: "comparison",
     fieldPath: ["metadata", "user", "email"],
-    operator: "eq",
+    operator: "match",
+    quoted: true,
     value: "test@example.com",
   })
-})
-
-test("UsageEventSearchParser builds a matcher that handles complex liqe expressions", () => {
-  const parser = new UsageEventSearchParser()
-  const result = parser.parse(
-    createSearchInput({
-      query: '(event:signup OR event:login) AND apiKey.name:"Primary key"',
-    })
-  )
-
-  assert.equal(
-    result.matchesRecord({
-      id: "00000000-0000-4000-8000-000000000001",
-      occurredAt: new Date("2026-03-26T10:00:00.000Z"),
-      payload: { event: "signup" },
-      metadata: null,
-      apiKey: {
-        id: "223e4567-e89b-42d3-a456-426614174000",
-        name: "Primary key",
-        maskedKey: "trk_test...1234",
-      },
-    }),
-    true
-  )
-
-  assert.equal(
-    result.matchesRecord({
-      id: "00000000-0000-4000-8000-000000000002",
-      occurredAt: new Date("2026-03-26T10:00:00.000Z"),
-      payload: { event: "purchase" },
-      metadata: null,
-      apiKey: {
-        id: "223e4567-e89b-42d3-a456-426614174000",
-        name: "Primary key",
-        maskedKey: "trk_test...1234",
-      },
-    }),
-    false
-  )
 })
 
 test("UsageEventSearchParser throws a BAD_REQUEST error for invalid liqe", () => {

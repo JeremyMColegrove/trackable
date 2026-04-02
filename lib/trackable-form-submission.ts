@@ -3,12 +3,14 @@ import { z } from "zod"
 import type {
   CheckboxesFieldConfig,
   FormAnswerValue,
+  FormFieldConfig,
   NotesFieldConfig,
   RatingFieldConfig,
   ShortTextFieldConfig,
   TrackableFormFieldSnapshot,
   TrackableFormSnapshot,
   TrackableSubmissionSnapshot,
+  YouTubeVideoFieldConfig,
 } from "@/db/schema/types"
 
 const otherCheckboxValue = "__other__"
@@ -36,6 +38,10 @@ export type PublicFormSubmissionInput = z.infer<
 >
 
 type SubmissionAnswer = TrackableSubmissionSnapshot["answers"][number]
+type AnswerableTrackableFormField = TrackableFormFieldSnapshot & {
+  kind: Exclude<FormFieldConfig["kind"], "youtube_video">
+  config: Exclude<FormFieldConfig, { kind: "youtube_video" }>
+}
 
 export function isRatingField(
   field: TrackableFormFieldSnapshot
@@ -73,11 +79,29 @@ export function isShortTextField(
   return field.kind === "short_text" && field.config.kind === "short_text"
 }
 
+export function isYouTubeVideoField(
+  field: TrackableFormFieldSnapshot
+): field is TrackableFormFieldSnapshot & {
+  kind: "youtube_video"
+  config: YouTubeVideoFieldConfig
+} {
+  return field.kind === "youtube_video" && field.config.kind === "youtube_video"
+}
+
+export function isAnswerableField(
+  field: TrackableFormFieldSnapshot
+): field is AnswerableTrackableFormField {
+  return !isYouTubeVideoField(field)
+}
+
 export function buildSubmissionSnapshot(
   form: TrackableFormSnapshot,
   answers: PublicFormSubmissionInput["answers"]
 ) {
-  const fields = [...form.fields].sort((left, right) => left.position - right.position)
+  const fields = [...form.fields].sort(
+    (left, right) => left.position - right.position
+  )
+  const answerableFields = fields.filter(isAnswerableField)
   const answersByFieldId = new Map<string, unknown>()
 
   for (const answer of answers) {
@@ -88,7 +112,7 @@ export function buildSubmissionSnapshot(
     answersByFieldId.set(answer.fieldId, answer.value)
   }
 
-  const normalizedAnswers = fields.map((field) =>
+  const normalizedAnswers = answerableFields.map((field) =>
     buildFieldAnswer(field, answersByFieldId.get(field.id))
   )
 
@@ -107,15 +131,17 @@ export function buildSubmissionSnapshot(
   }
 }
 
-export function requiresResponderEmail(settings: {
-  allowAnonymousSubmissions?: boolean
-  collectResponderEmail?: boolean
-} | null) {
+export function requiresResponderEmail(
+  settings: {
+    allowAnonymousSubmissions?: boolean
+    collectResponderEmail?: boolean
+  } | null
+) {
   return settings?.collectResponderEmail === true
 }
 
 function buildFieldAnswer(
-  field: TrackableFormFieldSnapshot,
+  field: AnswerableTrackableFormField,
   rawValue: unknown
 ): SubmissionAnswer {
   if (isRatingField(field)) {
@@ -185,7 +211,9 @@ function parseRatingValue(
   }
 
   if (rawValue < 1 || rawValue > field.config.scale) {
-    throw new Error(`${field.label} must be between 1 and ${field.config.scale}.`)
+    throw new Error(
+      `${field.label} must be between 1 and ${field.config.scale}.`
+    )
   }
 
   return rawValue
@@ -211,7 +239,9 @@ function parseCheckboxValues(
     )
   )
 
-  const allowedValues = new Set(field.config.options.map((option) => option.value))
+  const allowedValues = new Set(
+    field.config.options.map((option) => option.value)
+  )
 
   if (field.config.allowOther) {
     allowedValues.add(otherCheckboxValue)
@@ -277,7 +307,9 @@ function parseTextValue(
   return normalizedValue
 }
 
-export function getEmptyAnswerValue(field: TrackableFormFieldSnapshot): FormAnswerValue {
+export function getEmptyAnswerValue(
+  field: AnswerableTrackableFormField
+): FormAnswerValue {
   switch (field.kind) {
     case "rating":
       return { kind: "rating", value: 0 }

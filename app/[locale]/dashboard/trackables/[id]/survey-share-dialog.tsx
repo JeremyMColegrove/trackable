@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { TrackableFormSnapshot } from "@/db/schema/types";
 import {
 	Dialog,
 	DialogContent,
@@ -12,14 +11,16 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { T } from "gt-next";
 import { Check, Copy, Globe, Link2, Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatDateTime } from "./display-utils";
+import type { ShareLinkRow, TrackableDetails } from "./table-types";
 import { hasConfiguredTrackableForm } from "./trackable-form-status";
-import type { ShareLinkRow } from "./table-types";
+import { useTrackableDetails } from "./trackable-shell";
 
 function buildSurveyLink(token: string) {
 	if (typeof window === "undefined") {
@@ -34,9 +35,6 @@ function getSurveyLink(links: ShareLinkRow[]) {
 }
 
 type SurveyShareDialogProps = {
-	trackableId: string;
-	activeForm: Pick<TrackableFormSnapshot, "id" | "fields"> | null;
-	shareLinks: ShareLinkRow[];
 	trigger?: React.ReactNode;
 	hideTrigger?: boolean;
 	open?: boolean;
@@ -44,28 +42,38 @@ type SurveyShareDialogProps = {
 };
 
 export function SurveyShareDialog({
-	trackableId,
-	activeForm,
-	shareLinks,
 	trigger,
 	hideTrigger = false,
 	open,
 	onOpenChange,
 }: SurveyShareDialogProps) {
+	const trackable = useTrackableDetails();
 	const [copied, setCopied] = useState(false);
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 	const trackableQueryKey = trpc.trackables.getById.queryKey({
-		id: trackableId,
+		id: trackable.id,
+	});
+	const trackableShellQueryKey = trpc.trackables.getShellById.queryKey({
+		id: trackable.id,
 	});
 
-	const surveyLink = useMemo(() => getSurveyLink(shareLinks), [shareLinks]);
+	const surveyLink = useMemo(
+		() => getSurveyLink(trackable.shareSettings.shareLinks),
+		[trackable.shareSettings.shareLinks],
+	);
 	const linkIsOn = Boolean(surveyLink && !surveyLink.revokedAt);
-	const hasForm = hasConfiguredTrackableForm(activeForm);
+	const hasForm = hasConfiguredTrackableForm(trackable.activeForm);
+	const canManageSurveyAccess = trackable.permissions.canManageSettings;
+	const allowAnonymousSubmissions =
+		trackable.settings?.allowAnonymousSubmissions ?? true;
 
 	async function refreshTrackable() {
 		await queryClient.invalidateQueries({
 			queryKey: trackableQueryKey,
+		});
+		await queryClient.invalidateQueries({
+			queryKey: trackableShellQueryKey,
 		});
 	}
 
@@ -80,13 +88,21 @@ export function SurveyShareDialog({
 			onSuccess: refreshTrackable,
 		}),
 	);
+	const updateSettings = useMutation(
+		trpc.trackables.updateSettings.mutationOptions({
+			onSuccess: refreshTrackable,
+		}),
+	);
 
-	const isBusy = createShareLink.isPending || updateShareLink.isPending;
+	const isBusy =
+		createShareLink.isPending ||
+		updateShareLink.isPending ||
+		updateSettings.isPending;
 
 	function turnLinkOn() {
 		if (surveyLink) {
 			updateShareLink.mutate({
-				trackableId,
+				trackableId: trackable.id,
 				linkId: surveyLink.id,
 				role: "submit",
 				isActive: true,
@@ -95,7 +111,7 @@ export function SurveyShareDialog({
 		}
 
 		createShareLink.mutate({
-			trackableId,
+			trackableId: trackable.id,
 			role: "submit",
 		});
 	}
@@ -106,7 +122,7 @@ export function SurveyShareDialog({
 		}
 
 		updateShareLink.mutate({
-			trackableId,
+			trackableId: trackable.id,
 			linkId: surveyLink.id,
 			role: "submit",
 			isActive: false,
@@ -121,6 +137,47 @@ export function SurveyShareDialog({
 		await navigator.clipboard.writeText(buildSurveyLink(surveyLink.token));
 		setCopied(true);
 		window.setTimeout(() => setCopied(false), 2000);
+	}
+
+	function updateAnonymousSettingInCache(nextChecked: boolean) {
+		const applySetting = (cachedTrackable: TrackableDetails | undefined) => {
+			if (!cachedTrackable) {
+				return cachedTrackable;
+			}
+
+			return {
+				...cachedTrackable,
+				settings: {
+					...(cachedTrackable.settings ?? {}),
+					allowAnonymousSubmissions: nextChecked,
+				},
+			};
+		};
+
+		queryClient.setQueryData<TrackableDetails>(trackableQueryKey, applySetting);
+		queryClient.setQueryData<TrackableDetails>(
+			trackableShellQueryKey,
+			applySetting,
+		);
+	}
+
+	function handleAnonymousToggle(nextChecked: boolean) {
+		const previousValue = allowAnonymousSubmissions;
+		updateAnonymousSettingInCache(nextChecked);
+
+		updateSettings.mutate(
+			{
+				trackableId: trackable.id,
+				name: trackable.name,
+				description: trackable.description ?? "",
+				allowAnonymousSubmissions: nextChecked,
+			},
+			{
+				onError: () => {
+					updateAnonymousSettingInCache(previousValue);
+				},
+			},
+		);
 	}
 
 	return (
@@ -198,6 +255,30 @@ export function SurveyShareDialog({
 								</Button>
 							</div>
 						</div>
+
+						{canManageSurveyAccess ? (
+							<div className="rounded-xl border bg-background p-4">
+								<div className="flex items-start justify-between gap-4">
+									<div className="flex flex-col gap-1 pr-2">
+										<div className="text-sm font-medium">
+											<T>Allow anonymous responses</T>
+										</div>
+										<p className="text-sm text-muted-foreground">
+											<T>
+												When off, people must sign in before they can open
+												and submit the shared survey.
+											</T>
+										</p>
+									</div>
+									<Switch
+										checked={allowAnonymousSubmissions}
+										onCheckedChange={handleAnonymousToggle}
+										disabled={updateSettings.isPending}
+										aria-label="Allow anonymous responses"
+									/>
+								</div>
+							</div>
+						) : null}
 
 						<div className="rounded-xl border bg-background p-4">
 							<div className="flex items-center gap-2 text-sm font-medium">

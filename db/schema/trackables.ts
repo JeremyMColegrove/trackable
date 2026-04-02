@@ -29,6 +29,7 @@ import {
 } from "@/db/schema/_shared"
 import {
   trackableAccessRoleEnum,
+  trackableAssetKindEnum,
   trackableAccessSubjectTypeEnum,
   trackableFormFieldKindEnum,
   trackableFormStatusEnum,
@@ -36,10 +37,12 @@ import {
   trackableSubmissionSourceEnum,
 } from "@/db/schema/enums"
 import { workspaces } from "@/db/schema/team"
+import { trackableWebhookConnections } from "@/db/schema/webhooks"
 import type {
   FormAnswerValue,
   FormFieldConfig,
   SubmissionMetadata,
+  TrackableAssetKind,
   TrackableKind,
   TrackableSubmissionSnapshot,
   TrackableSettings,
@@ -173,6 +176,38 @@ export const trackableForms = pgTable(
   ]
 )
 
+export const trackableAssets = pgTable(
+  "trackable_assets",
+  {
+    id: uuidPrimaryKey(),
+    trackableId: uuid("trackable_id")
+      .notNull()
+      .references(() => trackableItems.id, { onDelete: "cascade" }),
+    uploadedByUserId: text("uploaded_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    publicToken: text("public_token").notNull(),
+    kind: trackableAssetKindEnum("kind").$type<TrackableAssetKind>().notNull(),
+    originalFileName: text("original_file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    extension: text("extension").notNull(),
+    originalBytes: integer("original_bytes").notNull(),
+    storedBytes: integer("stored_bytes").notNull(),
+    storageKey: text("storage_key").notNull(),
+    imageWidth: integer("image_width"),
+    imageHeight: integer("image_height"),
+    imageFormat: text("image_format"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("trackable_assets_public_token_idx").on(table.publicToken),
+    uniqueIndex("trackable_assets_storage_key_idx").on(table.storageKey),
+    index("trackable_assets_trackable_idx").on(table.trackableId),
+    index("trackable_assets_uploaded_by_idx").on(table.uploadedByUserId),
+    index("trackable_assets_created_at_idx").on(table.createdAt),
+  ]
+)
+
 export const trackableFormFields = pgTable(
   "trackable_form_fields",
   {
@@ -235,6 +270,27 @@ export const trackableFormSubmissions = pgTable(
   ]
 )
 
+export const trackableItemsRelations = relations(
+  trackableItems,
+  ({ many, one }) => ({
+    workspace: one(workspaces, {
+      fields: [trackableItems.workspaceId],
+      references: [workspaces.id],
+    }),
+    activeForm: one(trackableForms, {
+      fields: [trackableItems.activeFormId],
+      references: [trackableForms.id],
+      relationName: "trackableActiveForm",
+    }),
+    accessGrants: many(trackableAccessGrants),
+    shareLinks: many(trackableShareLinks),
+    forms: many(trackableForms),
+    assets: many(trackableAssets),
+    submissions: many(trackableFormSubmissions),
+    webhookConnections: many(trackableWebhookConnections),
+  })
+)
+
 export const trackableFormAnswers = pgTable(
   "trackable_form_answers",
   {
@@ -255,24 +311,6 @@ export const trackableFormAnswers = pgTable(
     ),
     index("trackable_form_answers_submission_idx").on(table.submissionId),
   ]
-)
-
-export const trackableItemsRelations = relations(
-  trackableItems,
-  ({ many, one }) => ({
-    workspace: one(workspaces, {
-      fields: [trackableItems.workspaceId],
-      references: [workspaces.id],
-    }),
-    activeForm: one(trackableForms, {
-      fields: [trackableItems.activeFormId],
-      references: [trackableForms.id],
-    }),
-    accessGrants: many(trackableAccessGrants),
-    shareLinks: many(trackableShareLinks),
-    forms: many(trackableForms),
-    submissions: many(trackableFormSubmissions),
-  })
 )
 
 export const trackableAccessGrantsRelations = relations(
@@ -319,6 +357,20 @@ export const trackableFormsRelations = relations(
     }),
     fields: many(trackableFormFields),
     submissions: many(trackableFormSubmissions),
+  })
+)
+
+export const trackableAssetsRelations = relations(
+  trackableAssets,
+  ({ one }) => ({
+    trackable: one(trackableItems, {
+      fields: [trackableAssets.trackableId],
+      references: [trackableItems.id],
+    }),
+    uploadedByUser: one(users, {
+      fields: [trackableAssets.uploadedByUserId],
+      references: [users.id],
+    }),
   })
 )
 

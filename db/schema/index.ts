@@ -7,6 +7,7 @@ export * from "@/db/schema/team"
 export * from "@/db/schema/trackables"
 export * from "@/db/schema/types"
 export * from "@/db/schema/users"
+export * from "@/db/schema/webhooks"
 
 import { InferInsertModel, InferSelectModel } from "drizzle-orm"
 
@@ -20,6 +21,7 @@ import {
 } from "@/db/schema/team"
 import {
   trackableAccessGrants,
+  trackableAssets,
   trackableFormAnswers,
   trackableFormFields,
   trackableFormSubmissions,
@@ -28,6 +30,12 @@ import {
   trackableShareLinks,
 } from "@/db/schema/trackables"
 import { users } from "@/db/schema/users"
+import {
+  trackableWebhookConnections,
+  webhookDeliveryAttempts,
+  workspaceWebhookTriggerRules,
+  workspaceWebhooks,
+} from "@/db/schema/webhooks"
 
 export type User = InferSelectModel<typeof users>
 export type NewUser = InferInsertModel<typeof users>
@@ -56,6 +64,9 @@ export type NewTrackableAccessGrant = InferInsertModel<
 export type TrackableShareLink = InferSelectModel<typeof trackableShareLinks>
 export type NewTrackableShareLink = InferInsertModel<typeof trackableShareLinks>
 
+export type TrackableAsset = InferSelectModel<typeof trackableAssets>
+export type NewTrackableAsset = InferInsertModel<typeof trackableAssets>
+
 export type TrackableForm = InferSelectModel<typeof trackableForms>
 export type NewTrackableForm = InferInsertModel<typeof trackableForms>
 
@@ -82,6 +93,30 @@ export type TrackableApiUsageEvent = InferSelectModel<
 >
 export type NewTrackableApiUsageEvent = InferInsertModel<
   typeof trackableApiUsageEvents
+>
+
+export type WorkspaceWebhook = InferSelectModel<typeof workspaceWebhooks>
+export type NewWorkspaceWebhook = InferInsertModel<typeof workspaceWebhooks>
+
+export type WorkspaceWebhookTriggerRule = InferSelectModel<
+  typeof workspaceWebhookTriggerRules
+>
+export type NewWorkspaceWebhookTriggerRule = InferInsertModel<
+  typeof workspaceWebhookTriggerRules
+>
+
+export type TrackableWebhookConnection = InferSelectModel<
+  typeof trackableWebhookConnections
+>
+export type NewTrackableWebhookConnection = InferInsertModel<
+  typeof trackableWebhookConnections
+>
+
+export type WebhookDeliveryAttempt = InferSelectModel<
+  typeof webhookDeliveryAttempts
+>
+export type NewWebhookDeliveryAttempt = InferInsertModel<
+  typeof webhookDeliveryAttempts
 >
 
 export type BatchJob = InferSelectModel<typeof batchJobs>

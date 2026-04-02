@@ -102,6 +102,7 @@ interface VirtualDataTableProps<TData, TValue> {
 
   // Column sizing
   enableColumnResizing?: boolean
+  manualSorting?: boolean
 }
 
 export function VirtualDataTable<TData, TValue>({
@@ -125,6 +126,7 @@ export function VirtualDataTable<TData, TValue>({
   columnActions,
   stickyHeader = true,
   enableColumnResizing = false,
+  manualSorting = false,
 }: VirtualDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnVisibility, setColumnVisibility] =
@@ -138,7 +140,8 @@ export function VirtualDataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
+    manualSorting,
     enableColumnResizing,
     columnResizeMode: enableColumnResizing ? "onChange" : undefined,
     defaultColumn: {
@@ -389,7 +392,9 @@ function VirtualizedTableContent<TData>({
       ? totalSize - (virtualItems[virtualItems.length - 1]?.end || 0)
       : 0
   const visibleColumns = table.getVisibleLeafColumns()
-  const resizedTableWidth = enableColumnResizing ? table.getTotalSize() : undefined
+  const resizedTableWidth = enableColumnResizing
+    ? table.getTotalSize()
+    : undefined
   const lastVisibleColumnId = visibleColumns[visibleColumns.length - 1]?.id
 
   return (
@@ -446,7 +451,8 @@ function VirtualizedTableContent<TData>({
                   key={header.id}
                   className={cn(
                     stickyHeader && "bg-muted",
-                    enableColumnResizing && "group/resize relative overflow-hidden",
+                    enableColumnResizing &&
+                      "group/resize relative overflow-hidden",
                     isFirstColumn && "pl-6",
                     isLastColumn && "pr-6",
                     columnClassNames.headerClassName
@@ -641,7 +647,7 @@ function ColumnResizeHandle<TData, TValue>({
     <div
       role="presentation"
       className={cn(
-        "absolute inset-y-0 right-0 z-20 flex w-3 cursor-col-resize touch-none select-none items-center justify-center",
+        "absolute inset-y-0 right-0 z-20 flex w-3 cursor-col-resize touch-none items-center justify-center select-none",
         header.column.getIsResizing() && "bg-border/10"
       )}
       onClick={(event) => event.stopPropagation()}

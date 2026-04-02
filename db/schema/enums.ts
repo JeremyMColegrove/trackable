@@ -27,6 +27,12 @@ export const trackableFormFieldKindEnum = pgEnum("trackable_form_field_kind", [
   "checkboxes",
   "notes",
   "short_text",
+  "youtube_video",
+])
+
+export const trackableAssetKindEnum = pgEnum("trackable_asset_kind", [
+  "image",
+  "file",
 ])
 
 export const trackableSubmissionSourceEnum = pgEnum(
@@ -35,6 +41,22 @@ export const trackableSubmissionSourceEnum = pgEnum(
 )
 
 export const apiKeyStatusEnum = pgEnum("api_key_status", ["active", "revoked"])
+
+export const webhookProviderEnum = pgEnum("webhook_provider", [
+  "generic",
+  "discord",
+])
+
+export const webhookTriggerTypeEnum = pgEnum("webhook_trigger_type", [
+  "log_match",
+  "log_count_match",
+  "survey_response_received",
+])
+
+export const webhookDeliveryStatusEnum = pgEnum("webhook_delivery_status", [
+  "success",
+  "failed",
+])
 
 export const workspaceRoleEnum = pgEnum("workspace_role", [
   "owner",

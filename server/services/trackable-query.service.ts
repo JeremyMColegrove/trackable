@@ -13,8 +13,12 @@ import {
 import { accessControlService } from "@/server/services/access-control.service"
 
 export class TrackableQueryService {
-  async getById(trackableId: string, userId: string) {
-    await accessControlService.assertTrackableAccess(trackableId, userId, "view")
+  private async resolveTrackableAccess(trackableId: string, userId: string) {
+    await accessControlService.assertTrackableAccess(
+      trackableId,
+      userId,
+      "view"
+    )
 
     let canManageTrackable = false
 
@@ -30,6 +34,95 @@ export class TrackableQueryService {
         throw error
       }
     }
+
+    return {
+      canManageTrackable,
+    }
+  }
+
+  private buildPermissions(
+    kind: "survey" | "api_ingestion",
+    canManageTrackable: boolean
+  ) {
+    return {
+      canManageTrackable,
+      canManageResponses: canManageTrackable && kind === "survey",
+      canManageForm: canManageTrackable && kind === "survey",
+      canManageSettings: canManageTrackable,
+      canManageApiKeys: canManageTrackable && kind === "api_ingestion",
+    }
+  }
+
+  private async getRequiredTrackable(trackableId: string) {
+    const trackable = await db.query.trackableItems.findFirst({
+      where: eq(trackableItems.id, trackableId),
+    })
+
+    if (!trackable) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Trackable not found.",
+      })
+    }
+
+    return trackable
+  }
+
+  async getShellById(trackableId: string, userId: string) {
+    const { canManageTrackable } = await this.resolveTrackableAccess(
+      trackableId,
+      userId
+    )
+    const trackable = await this.getRequiredTrackable(trackableId)
+    const permissions = this.buildPermissions(
+      trackable.kind,
+      canManageTrackable
+    )
+
+    const ownedApiKeys = permissions.canManageApiKeys
+      ? await db.query.apiKeys.findMany({
+          where: eq(apiKeys.projectId, trackable.id),
+          orderBy: [desc(apiKeys.createdAt)],
+        })
+      : []
+
+    return {
+      id: trackable.id,
+      kind: trackable.kind,
+      name: trackable.name,
+      description: trackable.description,
+      permissions,
+      settings: trackable.settings,
+      createdAt: trackable.createdAt.toISOString(),
+      submissionCount: trackable.submissionCount,
+      apiUsageCount: trackable.apiUsageCount,
+      lastSubmissionAt: trackable.lastSubmissionAt?.toISOString() ?? null,
+      lastApiUsageAt: trackable.lastApiUsageAt?.toISOString() ?? null,
+      activeForm: null,
+      recentSubmissions: [],
+      apiKeys: permissions.canManageApiKeys
+        ? ownedApiKeys.map((key) => ({
+            id: key.id,
+            name: key.name,
+            maskedKey: `${key.keyPrefix}...${key.lastFour}`,
+            status: key.status,
+            expiresAt: key.expiresAt?.toISOString() ?? null,
+            trackableUsageCount: 0,
+            lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+          }))
+        : [],
+      shareSettings: {
+        accessGrants: [],
+        shareLinks: [],
+      },
+    }
+  }
+
+  async getById(trackableId: string, userId: string) {
+    const { canManageTrackable } = await this.resolveTrackableAccess(
+      trackableId,
+      userId
+    )
 
     const trackable = await db.query.trackableItems.findFirst({
       where: eq(trackableItems.id, trackableId),
@@ -63,14 +156,10 @@ export class TrackableQueryService {
       })
     }
 
-    const permissions = {
-      canManageTrackable,
-      canManageResponses: canManageTrackable && trackable.kind === "survey",
-      canManageForm: canManageTrackable && trackable.kind === "survey",
-      canManageSettings: canManageTrackable,
-      canManageApiKeys:
-        canManageTrackable && trackable.kind === "api_ingestion",
-    }
+    const permissions = this.buildPermissions(
+      trackable.kind,
+      canManageTrackable
+    )
 
     const [submissions, ownedApiKeys, usageCountsByKey] = await Promise.all([
       db.query.trackableFormSubmissions.findMany({

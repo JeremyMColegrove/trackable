@@ -2,10 +2,8 @@
 /** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatusPageCard } from "@/components/status-page-card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
 import { T } from "gt-next"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 
@@ -29,18 +27,14 @@ export function SharedFormUnavailable({
   children?: React.ReactNode
 }) {
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-10 md:px-6">
-      <Card className="w-full rounded-3xl border-border/60">
-        <CardHeader className="space-y-3">
-          <Badge variant="outline" className="w-fit rounded-full px-3 py-1">
-            <T>Shared form</T>
-          </Badge>
-          <CardTitle className="text-2xl">{title}</CardTitle>
-          <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
-          {children ? <div className="pt-2">{children}</div> : null}
-        </CardHeader>
-      </Card>
-    </div>
+    <StatusPageCard
+      badge={<T>Shared form</T>}
+      title={title}
+      description={description}
+      align="start"
+    >
+      {children}
+    </StatusPageCard>
   )
 }
 
@@ -58,27 +52,13 @@ export function SharedFormStatusCard({
   const Icon = variant === "error" ? AlertCircle : CheckCircle2
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-10 md:px-6">
-      <Card className="w-full rounded-3xl border-border/60 bg-card/95 shadow-sm">
-        <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
-          <div
-            className={cn(
-              "rounded-full p-3",
-              variant === "error"
-                ? "bg-destructive/10 text-destructive"
-                : "bg-emerald-500/10 text-emerald-600"
-            )}
-          >
-            <Icon className="size-8" />
-          </div>
-          <Badge variant="outline" className="rounded-full px-3 py-1">
-            {badge}
-          </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-          <p className="max-w-lg text-sm text-muted-foreground">{description}</p>
-        </CardContent>
-      </Card>
-    </div>
+    <StatusPageCard
+      badge={badge}
+      title={title}
+      description={description}
+      icon={Icon}
+      variant={variant}
+    />
   )
 }
 

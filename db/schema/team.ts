@@ -10,6 +10,7 @@ import {
 
 import { apiKeys } from "@/db/schema/api-usage"
 import { workspaceSubscriptions } from "@/db/schema/subscriptions"
+import { workspaceWebhooks } from "@/db/schema/webhooks"
 import {
   createdByUserId,
   revokedAt,
@@ -120,6 +121,7 @@ export const workspacesRelations = relations(workspaces, ({ many, one }) => ({
   }),
   trackables: many(trackableItems),
   apiKeys: many(apiKeys),
+  webhooks: many(workspaceWebhooks),
 }))
 
 export const workspaceMembersRelations = relations(

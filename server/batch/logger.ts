@@ -1,16 +1,8 @@
 import "server-only"
 
-import { hostname } from "node:os"
+import { getLogger } from "@/lib/logger"
 
-import pino from "pino"
-
-const rootBatchLogger = pino({
-  name: "batch",
-  base: {
-    hostname: hostname(),
-    pid: process.pid,
-  },
-})
+const rootBatchLogger = getLogger("batch")
 
 export function getBatchLogger(bindings?: Record<string, string | number>) {
   return bindings ? rootBatchLogger.child(bindings) : rootBatchLogger

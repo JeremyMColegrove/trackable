@@ -1,538 +1,562 @@
-"use client";
+"use client"
 
 import {
-	VirtualDataTableColumnHeader,
-	type VirtualDataTableMenuItem,
-} from "@/components/ui/virtual-data-table-column-header";
+  VirtualDataTableColumnHeader,
+  type VirtualDataTableMenuItem,
+} from "@/components/ui/virtual-data-table-column-header"
 import {
-	createUsageEventComputedColumnId,
-	getUsageEventComputedColumnField,
-	isUsageEventBuiltInColumnId,
-	type UsageEventBuiltInColumnId,
-	type UsageEventVisibleColumnId,
-} from "@/lib/usage-event-search";
-import type { ColumnDef } from "@tanstack/react-table";
-import { T } from "gt-next";
-import { EyeOff, Rows3 } from "lucide-react";
+  createUsageEventComputedColumnId,
+  getUsageEventComputedColumnField,
+  isUsageEventBuiltInColumnId,
+  type UsageEventBuiltInColumnId,
+  type UsageEventSortDirection,
+  type UsageEventSortField,
+  type UsageEventVisibleColumnId,
+} from "@/lib/usage-event-search"
+import type { ColumnDef } from "@tanstack/react-table"
+import { T } from "gt-next"
+import { EyeOff, Rows3 } from "lucide-react"
 import {
-	formatCompactDateTime,
-	formatStatusLabel,
-	formatUsageFieldLabel,
-	formatUsageFieldValue,
-} from "./display-utils";
-import { LogLevelBadge } from "./log-level-badge";
+  formatCompactDateTime,
+  formatStatusLabel,
+  formatUsageFieldLabel,
+  formatUsageFieldValue,
+} from "./display-utils"
+import { LogLevelBadge } from "./log-level-badge"
 import type {
-	UsageEventColumn,
-	UsageEventRow,
-	UsageEventVisibleColumn,
-} from "./table-types";
+  UsageEventColumn,
+  UsageEventRow,
+  UsageEventVisibleColumn,
+} from "./table-types"
 
 type UsageEventColumnOptions = {
-	enableGroupByActions?: boolean;
-	availableAggregateFields?: string[];
-	onGroupByField?: (field: string) => void;
-	onRemoveColumn?: (columnId: UsageEventVisibleColumn["id"]) => void;
-	canRemoveColumn?: (column: UsageEventVisibleColumn) => boolean;
-	headerTrailingContent?: React.ReactNode;
-	translate?: (value: string) => string;
-};
+  enableGroupByActions?: boolean
+  availableAggregateFields?: string[]
+  currentSort?: UsageEventSortField
+  currentSortDirection?: UsageEventSortDirection
+  onGroupByField?: (field: string) => void
+  onSortChange?: (
+    field: UsageEventSortField,
+    dir: UsageEventSortDirection
+  ) => void
+  onRemoveColumn?: (columnId: UsageEventVisibleColumn["id"]) => void
+  canRemoveColumn?: (column: UsageEventVisibleColumn) => boolean
+  headerTrailingContent?: React.ReactNode
+  translate?: (value: string) => string
+}
 
-type UsageEventTableMode = "flat" | "grouped";
-const MIN_RESIZABLE_COLUMN_SIZE_PX = 16;
-const COLUMN_HEADER_BASE_MIN_SIZE_PX = 72;
-const COLUMN_HEADER_CHARACTER_WIDTH_PX = 7.5;
-const COLUMN_HEADER_CHROME_WIDTH_PX = 48;
+type UsageEventTableMode = "flat" | "grouped"
+const MIN_RESIZABLE_COLUMN_SIZE_PX = 16
+const COLUMN_HEADER_BASE_MIN_SIZE_PX = 72
+const COLUMN_HEADER_CHARACTER_WIDTH_PX = 7.5
+const COLUMN_HEADER_CHROME_WIDTH_PX = 48
 
 const columnAggregateFieldCandidates: Partial<
-	Record<UsageEventBuiltInColumnId, string[]>
+  Record<UsageEventBuiltInColumnId, string[]>
 > = {
-	event: ["event"],
-	level: ["level"],
-	message: ["message", "msg"],
-};
+  event: ["event"],
+  level: ["level"],
+  message: ["message", "msg"],
+}
 
 const usageEventColumnDefinitions: Record<
-	UsageEventBuiltInColumnId,
-	ColumnDef<UsageEventRow>
+  UsageEventBuiltInColumnId,
+  ColumnDef<UsageEventRow>
 > = {
-	lastOccurredAt: {
-		accessorKey: "lastOccurredAt",
-		size: 176,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="Timestamp" />
-		),
-		cell: ({ row }) => (
-			<span className="whitespace-nowrap text-muted-foreground">
-				{formatCompactDateTime(row.original.lastOccurredAt)}
-			</span>
-		),
-		meta: {
-			export: {
-				label: "Timestamp",
-				getValue: ({ row }) => formatCompactDateTime(row.lastOccurredAt),
-			},
-		},
-	},
-	event: {
-		id: "event",
-		accessorFn: (row) => row.event ?? "",
-		size: 104,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="Event" />
-		),
-		cell: ({ row }) => (
-			<div className="min-w-0">
-				<span
-					className="block truncate font-medium"
-					title={row.original.event ?? undefined}
-				>
-					{formatCompactEvent(row.original.event)}
-				</span>
-			</div>
-		),
-		sortingFn: (left, right) =>
-			(left.original.event ?? "").localeCompare(right.original.event ?? ""),
-		filterFn: (row, _columnId, filterValue) => {
-			return (row.original.event ?? "")
-				.toLowerCase()
-				.includes(String(filterValue).toLowerCase());
-		},
-		meta: {
-			export: {
-				label: "Event",
-				getValue: ({ row }) => formatCompactEvent(row.event),
-			},
-		},
-	},
-	level: {
-		id: "level",
-		accessorFn: (row) => row.level ?? "",
-		size: 88,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="Level" />
-		),
-		cell: ({ row }) => <LogLevelBadge level={row.original.level} />,
-		sortingFn: (left, right) =>
-			(left.original.level ?? "").localeCompare(right.original.level ?? ""),
-		meta: {
-			export: {
-				label: "Level",
-				getValue: ({ row }) => (row.level ? formatStatusLabel(row.level) : "—"),
-			},
-		},
-	},
-	message: {
-		id: "message",
-		accessorFn: (row) => row.message ?? "",
-		size: 320,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="Message" />
-		),
-		cell: ({ row }) => (
-			<div className="max-w-full min-w-0">
-				<span className="block truncate text-sm text-muted-foreground">
-					{row.original.message ?? "—"}
-				</span>
-			</div>
-		),
-		sortingFn: (left, right) =>
-			(left.original.message ?? "").localeCompare(right.original.message ?? ""),
-		meta: {
-			virtualTable: {
-				cellClassName: "w-full max-w-0",
-				headerClassName: "w-full max-w-0",
-			},
-			export: {
-				label: "Message",
-				getValue: ({ row }) => row.message ?? "—",
-			},
-		},
-	},
-	totalHits: {
-		accessorKey: "totalHits",
-		size: 72,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="Hits" />
-		),
-		cell: ({ row }) => (
-			<span className="font-medium">{row.original.totalHits}</span>
-		),
-		meta: {
-			export: {
-				label: "Hits",
-				getValue: ({ row }) => String(row.totalHits),
-			},
-		},
-	},
-	firstOccurredAt: {
-		accessorKey: "firstOccurredAt",
-		size: 176,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="First Seen" />
-		),
-		cell: ({ row }) => (
-			<span className="whitespace-nowrap text-muted-foreground">
-				{formatCompactDateTime(row.original.firstOccurredAt)}
-			</span>
-		),
-		meta: {
-			export: {
-				label: "First Seen",
-				getValue: ({ row }) => formatCompactDateTime(row.firstOccurredAt),
-			},
-		},
-	},
-	percentage: {
-		accessorKey: "percentage",
-		size: 64,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		header: ({ column }) => (
-			<VirtualDataTableColumnHeader column={column} title="%" />
-		),
-		cell: ({ row }) => (
-			<span className="font-medium">
-				{formatPercentage(row.original.percentage)}
-			</span>
-		),
-		sortingFn: (left, right) =>
-			left.original.percentage - right.original.percentage,
-		meta: {
-			export: {
-				label: "%",
-				getValue: ({ row }) => formatPercentage(row.percentage),
-			},
-		},
-	},
-};
+  lastOccurredAt: {
+    accessorKey: "lastOccurredAt",
+    enableSorting: true,
+    size: 176,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="Timestamp" />
+    ),
+    cell: ({ row }) => (
+      <span className="whitespace-nowrap text-muted-foreground">
+        {formatCompactDateTime(row.original.lastOccurredAt)}
+      </span>
+    ),
+    meta: {
+      export: {
+        label: "Timestamp",
+        getValue: ({ row }) => formatCompactDateTime(row.lastOccurredAt),
+      },
+    },
+  },
+  event: {
+    id: "event",
+    accessorFn: (row) => row.event ?? "",
+    enableSorting: true,
+    size: 104,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="Event" />
+    ),
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <span
+          className="block truncate font-medium"
+          title={row.original.event ?? undefined}
+        >
+          {formatCompactEvent(row.original.event)}
+        </span>
+      </div>
+    ),
+    meta: {
+      export: {
+        label: "Event",
+        getValue: ({ row }) => formatCompactEvent(row.event),
+      },
+    },
+  },
+  level: {
+    id: "level",
+    accessorFn: (row) => row.level ?? "",
+    enableSorting: false,
+    size: 88,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="Level" />
+    ),
+    cell: ({ row }) => <LogLevelBadge level={row.original.level} />,
+    meta: {
+      export: {
+        label: "Level",
+        getValue: ({ row }) => (row.level ? formatStatusLabel(row.level) : "—"),
+      },
+    },
+  },
+  message: {
+    id: "message",
+    accessorFn: (row) => row.message ?? "",
+    enableSorting: false,
+    size: 320,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="Message" />
+    ),
+    cell: ({ row }) => (
+      <div className="max-w-full min-w-0">
+        <span className="block truncate text-sm text-muted-foreground">
+          {row.original.message ?? "—"}
+        </span>
+      </div>
+    ),
+    meta: {
+      virtualTable: {
+        cellClassName: "w-full max-w-0",
+        headerClassName: "w-full max-w-0",
+      },
+      export: {
+        label: "Message",
+        getValue: ({ row }) => row.message ?? "—",
+      },
+    },
+  },
+  totalHits: {
+    accessorKey: "totalHits",
+    enableSorting: true,
+    size: 72,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="Hits" />
+    ),
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.totalHits}</span>
+    ),
+    meta: {
+      export: {
+        label: "Hits",
+        getValue: ({ row }) => String(row.totalHits),
+      },
+    },
+  },
+  firstOccurredAt: {
+    accessorKey: "firstOccurredAt",
+    enableSorting: false,
+    size: 176,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="First Seen" />
+    ),
+    cell: ({ row }) => (
+      <span className="whitespace-nowrap text-muted-foreground">
+        {formatCompactDateTime(row.original.firstOccurredAt)}
+      </span>
+    ),
+    meta: {
+      export: {
+        label: "First Seen",
+        getValue: ({ row }) => formatCompactDateTime(row.firstOccurredAt),
+      },
+    },
+  },
+  percentage: {
+    accessorKey: "percentage",
+    enableSorting: false,
+    size: 64,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    header: ({ column }) => (
+      <VirtualDataTableColumnHeader column={column} title="%" />
+    ),
+    cell: ({ row }) => (
+      <span className="font-medium">
+        {formatPercentage(row.original.percentage)}
+      </span>
+    ),
+    meta: {
+      export: {
+        label: "%",
+        getValue: ({ row }) => formatPercentage(row.percentage),
+      },
+    },
+  },
+}
 
 const usageEventColumnTitles: Record<UsageEventBuiltInColumnId, string> = {
-	lastOccurredAt: "Timestamp",
-	event: "Event",
-	level: "Level",
-	message: "Message",
-	totalHits: "Hits",
-	firstOccurredAt: "First Seen",
-	percentage: "%",
-};
+  lastOccurredAt: "Timestamp",
+  event: "Event",
+  level: "Level",
+  message: "Message",
+  totalHits: "Hits",
+  firstOccurredAt: "First Seen",
+  percentage: "%",
+}
 
 export function getUsageEventColumns(
-	columns: UsageEventVisibleColumn[],
-	options: UsageEventColumnOptions = {},
+  columns: UsageEventVisibleColumn[],
+  options: UsageEventColumnOptions = {}
 ): ColumnDef<UsageEventRow>[] {
-	const visibleColumns = columns.filter((column) => column.visible);
-	const availableAggregateFields = options.availableAggregateFields ?? [];
-	const gt = options.translate ?? ((value: string) => value);
-	const tableMode: UsageEventTableMode = columns.some(
-		(column) => column.id === "totalHits",
-	)
-		? "grouped"
-		: "flat";
+  const visibleColumns = columns.filter((column) => column.visible)
+  const availableAggregateFields = options.availableAggregateFields ?? []
+  const gt = options.translate ?? ((value: string) => value)
+  const tableMode: UsageEventTableMode = columns.some(
+    (column) => column.id === "totalHits"
+  )
+    ? "grouped"
+    : "flat"
 
-	return visibleColumns.map((column, index) => {
-		const definition = isComputedUsageEventColumn(column)
-			? buildComputedUsageEventColumnDefinition(column)
-			: usageEventColumnDefinitions[column.id];
-		const aggregateField = isComputedUsageEventColumn(column)
-			? column.field
-			: resolveAggregateField(column.id, availableAggregateFields);
-		const menuItems = buildColumnMenuItems(column, aggregateField, options);
-		const headerTrailingContent =
-			index === visibleColumns.length - 1
-				? options.headerTrailingContent
-				: null;
-		const titleMinSize = getColumnTitleMinSize(column.label);
-		const columnSizingOverrides = getColumnSizingOverrides(
-			tableMode,
-			visibleColumns.length,
-			titleMinSize,
-		);
+  return visibleColumns.map((column, index) => {
+    const definition = isComputedUsageEventColumn(column)
+      ? buildComputedUsageEventColumnDefinition(column)
+      : usageEventColumnDefinitions[column.id]
+    const aggregateField = isComputedUsageEventColumn(column)
+      ? column.field
+      : resolveAggregateField(column.id, availableAggregateFields)
+    const menuItems = buildColumnMenuItems(column, aggregateField, options)
+    const sortableField = resolveSortableField(column.id)
+    const sortDirection =
+      sortableField && sortableField === options.currentSort
+        ? (options.currentSortDirection ?? false)
+        : false
+    const headerTrailingContent =
+      index === visibleColumns.length - 1 ? options.headerTrailingContent : null
+    const titleMinSize = getColumnTitleMinSize(column.label)
+    const columnSizingOverrides = getColumnSizingOverrides(
+      tableMode,
+      visibleColumns.length,
+      titleMinSize
+    )
 
-		return {
-			...definition,
-			...columnSizingOverrides,
-			minSize: Math.max(definition.minSize ?? 0, titleMinSize),
-			meta: {
-				...definition.meta,
-				export: {
-					...definition.meta?.export,
-					label: column.label,
-				},
-				virtualTable: {
-					...definition.meta?.virtualTable,
-					...getColumnVirtualTableOverrides(column, tableMode),
-				},
-			},
-			header: ({ column: tableColumn }) => (
-				<VirtualDataTableColumnHeader
-					column={tableColumn}
-					title={
-						isComputedUsageEventColumn(column)
-							? column.label
-							: usageEventColumnTitles[column.id]
-					}
-					menuItems={menuItems}
-					trailingContent={headerTrailingContent}
-				/>
-			),
-		} as ColumnDef<UsageEventRow>;
-	});
+    return {
+      ...definition,
+      ...columnSizingOverrides,
+      minSize: Math.max(definition.minSize ?? 0, titleMinSize),
+      meta: {
+        ...definition.meta,
+        export: {
+          ...definition.meta?.export,
+          label: column.label,
+        },
+        virtualTable: {
+          ...definition.meta?.virtualTable,
+          ...getColumnVirtualTableOverrides(column, tableMode),
+        },
+      },
+      header: ({ column: tableColumn }) => (
+        <VirtualDataTableColumnHeader
+          column={tableColumn}
+          sortDirection={sortDirection}
+          title={
+            isComputedUsageEventColumn(column)
+              ? column.label
+              : usageEventColumnTitles[column.id]
+          }
+          menuItems={menuItems}
+          onSortChange={
+            sortableField && options.onSortChange
+              ? (dir) => options.onSortChange?.(sortableField, dir)
+              : undefined
+          }
+          trailingContent={headerTrailingContent}
+        />
+      ),
+    } as ColumnDef<UsageEventRow>
+  })
 }
 
 export function getDefaultUsageEventVisibleColumnIds(
-	columns: UsageEventColumn[],
+  columns: UsageEventColumn[]
 ) {
-	return columns
-		.filter((column) => column.visible)
-		.map((column) => column.id as UsageEventVisibleColumnId);
+  return columns
+    .filter((column) => column.visible)
+    .map((column) => column.id as UsageEventVisibleColumnId)
 }
 
 export function resolveUsageEventVisibleColumns(
-	columns: UsageEventColumn[],
-	visibleColumnIds: UsageEventVisibleColumnId[],
+  columns: UsageEventColumn[],
+  visibleColumnIds: UsageEventVisibleColumnId[]
 ) {
-	if (visibleColumnIds.length === 0) {
-		return columns.filter((column) => column.visible);
-	}
+  if (visibleColumnIds.length === 0) {
+    return columns.filter((column) => column.visible)
+  }
 
-	const builtInColumnMap = new Map(
-		columns.map((column) => [column.id, column] as const),
-	);
-	const currentModeBuiltInColumnIds = visibleColumnIds.filter(
-		(columnId): columnId is UsageEventBuiltInColumnId =>
-			isUsageEventBuiltInColumnId(columnId) && builtInColumnMap.has(columnId),
-	);
-	const shouldUseExplicitBuiltInColumns =
-		currentModeBuiltInColumnIds.length > 0;
-	const resolvedColumns: UsageEventVisibleColumn[] =
-		shouldUseExplicitBuiltInColumns
-			? currentModeBuiltInColumnIds
-					.map((columnId) => builtInColumnMap.get(columnId))
-					.filter((column): column is UsageEventColumn => Boolean(column))
-					.map((column) => ({
-						...column,
-						visible: true,
-					}))
-			: columns
-					.filter((column) => column.visible)
-					.map((column) => ({
-						...column,
-						visible: true,
-					}));
+  const builtInColumnMap = new Map(
+    columns.map((column) => [column.id, column] as const)
+  )
+  const currentModeBuiltInColumnIds = visibleColumnIds.filter(
+    (columnId): columnId is UsageEventBuiltInColumnId =>
+      isUsageEventBuiltInColumnId(columnId) && builtInColumnMap.has(columnId)
+  )
+  const shouldUseExplicitBuiltInColumns = currentModeBuiltInColumnIds.length > 0
+  const resolvedColumns: UsageEventVisibleColumn[] =
+    shouldUseExplicitBuiltInColumns
+      ? currentModeBuiltInColumnIds
+          .map((columnId) => builtInColumnMap.get(columnId))
+          .filter((column): column is UsageEventColumn => Boolean(column))
+          .map((column) => ({
+            ...column,
+            visible: true,
+          }))
+      : columns
+          .filter((column) => column.visible)
+          .map((column) => ({
+            ...column,
+            visible: true,
+          }))
 
-	for (const columnId of visibleColumnIds) {
-		if (isUsageEventBuiltInColumnId(columnId)) {
-			continue;
-		}
+  for (const columnId of visibleColumnIds) {
+    if (isUsageEventBuiltInColumnId(columnId)) {
+      continue
+    }
 
-		const computedField = getUsageEventComputedColumnField(columnId);
+    const computedField = getUsageEventComputedColumnField(columnId)
 
-		if (!computedField) {
-			continue;
-		}
+    if (!computedField) {
+      continue
+    }
 
-		resolvedColumns.push({
-			id: createUsageEventComputedColumnId(computedField),
-			field: computedField,
-			kind: "computed",
-			label: formatUsageFieldLabel(computedField),
-			visible: true,
-		});
-	}
+    resolvedColumns.push({
+      id: createUsageEventComputedColumnId(computedField),
+      field: computedField,
+      kind: "computed",
+      label: formatUsageFieldLabel(computedField),
+      visible: true,
+    })
+  }
 
-	return resolvedColumns;
+  return resolvedColumns
 }
 
 function resolveAggregateField(
-	columnId: UsageEventBuiltInColumnId,
-	availableAggregateFields: string[],
+  columnId: UsageEventBuiltInColumnId,
+  availableAggregateFields: string[]
 ) {
-	const candidates = columnAggregateFieldCandidates[columnId];
+  const candidates = columnAggregateFieldCandidates[columnId]
 
-	if (!candidates) {
-		return null;
-	}
+  if (!candidates) {
+    return null
+  }
 
-	return (
-		candidates.find((candidate) =>
-			availableAggregateFields.includes(candidate),
-		) ?? null
-	);
+  return (
+    candidates.find((candidate) =>
+      availableAggregateFields.includes(candidate)
+    ) ?? null
+  )
+}
+
+function resolveSortableField(columnId: UsageEventVisibleColumn["id"]) {
+  switch (columnId) {
+    case "event":
+      return "event"
+    case "lastOccurredAt":
+      return "lastOccurredAt"
+    case "totalHits":
+      return "totalHits"
+    default:
+      return null
+  }
 }
 
 function formatPercentage(value: number) {
-	const roundedValue = Number.isInteger(value)
-		? String(value)
-		: value.toFixed(1);
+  const roundedValue = Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(1)
 
-	return `${roundedValue}%`;
+  return `${roundedValue}%`
 }
 
 function formatCompactEvent(value: string | null) {
-	const trimmedValue = value?.trim();
+  const trimmedValue = value?.trim()
 
-	if (!trimmedValue) {
-		return "—";
-	}
+  if (!trimmedValue) {
+    return "—"
+  }
 
-	return trimmedValue.split(/\s+/, 1)[0] ?? trimmedValue;
+  return trimmedValue.split(/\s+/, 1)[0] ?? trimmedValue
 }
 
 function getColumnSizingOverrides(
-	tableMode: UsageEventTableMode,
-	visibleColumnCount: number,
-	titleMinSize: number,
+  tableMode: UsageEventTableMode,
+  visibleColumnCount: number,
+  titleMinSize: number
 ) {
-	if (tableMode !== "grouped") {
-		return {};
-	}
+  if (tableMode !== "grouped") {
+    return {}
+  }
 
-	return {
-		size: Math.max(getGroupedColumnSize(visibleColumnCount), titleMinSize),
-		minSize: titleMinSize,
-	};
+  return {
+    size: Math.max(getGroupedColumnSize(visibleColumnCount), titleMinSize),
+    minSize: titleMinSize,
+  }
 }
 
 function getColumnVirtualTableOverrides(
-	column: UsageEventVisibleColumn,
-	tableMode: UsageEventTableMode,
+  column: UsageEventVisibleColumn,
+  tableMode: UsageEventTableMode
 ) {
-	if (tableMode === "flat") {
-		return {};
-	}
+  if (tableMode === "flat") {
+    return {}
+  }
 
-	switch (column.id) {
-		case "event":
-			return {
-				cellClassName: "w-full max-w-0",
-				headerClassName: "w-full max-w-0",
-			};
-		default:
-			return {};
-	}
+  switch (column.id) {
+    case "event":
+      return {
+        cellClassName: "w-full max-w-0",
+        headerClassName: "w-full max-w-0",
+      }
+    default:
+      return {}
+  }
 }
 
 function buildColumnMenuItems(
-	column: UsageEventVisibleColumn,
-	aggregateField: string | null,
-	options: UsageEventColumnOptions,
+  column: UsageEventVisibleColumn,
+  aggregateField: string | null,
+  options: UsageEventColumnOptions
 ) {
-	const menuItems: VirtualDataTableMenuItem[] = [];
+  const menuItems: VirtualDataTableMenuItem[] = []
 
-	if (
-		options.enableGroupByActions &&
-		aggregateField &&
-		options.onGroupByField
-	) {
-		menuItems.push({
-			id: `group-by-${aggregateField}`,
-			label: `Group by ${column.label}`,
-			icon: <Rows3 className="size-4" />,
-			onClick: () => options.onGroupByField?.(aggregateField),
-		});
-	}
+  if (
+    options.enableGroupByActions &&
+    aggregateField &&
+    options.onGroupByField
+  ) {
+    menuItems.push({
+      id: `group-by-${aggregateField}`,
+      label: `Group by ${column.label}`,
+      icon: <Rows3 className="size-4" />,
+      onClick: () => options.onGroupByField?.(aggregateField),
+    })
+  }
 
-	if (options.onRemoveColumn && options.canRemoveColumn?.(column)) {
-		menuItems.push({
-			id: `remove-column-${column.id}`,
-			label: <T>"Hide column"</T>,
-			icon: <EyeOff className="size-4" />,
-			onClick: () => options.onRemoveColumn?.(column.id),
-			separator: menuItems.length > 0,
-		});
-	}
+  if (options.onRemoveColumn && options.canRemoveColumn?.(column)) {
+    menuItems.push({
+      id: `remove-column-${column.id}`,
+      label: <T>"Hide column"</T>,
+      icon: <EyeOff className="size-4" />,
+      onClick: () => options.onRemoveColumn?.(column.id),
+      separator: menuItems.length > 0,
+    })
+  }
 
-	return menuItems.length > 0 ? menuItems : undefined;
+  return menuItems.length > 0 ? menuItems : undefined
 }
 
 function buildComputedUsageEventColumnDefinition(
-	column: Extract<UsageEventVisibleColumn, { kind: "computed" }>,
+  column: Extract<UsageEventVisibleColumn, { kind: "computed" }>
 ): ColumnDef<UsageEventRow> {
-	return {
-		id: column.id,
-		accessorFn: (row) => getUsageEventComputedFieldSummary(row, column.field),
-		size: 192,
-		minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
-		cell: ({ row }) => (
-			<div className="max-w-full min-w-0">
-				<span
-					className="block truncate text-sm text-muted-foreground"
-					title={getUsageEventComputedFieldSummary(row.original, column.field)}
-				>
-					{getUsageEventComputedFieldSummary(row.original, column.field)}
-				</span>
-			</div>
-		),
-		meta: {
-			virtualTable: {
-				cellClassName: "w-full max-w-0",
-				headerClassName: "w-full max-w-0",
-			},
-			export: {
-				label: column.label,
-				getValue: ({ row }) =>
-					getUsageEventComputedFieldSummary(row, column.field),
-			},
-		},
-	};
+  return {
+    id: column.id,
+    accessorFn: (row) => getUsageEventComputedFieldSummary(row, column.field),
+    enableSorting: false,
+    size: 192,
+    minSize: MIN_RESIZABLE_COLUMN_SIZE_PX,
+    cell: ({ row }) => (
+      <div className="max-w-full min-w-0">
+        <span
+          className="block truncate text-sm text-muted-foreground"
+          title={getUsageEventComputedFieldSummary(row.original, column.field)}
+        >
+          {getUsageEventComputedFieldSummary(row.original, column.field)}
+        </span>
+      </div>
+    ),
+    meta: {
+      virtualTable: {
+        cellClassName: "w-full max-w-0",
+        headerClassName: "w-full max-w-0",
+      },
+      export: {
+        label: column.label,
+        getValue: ({ row }) =>
+          getUsageEventComputedFieldSummary(row, column.field),
+      },
+    },
+  }
 }
 
 function isComputedUsageEventColumn(
-	column: UsageEventVisibleColumn,
+  column: UsageEventVisibleColumn
 ): column is Extract<UsageEventVisibleColumn, { kind: "computed" }> {
-	return "kind" in column && column.kind === "computed";
+  return "kind" in column && column.kind === "computed"
 }
 
 function getUsageEventComputedFieldSummary(row: UsageEventRow, field: string) {
-	if (row.aggregation === "payload_field" && row.groupField === field) {
-		return row.event?.trim() || "—";
-	}
+  if (row.aggregation === "payload_field" && row.groupField === field) {
+    return row.event?.trim() || "—"
+  }
 
-	const uniqueValues = new Set<string>();
-	const orderedValues: string[] = [];
+  const uniqueValues = new Set<string>()
+  const orderedValues: string[] = []
 
-	for (const hit of row.hits) {
-		const formattedValue = formatUsageFieldValue(hit.payload[field]).trim();
+  for (const hit of row.hits) {
+    const formattedValue = formatUsageFieldValue(hit.payload[field]).trim()
 
-		if (!formattedValue || uniqueValues.has(formattedValue)) {
-			continue;
-		}
+    if (!formattedValue || uniqueValues.has(formattedValue)) {
+      continue
+    }
 
-		uniqueValues.add(formattedValue);
-		orderedValues.push(formattedValue);
-	}
+    uniqueValues.add(formattedValue)
+    orderedValues.push(formattedValue)
+  }
 
-	if (orderedValues.length === 0) {
-		return "—";
-	}
+  if (orderedValues.length === 0) {
+    return "—"
+  }
 
-	if (orderedValues.length <= 3) {
-		return orderedValues.join(", ");
-	}
+  if (orderedValues.length <= 3) {
+    return orderedValues.join(", ")
+  }
 
-	return `${orderedValues.slice(0, 3).join(", ")} +${orderedValues.length - 3} more`;
+  return `${orderedValues.slice(0, 3).join(", ")} +${orderedValues.length - 3} more`
 }
 
 function getGroupedColumnSize(visibleColumnCount: number) {
-	const safeVisibleColumnCount = Math.max(visibleColumnCount, 1);
+  const safeVisibleColumnCount = Math.max(visibleColumnCount, 1)
 
-	return Math.max(
-		Math.round(960 / safeVisibleColumnCount),
-		MIN_RESIZABLE_COLUMN_SIZE_PX,
-	);
+  return Math.max(
+    Math.round(960 / safeVisibleColumnCount),
+    MIN_RESIZABLE_COLUMN_SIZE_PX
+  )
 }
 
 function getColumnTitleMinSize(label: string) {
-	return Math.max(
-		COLUMN_HEADER_BASE_MIN_SIZE_PX,
-		Math.ceil(
-			label.length * COLUMN_HEADER_CHARACTER_WIDTH_PX +
-				COLUMN_HEADER_CHROME_WIDTH_PX,
-		),
-	);
+  return Math.max(
+    COLUMN_HEADER_BASE_MIN_SIZE_PX,
+    Math.ceil(
+      label.length * COLUMN_HEADER_CHARACTER_WIDTH_PX +
+        COLUMN_HEADER_CHROME_WIDTH_PX
+    )
+  )
 }

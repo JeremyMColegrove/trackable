@@ -18,18 +18,25 @@ export class CounterCacheRepository extends BaseCacheRepository<number> {
    * If the counter doesn't exist, it creates it with the given TTL.
    * For example, useful for rate limiting within a second or minute window.
    */
-  async incrementWindow(id: string, amount: number = 1, ttlSeconds: number = this.defaultTtlSeconds): Promise<number> {
+  async incrementWindow(
+    id: string,
+    amount: number = 1,
+    ttlSeconds: number = this.defaultTtlSeconds
+  ): Promise<number> {
     const key = this.getKey(id)
-    
+
     // We use a multi-block to ensure TTL is set on the first increment if not present
     const countResult = await redis.incrby(key, amount)
-    
+
     // If it's a new key, the count will be `amount`. Set TTL.
     if (countResult === amount) {
       await redis.expire(key, ttlSeconds)
     }
 
-    logger.debug({ cacheKey: key, countResult, amount }, "Counter INCR completed")
+    logger.debug(
+      { ...this.getLogContext(id), countResult, amount },
+      "Counter INCR completed"
+    )
 
     return countResult
   }
@@ -40,7 +47,7 @@ export class CounterCacheRepository extends BaseCacheRepository<number> {
   async getCount(id: string): Promise<number> {
     const key = this.getKey(id)
     const data = await redis.get(key)
-    const count = data ? parseInt(data, 10) : 0    
+    const count = data ? parseInt(data, 10) : 0
     return count
   }
 }

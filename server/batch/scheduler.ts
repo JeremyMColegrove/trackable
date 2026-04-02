@@ -34,6 +34,8 @@ export class BatchScheduler {
           jobKey: job.key,
           schedule: job.schedule,
           timeZone: DEFAULT_TIME_ZONE,
+          concurrency: job.concurrency,
+          timeoutMs: job.timeoutMs,
         },
         "Registered cron batch job."
       )

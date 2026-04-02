@@ -148,7 +148,7 @@ export function buildUsageEventHit(event: UsageEventRecord): UsageEventHit {
 
 export function buildFlatUsageEventRow(
   event: UsageEventRecord,
-  totalMatchedEvents: number
+  _totalMatchedEvents: number
 ) {
   const occurredAt = event.occurredAt.toISOString()
 
@@ -164,7 +164,7 @@ export function buildFlatUsageEventRow(
     totalHits: 1,
     lastOccurredAt: occurredAt,
     firstOccurredAt: occurredAt,
-    percentage: totalMatchedEvents > 0 ? 100 : 0,
+    percentage: 100,
     apiKey: event.apiKey,
     apiKeyCount: 1,
     apiKeys: [event.apiKey],

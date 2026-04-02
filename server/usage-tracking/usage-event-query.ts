@@ -5,16 +5,19 @@ import { count, eq, max } from "drizzle-orm"
 import { db } from "@/db"
 import { trackableApiUsageEvents } from "@/db/schema"
 import type {
+  UsageEventContextBounds,
+  UsageEventContextInput,
   UsageEventSearchInput,
   UsageEventSourceSnapshot,
 } from "@/lib/usage-event-search"
 import { UsageEventQueryPipeline } from "@/server/usage-tracking/usage-event-query-pipeline"
 import { UsageEventSqlRepository } from "@/server/usage-tracking/usage-event-sql-repository"
 
+const usageEventSqlRepository = new UsageEventSqlRepository(db)
 const usageEventQueryPipeline = new UsageEventQueryPipeline(
   undefined,
   undefined,
-  new UsageEventSqlRepository()
+  usageEventSqlRepository
 )
 
 export async function getTrackableUsageSourceSnapshot(
@@ -39,4 +42,23 @@ export async function getTrackableUsageEvents(
   sourceSnapshot: UsageEventSourceSnapshot
 ) {
   return usageEventQueryPipeline.execute(input, sourceSnapshot)
+}
+
+export async function getTrackableUsageEventContextBounds(
+  input: UsageEventContextInput
+): Promise<UsageEventContextBounds> {
+  const rows = await usageEventSqlRepository.fetchSurroundingFlatRows({
+    afterCount: input.after,
+    beforeCount: input.before,
+    eventId: input.eventId,
+    trackableId: input.trackableId,
+  })
+
+  const firstRow = rows.at(-1)
+  const lastRow = rows[0]
+
+  return {
+    from: firstRow?.occurredAt.toISOString() ?? null,
+    to: lastRow?.occurredAt.toISOString() ?? null,
+  }
 }

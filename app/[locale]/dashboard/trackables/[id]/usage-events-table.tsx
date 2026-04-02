@@ -14,11 +14,13 @@ import { VirtualDataTable } from "@/components/ui/virtual-data-table";
 import {
 	createUsageEventComputedColumnId,
 	isUsageEventBuiltInColumnId,
+	type UsageEventSortDirection,
+	type UsageEventSortField,
 	type UsageEventUrlState,
 	type UsageEventVisibleColumnId,
 } from "@/lib/usage-event-search";
 import { useGT, useLocale } from "gt-next";
-import { KeyRoundIcon, Plus } from "lucide-react";
+import { ChevronDown, KeyRoundIcon, LoaderCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { UsageEventTableData } from "./table-types";
 import { useTrackableDetails } from "./trackable-shell";
@@ -74,9 +76,15 @@ export function UsageEventsTable({
 	visibleColumnIds,
 	onVisibleColumnIdsChange,
 	onFilterToGroup,
+	onOpenNearbyLogs,
 	onGroupByField,
-	onApplyFilters,
+	onSortChange,
 	exportFileName,
+	currentSort,
+	currentSortDirection,
+	endMessage,
+	isFetchingNextPage = false,
+	onLoadMore,
 	title = "",
 	description = "",
 	headerButton,
@@ -86,9 +94,18 @@ export function UsageEventsTable({
 	visibleColumnIds: UsageEventVisibleColumnId[];
 	onVisibleColumnIdsChange: (columnIds: UsageEventVisibleColumnId[]) => void;
 	onFilterToGroup: (patch: Partial<UsageEventUrlState>) => void;
+	onOpenNearbyLogs: (eventId: string) => void | Promise<void>;
 	onGroupByField: (field: string) => void;
-	onApplyFilters: (patch: Partial<UsageEventUrlState>) => void;
+	onSortChange: (
+		sort: UsageEventSortField,
+		dir: UsageEventSortDirection,
+	) => void;
 	exportFileName: string;
+	currentSort: UsageEventSortField;
+	currentSortDirection: UsageEventSortDirection;
+	endMessage?: React.ReactNode;
+	isFetchingNextPage?: boolean;
+	onLoadMore: () => void;
 	title?: React.ReactNode;
 	description?: string;
 	headerButton?: React.ReactNode;
@@ -165,8 +182,11 @@ export function UsageEventsTable({
 			getUsageEventColumns(visibleColumns, {
 				enableGroupByActions: !isGroupedTable,
 				availableAggregateFields: data.availableAggregateFields,
+				currentSort,
+				currentSortDirection,
 				translate: gt,
 				onGroupByField,
+				onSortChange,
 				onRemoveColumn: (columnId) => {
 					if (currentVisibleColumnIds.length <= 1) {
 						return;
@@ -195,6 +215,8 @@ export function UsageEventsTable({
 			}),
 		[
 			currentVisibleColumnIds,
+			currentSort,
+			currentSortDirection,
 			data.availableAggregateFields,
 			gt,
 			hiddenBuiltInColumns,
@@ -202,6 +224,7 @@ export function UsageEventsTable({
 			isGroupedTable,
 			onVisibleColumnIdsChange,
 			onGroupByField,
+			onSortChange,
 			visibleColumns,
 		],
 	);
@@ -227,6 +250,27 @@ export function UsageEventsTable({
 			actionLabel={canManageConnection ? gt("Open Connection") : undefined}
 		/>
 	);
+	const footerContent =
+		data.rows.length > 0 ? (
+			data.hasMore ? (
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={onLoadMore}
+					disabled={isFetchingNextPage}
+					className="w-full"
+				>
+					{isFetchingNextPage ? (
+						<LoaderCircle className="size-4 animate-spin" />
+					) : (
+						<ChevronDown />
+					)}
+					{isFetchingNextPage ? gt("Loading...") : gt("Load more")}
+				</Button>
+			) : (
+				(endMessage ?? gt("All loaded"))
+			)
+		) : undefined;
 
 	return (
 		<>
@@ -239,12 +283,13 @@ export function UsageEventsTable({
 				data={data.rows}
 				title={title}
 				description={subtitle}
-				footer={data.rows.length > 0 ? gt("End of logs") : undefined}
+				footer={footerContent}
 				onRowClick={setSelectedUsageEvent}
 				emptyMessage={emptyState}
 				scrollMode="window"
 				estimateRowHeight={44}
 				enableColumnResizing
+				manualSorting
 				classNames={{
 					cell: "py-1",
 				}}
@@ -253,7 +298,7 @@ export function UsageEventsTable({
 				<UsageDetailsDialog
 					usageEvent={selectedUsageEvent}
 					onFilterToGroup={onFilterToGroup}
-					onApplyFilters={onApplyFilters}
+					onOpenNearbyLogs={onOpenNearbyLogs}
 					open
 					onOpenChange={(open) => {
 						if (!open) {

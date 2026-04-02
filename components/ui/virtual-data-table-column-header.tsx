@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 import * as React from "react"
 import { T } from "gt-next"
+import type { UsageEventSortDirection } from "@/lib/usage-event-search"
 
 export type VirtualDataTableMenuItem = {
   id: string
@@ -28,6 +29,8 @@ interface VirtualDataTableColumnHeaderProps<TData, TValue> {
   title: string
   className?: string
   menuItems?: VirtualDataTableMenuItem[]
+  onSortChange?: (dir: UsageEventSortDirection) => void
+  sortDirection?: UsageEventSortDirection | false
   trailingContent?: React.ReactNode
 }
 
@@ -36,11 +39,14 @@ export function VirtualDataTableColumnHeader<TData, TValue>({
   title,
   className,
   menuItems,
+  onSortChange,
+  sortDirection = false,
   trailingContent,
 }: VirtualDataTableColumnHeaderProps<TData, TValue>) {
-  const canSort = column.getCanSort()
+  const canSort = Boolean(onSortChange) || column.getCanSort()
   const hasMenuItems = menuItems && menuItems.length > 0
-  const isSorted = column.getIsSorted() !== false
+  const resolvedSortDirection = sortDirection || column.getIsSorted()
+  const isSorted = resolvedSortDirection !== false
 
   if (!canSort && !hasMenuItems) {
     return (
@@ -64,9 +70,9 @@ export function VirtualDataTableColumnHeader<TData, TValue>({
             )}
           >
             <span className="truncate">{title}</span>
-            {column.getIsSorted() === "desc" ? (
+            {resolvedSortDirection === "desc" ? (
               <ArrowDown className="size-4" />
-            ) : column.getIsSorted() === "asc" ? (
+            ) : resolvedSortDirection === "asc" ? (
               <ArrowUp className="size-4" />
             ) : (
               <ChevronsUpDown className="size-4" />
@@ -76,13 +82,29 @@ export function VirtualDataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           {canSort && (
             <>
-              <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  onSortChange
+                    ? onSortChange("asc")
+                    : column.toggleSorting(false)
+                }
+              >
                 <ArrowUp className="mr-2 size-4 text-muted-foreground/70" />
-                <span><T>Sort Ascending</T></span>
+                <span>
+                  <T>Sort Ascending</T>
+                </span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  onSortChange
+                    ? onSortChange("desc")
+                    : column.toggleSorting(true)
+                }
+              >
                 <ArrowDown className="mr-2 size-4 text-muted-foreground/70" />
-                <span><T>Sort Descending</T></span>
+                <span>
+                  <T>Sort Descending</T>
+                </span>
               </DropdownMenuItem>
             </>
           )}

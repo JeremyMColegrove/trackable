@@ -2,7 +2,7 @@
 
 import { useTRPC } from "@/trpc/client"
 import { useQueryClient } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { LoaderCircle, RefreshCw } from "lucide-react"
 import { buildTableExportFileName } from "@/lib/table-export"
@@ -15,14 +15,19 @@ import {
 import { UsageEventsPage } from "./usage-events-page"
 import { T, useGT } from "gt-next"
 import { SurveyShareDialog } from "./survey-share-dialog"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 export function TrackableOverviewSection() {
   const gt = useGT()
   const trackable = useTrackableDetails()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
-  const [draftQuery, setDraftQuery] = useState("")
-  const [appliedQuery, setAppliedQuery] = useState("")
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const urlQuery = searchParams.get("q") ?? ""
+  const [draftQuery, setDraftQuery] = useState(urlQuery)
+  const [appliedQuery, setAppliedQuery] = useState(urlQuery)
   const [isRefreshingTable, setIsRefreshingTable] = useState(false)
   const hasPendingTableChange = draftQuery.trim() !== appliedQuery.trim()
   const filteredSubmissions = useMemo(() => {
@@ -32,12 +37,24 @@ export function TrackableOverviewSection() {
       return trackable.recentSubmissions
     }
 
-    return trackable.recentSubmissions.filter((submission) =>
-      JSON.stringify(submission.submissionSnapshot)
+    return trackable.recentSubmissions.filter((submission) => {
+      const searchableText = [
+        submission.id,
+        submission.submitterLabel,
+        submission.source,
+        JSON.stringify(submission.submissionSnapshot),
+      ]
+        .join(" ")
         .toLowerCase()
-        .includes(normalizedQuery)
-    )
+
+      return searchableText.includes(normalizedQuery)
+    })
   }, [appliedQuery, trackable.recentSubmissions])
+
+  useEffect(() => {
+    setDraftQuery(urlQuery)
+    setAppliedQuery(urlQuery)
+  }, [urlQuery])
 
   if (trackable.kind === "survey") {
     const trackableQueryKey = trpc.trackables.getById.queryKey({
@@ -57,7 +74,21 @@ export function TrackableOverviewSection() {
     }
 
     function handleUpdateTable() {
-      setAppliedQuery(draftQuery)
+      const nextQuery = draftQuery.trim()
+      const nextSearchParams = new URLSearchParams(searchParams.toString())
+
+      if (nextQuery.length === 0) {
+        nextSearchParams.delete("q")
+      } else {
+        nextSearchParams.set("q", nextQuery)
+      }
+
+      const nextHref = nextSearchParams.toString()
+        ? `${pathname}?${nextSearchParams.toString()}`
+        : pathname
+
+      setAppliedQuery(nextQuery)
+      router.replace(nextHref, { scroll: false })
     }
 
     return (
@@ -68,11 +99,7 @@ export function TrackableOverviewSection() {
         )}
         headerActions={
           trackable.permissions.canManageResponses ? (
-            <SurveyShareDialog
-              trackableId={trackable.id}
-              activeForm={trackable.activeForm}
-              shareLinks={trackable.shareSettings.shareLinks}
-            />
+            <SurveyShareDialog />
           ) : null
         }
         search={

@@ -1,4 +1,5 @@
 export type TrackableKind = "survey" | "api_ingestion"
+export type TrackableAssetKind = "image" | "file"
 
 export interface RatingFieldConfig {
   kind: "rating"
@@ -36,11 +37,17 @@ export interface ShortTextFieldConfig {
   maxLength?: number
 }
 
+export interface YouTubeVideoFieldConfig {
+  kind: "youtube_video"
+  url: string
+}
+
 export type FormFieldConfig =
   | RatingFieldConfig
   | CheckboxesFieldConfig
   | NotesFieldConfig
   | ShortTextFieldConfig
+  | YouTubeVideoFieldConfig
 
 export type FormAnswerValue =
   | { kind: "rating"; value: number }
@@ -99,6 +106,80 @@ export interface SubmissionMetadata {
   deviceId?: string
 }
 
-export type UsageEventMetadata = string
+export interface TrackableAssetRecord {
+  id: string
+  trackableId: string
+  publicToken: string
+  kind: TrackableAssetKind
+  originalFileName: string
+  mimeType: string
+  extension: string
+  originalBytes: number
+  storedBytes: number
+  storageKey: string
+  imageWidth: number | null
+  imageHeight: number | null
+  imageFormat: string | null
+  createdAt: string
+  updatedAt: string
+  url: string
+}
+
+export type UsageEventMetadata = Record<string, unknown>
 
 export type UsageEventPayload = Record<string, unknown>
+
+export type WebhookProvider = "discord" | "generic"
+export type WebhookTriggerType =
+  | "log_count_match"
+  | "log_match"
+  | "survey_response_received"
+
+export interface GenericWebhookConfig {
+  provider: "generic"
+  url: string
+  secret?: string | null
+  headers?: Record<string, string>
+}
+
+export interface DiscordWebhookConfig {
+  provider: "discord"
+  url: string
+  username?: string | null
+  avatarUrl?: string | null
+}
+
+export type WebhookProviderConfig = DiscordWebhookConfig | GenericWebhookConfig
+
+export interface LogMatchTriggerConfig {
+  type: "log_match"
+  liqeQuery: string
+}
+
+export interface LogCountMatchTriggerConfig {
+  type: "log_count_match"
+  liqeQuery: string
+  windowMinutes: number
+  matchCount: number
+}
+
+export interface SurveyResponseReceivedTriggerConfig {
+  type: "survey_response_received"
+}
+
+export type WebhookTriggerConfig =
+  | LogCountMatchTriggerConfig
+  | LogMatchTriggerConfig
+  | SurveyResponseReceivedTriggerConfig
+
+export interface WebhookDeliveryRequestPayload {
+  url: string
+  method: "POST"
+  headers: Record<string, string>
+  body: string
+}
+
+export interface WebhookDeliveryResponsePayload {
+  status: number
+  body: string | null
+}

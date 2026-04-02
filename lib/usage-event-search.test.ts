@@ -35,14 +35,12 @@ test("drill-down URL params keep the concrete time range used for the grouped ta
       q: "event:signup",
       aggregate: "plan",
       range: "last_24_hours",
-      limit: "50",
     }
   )
 
   const nextParams = buildUsageEventUrlSearchParams({
     q: "plan:=pro",
     aggregate: undefined,
-    limit: "50",
     ...buildAppliedUsageEventTimeRangeUrlState(appliedSearchInput),
   })
 
@@ -50,6 +48,36 @@ test("drill-down URL params keep the concrete time range used for the grouped ta
   assert.equal(nextParams.get("range"), "custom")
   assert.equal(nextParams.get("from"), appliedSearchInput.from)
   assert.equal(nextParams.get("to"), appliedSearchInput.to)
+})
+
+test("buildUsageEventSearchInput keeps grouped sorts and resets unsupported flat sorts", () => {
+  const groupedSearchInput = buildUsageEventSearchInput(
+    "123e4567-e89b-42d3-a456-426614174000",
+    {
+      q: "",
+      aggregate: "route",
+      range: "all_time",
+      sort: "totalHits",
+      dir: "asc",
+    }
+  )
+  const flatSearchInput = buildUsageEventSearchInput(
+    "123e4567-e89b-42d3-a456-426614174000",
+    {
+      q: "",
+      aggregate: undefined,
+      range: "all_time",
+      sort: "totalHits",
+      dir: "asc",
+    }
+  )
+
+  assert.equal(groupedSearchInput.sort, "totalHits")
+  assert.equal(groupedSearchInput.dir, "asc")
+  assert.equal(groupedSearchInput.pageSize, undefined)
+  assert.equal(flatSearchInput.sort, "lastOccurredAt")
+  assert.equal(flatSearchInput.dir, "asc")
+  assert.equal(flatSearchInput.cursor, null)
 })
 
 test("usage event visible columns round-trip through the compact URL format", () => {

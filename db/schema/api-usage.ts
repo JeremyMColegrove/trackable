@@ -1,11 +1,11 @@
-import { relations } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
 import {
   index,
   jsonb,
   pgTable,
-  text,
   uniqueIndex,
   uuid,
+  text,
 } from "drizzle-orm/pg-core"
 
 import {
@@ -62,7 +62,7 @@ export const trackableApiUsageEvents = pgTable(
     requestId: text("request_id"),
     occurredAt: occurredAt(),
     payload: jsonb("payload").$type<UsageEventPayload>().notNull(),
-    metadata: text("metadata").$type<UsageEventMetadata>(),
+    metadata: jsonb("metadata").$type<UsageEventMetadata>(),
   },
   (table) => [
     uniqueIndex("trackable_api_usage_events_request_id_idx").on(
@@ -72,10 +72,22 @@ export const trackableApiUsageEvents = pgTable(
       table.trackableId,
       table.occurredAt
     ),
+    index("trackable_api_usage_events_trackable_occurred_id_idx").on(
+      table.trackableId,
+      table.occurredAt,
+      table.id
+    ),
     index("trackable_api_usage_events_api_key_occurred_idx").on(
       table.apiKeyId,
       table.occurredAt
     ),
+    index("trackable_api_usage_events_payload_gin_idx").using(
+      "gin",
+      table.payload
+    ),
+    index("trackable_api_usage_events_metadata_gin_idx")
+      .using("gin", table.metadata)
+      .where(sql`${table.metadata} is not null`),
   ]
 )
 

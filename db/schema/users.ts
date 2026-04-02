@@ -11,6 +11,7 @@ import {
 import { lastSeenAt, timestamps } from "@/db/schema/_shared"
 import {
   trackableAccessGrants,
+  trackableAssets,
   trackableFormSubmissions,
   trackableShareLinks,
 } from "@/db/schema/trackables"
@@ -60,6 +61,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
   createdWorkspaces: many(workspaces),
   createdShareLinks: many(trackableShareLinks),
+  uploadedTrackableAssets: many(trackableAssets),
   submittedFormResponses: many(trackableFormSubmissions),
   subjectAccessGrants: many(trackableAccessGrants, {
     relationName: "trackableAccessGrantSubjectUser",

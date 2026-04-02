@@ -13,10 +13,21 @@ services:
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
       CLERK_WEBHOOK_SIGNING_SECRET: ${CLERK_WEBHOOK_SIGNING_SECRET}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      ENABLE_SUBSCRIPTIONS: ${ENABLE_SUBSCRIPTIONS:-false}
+      TRACKABLE_ASSET_STORAGE_ROOT: ${TRACKABLE_ASSET_STORAGE_ROOT:-/data/uploads}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      NODE_ENV: production
     ports:
       - 3000:3000
+    volumes:
+      - ./data/uploads:/data/uploads
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     restart: unless-stopped
 
   postgres:
@@ -24,13 +35,12 @@ services:
     container_name: trackables-postgres
     environment:
       POSTGRES_DB: "trackables"
-      POSTGRES_USER: "superman"
-      POSTGRES_PASSWORD: "peanutbutter"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U superman -d trackables"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d trackables"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,8 +50,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: trackables-redis
-    ports:
-      - 6379:6379
     volumes:
       - ./data/redis:/data
     healthcheck:
@@ -51,10 +59,3 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
-
-# options cloudflared container
-  # cloudflared:
-  #     image: cloudflare/cloudflared:latest
-  #     container_name: cloudflared
-  #     command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
-  #     restart: unless-stopped

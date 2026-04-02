@@ -1,259 +1,262 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useTRPC } from "@/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { T, useGT } from "gt-next";
-import { Copy, Plus } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { useTRPC } from "@/trpc/client"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { T, useGT } from "gt-next"
+import { Copy, Plus } from "lucide-react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 
 const expirationPresetOptions = [
-	{ value: "never", label: "Never" },
-	{ value: "30_days", label: "30 days" },
-	{ value: "60_days", label: "60 days" },
-	{ value: "90_days", label: "90 days" },
-] as const;
+  { value: "never", label: "Never" },
+  { value: "30_days", label: "30 days" },
+  { value: "60_days", label: "60 days" },
+  { value: "90_days", label: "90 days" },
+] as const
 
 const formSchema = z.object({
-	name: z.string().min(2, "API key name must be at least 2 characters."),
-	expirationPreset: z.enum(["never", "30_days", "60_days", "90_days"]),
-});
+  name: z.string().min(2, "API key name must be at least 2 characters."),
+  expirationPreset: z.enum(["never", "30_days", "60_days", "90_days"]),
+})
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
 type CreateApiKeyDialogProps = {
-	trackableId: string;
-	onCreated?: (createdKey: { id: string; plaintextKey: string }) => void;
-};
+  trackableId: string
+  onCreated?: (createdKey: { id: string; plaintextKey: string }) => void
+}
 
 export function CreateApiKeyDialog({
-	trackableId,
-	onCreated,
+  trackableId,
+  onCreated,
 }: CreateApiKeyDialogProps) {
-	const gt = useGT();
-	const [open, setOpen] = useState(false);
-	const [createdKey, setCreatedKey] = useState<string | null>(null);
-	const [copied, setCopied] = useState(false);
-	const trpc = useTRPC();
-	const queryClient = useQueryClient();
+  const gt = useGT()
+  const [open, setOpen] = useState(false)
+  const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const trpc = useTRPC()
+  const queryClient = useQueryClient()
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			name: "",
-			expirationPreset: "never",
-		},
-	});
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      expirationPreset: "never",
+    },
+  })
 
-	const createApiKey = useMutation(
-		trpc.trackables.createApiKey.mutationOptions({
-			onSuccess: async (result) => {
-				setCreatedKey(result.plaintextKey);
-				setCopied(false);
-				onCreated?.({
-					id: result.id,
-					plaintextKey: result.plaintextKey,
-				});
-				form.reset({
-					name: "",
-					expirationPreset: "never",
-				});
+  const createApiKey = useMutation(
+    trpc.trackables.createApiKey.mutationOptions({
+      onSuccess: async (result) => {
+        setCreatedKey(result.plaintextKey)
+        setCopied(false)
+        onCreated?.({
+          id: result.id,
+          plaintextKey: result.plaintextKey,
+        })
+        form.reset({
+          name: "",
+          expirationPreset: "never",
+        })
 
-				await queryClient.invalidateQueries({
-					queryKey: trpc.trackables.getById.queryKey({ id: trackableId }),
-				});
-			},
-		}),
-	);
+        await queryClient.invalidateQueries({
+          queryKey: trpc.trackables.getById.queryKey({ id: trackableId }),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: trpc.trackables.getShellById.queryKey({ id: trackableId }),
+        })
+      },
+    })
+  )
 
-	function resetDialogState() {
-		setCreatedKey(null);
-		setCopied(false);
-		form.reset({
-			name: "",
-			expirationPreset: "never",
-		});
-	}
+  function resetDialogState() {
+    setCreatedKey(null)
+    setCopied(false)
+    form.reset({
+      name: "",
+      expirationPreset: "never",
+    })
+  }
 
-	function closeDialog() {
-		resetDialogState();
-		setOpen(false);
-	}
+  function closeDialog() {
+    resetDialogState()
+    setOpen(false)
+  }
 
-	function handleOpenChange(nextOpen: boolean) {
-		if (nextOpen) {
-			resetDialogState();
-		}
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
+      resetDialogState()
+    }
 
-		setOpen(nextOpen);
+    setOpen(nextOpen)
 
-		if (!nextOpen) {
-			resetDialogState();
-		}
-	}
+    if (!nextOpen) {
+      resetDialogState()
+    }
+  }
 
-	async function handleCopy() {
-		if (!createdKey) {
-			return;
-		}
+  async function handleCopy() {
+    if (!createdKey) {
+      return
+    }
 
-		await navigator.clipboard.writeText(createdKey);
-		setCopied(true);
-	}
+    await navigator.clipboard.writeText(createdKey)
+    setCopied(true)
+  }
 
-	function onSubmit(values: FormValues) {
-		createApiKey.mutate({
-			trackableId,
-			name: values.name,
-			expirationPreset: values.expirationPreset,
-		});
-	}
+  function onSubmit(values: FormValues) {
+    createApiKey.mutate({
+      trackableId,
+      name: values.name,
+      expirationPreset: values.expirationPreset,
+    })
+  }
 
-	const isSubmitting = form.formState.isSubmitting || createApiKey.isPending;
+  const isSubmitting = form.formState.isSubmitting || createApiKey.isPending
 
-	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogTrigger asChild>
-				<Button variant="default" size="sm" className="h-8 gap-2">
-					<Plus className="size-4" />
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="default" size="sm" className="h-8 gap-2">
+          <Plus className="size-4" />
 
-					<T>Create API Key</T>
-				</Button>
-			</DialogTrigger>
-			<DialogContent>
-				{createdKey ? (
-					<>
-						<DialogHeader>
-							<DialogTitle>
-								<T>API key created</T>
-							</DialogTitle>
-							<DialogDescription>
-								<T>
-									Copy this API key now. You will not be able to see it again.
-								</T>
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-3">
-							<code className="block break-all rounded-md border bg-muted/50 p-3 font-mono text-sm">
-								{createdKey}
-							</code>
-							<p className="text-sm text-muted-foreground">
-								<T>Store it somewhere secure before closing this dialog.</T>
-							</p>
-						</div>
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => void handleCopy()}
-							>
-								<Copy className="size-4" />
-								{copied ? "Copied" : "Copy key"}
-							</Button>
-							<Button type="button" onClick={closeDialog}>
-								<T>Done</T>
-							</Button>
-						</DialogFooter>
-					</>
-				) : (
-					<>
-						<DialogHeader>
-							<DialogTitle>
-								<T>Create API key</T>
-							</DialogTitle>
-							<DialogDescription>
-								<T>Create an API key for sending logs to this trackable.</T>
-							</DialogDescription>
-						</DialogHeader>
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-4"
-							>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>
-												<T>Name</T>
-											</FormLabel>
-											<FormControl>
-												<Input
-													placeholder={gt("e.g. Production log key")}
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+          <T>Create API Key</T>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        {createdKey ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>
+                <T>API key created</T>
+              </DialogTitle>
+              <DialogDescription>
+                <T>
+                  Copy this API key now. You will not be able to see it again.
+                </T>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <code className="block rounded-md border bg-muted/50 p-3 font-mono text-sm break-all">
+                {createdKey}
+              </code>
+              <p className="text-sm text-muted-foreground">
+                <T>Store it somewhere secure before closing this dialog.</T>
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleCopy()}
+              >
+                <Copy className="size-4" />
+                {copied ? "Copied" : "Copy key"}
+              </Button>
+              <Button type="button" onClick={closeDialog}>
+                <T>Done</T>
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>
+                <T>Create API key</T>
+              </DialogTitle>
+              <DialogDescription>
+                <T>Create an API key for sending logs to this trackable.</T>
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <T>Name</T>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={gt("e.g. Production log key")}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-								<FormField
-									control={form.control}
-									name="expirationPreset"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>
-												<T>Expiration</T>
-											</FormLabel>
-											<FormControl>
-												<select
-													{...field}
-													className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
-												>
-													{expirationPresetOptions.map((option) => (
-														<option key={option.value} value={option.value}>
-															{option.label}
-														</option>
-													))}
-												</select>
-											</FormControl>
+                <FormField
+                  control={form.control}
+                  name="expirationPreset"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        <T>Expiration</T>
+                      </FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+                        >
+                          {expirationPresetOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
 
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-								<DialogFooter>
-									<Button
-										type="button"
-										variant="outline"
-										onClick={closeDialog}
-										disabled={isSubmitting}
-									>
-										<T>Cancel</T>
-									</Button>
-									<Button type="submit" disabled={isSubmitting}>
-										{createApiKey.isPending ? "Creating..." : "Create API Key"}
-									</Button>
-								</DialogFooter>
-							</form>
-						</Form>
-					</>
-				)}
-			</DialogContent>
-		</Dialog>
-	);
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeDialog}
+                    disabled={isSubmitting}
+                  >
+                    <T>Cancel</T>
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {createApiKey.isPending ? "Creating..." : "Create API Key"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
 }

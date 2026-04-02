@@ -1,5 +1,6 @@
 import type { LiqeQuery } from "liqe"
 
+import type { UsageEventMetadata } from "@/db/schema/types"
 import type {
   UsageEventSearchInput,
   UsageEventSourceSnapshot,
@@ -7,13 +8,11 @@ import type {
   UsageEventTableResult,
 } from "@/lib/usage-event-search"
 
-export const MAX_USAGE_EVENT_QUERY_ROWS = 1_000
-
 export type UsageEventRecord = {
   id: string
   occurredAt: Date
   payload: Record<string, unknown>
-  metadata: string | null
+  metadata: UsageEventMetadata | null
   apiKey: UsageEventTableApiKey
 }
 
@@ -22,7 +21,7 @@ export type UsageEventSortDescriptor = Pick<
   "dir" | "sort"
 >
 
-export type UsageEventQueryValue = boolean | null | string
+export type UsageEventQueryValue = boolean | number | null | string
 
 export type UsageEventQueryExpression =
   | { kind: "empty" }
@@ -39,16 +38,17 @@ export type UsageEventQueryExpression =
   | {
       kind: "comparison"
       fieldPath: string[] | null
-      operator: "eq" | "gt" | "gte" | "lt" | "lte"
+      operator: "match" | "eq" | "gt" | "gte" | "lt" | "lte"
+      quoted: boolean
       value: UsageEventQueryValue
     }
   | {
       kind: "range"
       fieldPath: string[] | null
-      min: number
-      minInclusive: boolean
       max: number
       maxInclusive: boolean
+      min: number
+      minInclusive: boolean
     }
   | {
       kind: "regex"
@@ -57,41 +57,65 @@ export type UsageEventQueryExpression =
     }
 
 export type UsageEventSqlField =
-  | {
-      kind: "payload"
-      key: string
-    }
-  | {
-      kind: "apiKey"
-      key: "id" | "name"
-    }
+  | { kind: "implicit" }
+  | { kind: "occurredAt" }
+  | { kind: "apiKey"; key: "id" | "name" }
+  | { kind: "metadata"; path: string[] }
+  | { kind: "payload"; path: string[] }
 
-export type UsageEventSqlPredicate = {
-  field: UsageEventSqlField
-  operator: "eq"
-  value: UsageEventQueryValue
-}
+export type UsageEventCompiledExpression =
+  | { kind: "empty" }
+  | {
+      kind: "logical"
+      operator: "and" | "or"
+      left: UsageEventCompiledExpression
+      right: UsageEventCompiledExpression
+    }
+  | {
+      kind: "not"
+      operand: UsageEventCompiledExpression
+    }
+  | {
+      kind: "comparison"
+      field: UsageEventSqlField
+      operator: "match" | "eq" | "gt" | "gte" | "lt" | "lte"
+      quoted: boolean
+      value: UsageEventQueryValue
+    }
+  | {
+      kind: "range"
+      field: UsageEventSqlField
+      max: number
+      maxInclusive: boolean
+      min: number
+      minInclusive: boolean
+    }
+  | {
+      kind: "regex"
+      field: UsageEventSqlField
+      value: string
+    }
 
 export type ParsedUsageEventSearch = {
   aggregateField: string | null
   expression: UsageEventQueryExpression
   input: UsageEventSearchInput
+  liqeQuery: LiqeQuery | null
   normalizedQuery: string
-  matchesRecord: (record: UsageEventRecord) => boolean
 }
 
 export type QueryExecutionMode = "flat" | "grouped"
-export type QueryEvaluationMode = "sql_only" | "sql_plus_fallback"
 
 export type UsageEventExecutionPlan = {
   aggregateField: string | null
-  evaluationMode: QueryEvaluationMode
   executionMode: QueryExecutionMode
+  filterExpression: UsageEventCompiledExpression
   input: UsageEventSearchInput
-  sqlPredicates: UsageEventSqlPredicate[]
 }
 
 export type UsageEventFlatQueryResult = {
+  hasMore: boolean
+  nextCursor: string | null
   rows: UsageEventRecord[]
 }
 
@@ -104,14 +128,19 @@ export type UsageEventGroupedRow = {
   totalHits: number
 }
 
-export type UsageEventGroupedQueryResult = {
+export type UsageEventGroupedRowsPage = {
+  hasMore: boolean
+  nextCursor: string | null
   rows: UsageEventGroupedRow[]
+}
+
+export type UsageEventGroupedTotals = {
   totalGroupedRows: number
   totalMatchedEvents: number
 }
 
 export type UsageEventAvailableFieldsQueryResult = {
-  payloads: Array<Record<string, unknown>>
+  fields: string[]
 }
 
 export type UsageEventSqlRepositoryContract = {
@@ -120,30 +149,25 @@ export type UsageEventSqlRepositoryContract = {
     plan: UsageEventExecutionPlan
   ): Promise<UsageEventAvailableFieldsQueryResult>
   fetchFlatRows(
-    plan: UsageEventExecutionPlan,
-    options?: { limit?: number }
+    plan: UsageEventExecutionPlan
   ): Promise<UsageEventFlatQueryResult>
-  fetchGroupedRows(
-    plan: UsageEventExecutionPlan,
-    options?: { limit?: number }
-  ): Promise<UsageEventGroupedQueryResult>
+  fetchGroupedRowsPage(
+    plan: UsageEventExecutionPlan
+  ): Promise<UsageEventGroupedRowsPage>
+  fetchGroupedTotals(
+    plan: UsageEventExecutionPlan
+  ): Promise<UsageEventGroupedTotals>
 }
 
-export type OverflowState = {
-  maxLogsFound: boolean
-  partialResults: boolean
-}
-
-export type UsageEventPipelineResult = UsageEventTableResult & {
-  overflowState: OverflowState
-}
+export type UsageEventPipelineResult = UsageEventTableResult
 
 export type UsageEventResultBuilderInput =
   | {
       availableAggregateFields: string[]
+      hasMore: boolean
       input: UsageEventSearchInput
       mode: "flat"
-      overflowState: OverflowState
+      nextCursor: string | null
       rows: UsageEventRecord[]
       sourceSnapshot: UsageEventSourceSnapshot
       totalMatchedEvents: number
@@ -151,15 +175,14 @@ export type UsageEventResultBuilderInput =
   | {
       aggregateField: string
       availableAggregateFields: string[]
+      hasMore: boolean
       input: UsageEventSearchInput
       mode: "grouped"
-      overflowState: OverflowState
+      nextCursor: string | null
       rows: UsageEventGroupedRow[]
       sourceSnapshot: UsageEventSourceSnapshot
       totalGroupedRows: number
       totalMatchedEvents: number
     }
 
-export type UsageEventParserOutput = ParsedUsageEventSearch & {
-  liqeQuery: LiqeQuery | null
-}
+export type UsageEventParserOutput = ParsedUsageEventSearch

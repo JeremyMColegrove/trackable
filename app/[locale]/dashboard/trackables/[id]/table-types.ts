@@ -68,8 +68,8 @@ export type UsageEventTableData = {
   totalMatchedEvents: number
   totalGroupedRows: number
   availableAggregateFields: string[]
-  maxLogsFound: boolean
-  partialResults: boolean
+  hasMore: boolean
+  nextCursor: string | null
   sourceSnapshot: UsageEventSourceSnapshot
 }
 export type UsageEventFreshnessState = UsageEventFreshness

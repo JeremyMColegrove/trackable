@@ -10,14 +10,97 @@ import {
   protectedProcedure,
 } from "@/server/api/trpc"
 import { accessControlService } from "@/server/services/access-control.service"
+import {
+  createWebhookInputSchema,
+  testWebhookInputSchema,
+  updateWebhookInputSchema,
+} from "@/server/webhooks/webhook.schemas"
+import { webhookService } from "@/server/webhooks/webhook.service.singleton"
 
 export const workspaceRouter = createTRPCRouter({
+  listWebhooks: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string().uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      await accessControlService.assertWorkspaceManagementAccess(
+        userId,
+        input.workspaceId
+      )
+
+      const webhooks = await webhookService.listWorkspaceWebhooks(
+        input.workspaceId
+      )
+
+      return webhooks.map((webhook) => webhook.toRecord())
+    }),
+
+  createWebhook: protectedProcedure
+    .input(createWebhookInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      await accessControlService.assertWorkspaceManagementAccess(
+        userId,
+        input.workspaceId
+      )
+
+      return (await webhookService.createWebhook(input, userId)).toRecord()
+    }),
+
+  updateWebhook: protectedProcedure
+    .input(updateWebhookInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      await accessControlService.assertWorkspaceManagementAccess(
+        userId,
+        input.workspaceId
+      )
+
+      return (await webhookService.updateWebhook(input)).toRecord()
+    }),
+
+  deleteWebhook: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string().uuid(),
+        webhookId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      await accessControlService.assertWorkspaceManagementAccess(
+        userId,
+        input.workspaceId
+      )
+
+      return webhookService.deleteWebhook(input.webhookId)
+    }),
+
+  testWebhook: protectedProcedure
+    .input(testWebhookInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      await accessControlService.assertWorkspaceManagementAccess(
+        userId,
+        input.workspaceId
+      )
+
+      return webhookService.testWebhook(input)
+    }),
+
   getSettings: protectedProcedure.query(async ({ ctx }) => {
     const userId = getRequiredUserId(ctx)
 
     const membership = await accessControlService.resolveActiveWorkspace(userId)
-    
-    // Ensure they have at least admin access to view settings pages
+
     await accessControlService.assertWorkspaceManagementAccess(
       userId,
       membership.workspaceId
@@ -48,7 +131,7 @@ export const workspaceRouter = createTRPCRouter({
       const userId = getRequiredUserId(ctx)
 
       const membership = await accessControlService.resolveActiveWorkspace(userId)
-      
+
       await accessControlService.assertWorkspaceManagementAccess(
         userId,
         membership.workspaceId

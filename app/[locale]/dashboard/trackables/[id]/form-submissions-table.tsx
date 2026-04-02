@@ -116,9 +116,6 @@ export function FormSubmissionsTable({
 			) : null}
 			{canManageForm ? (
 				<SurveyShareDialog
-					trackableId={trackable.id}
-					activeForm={trackable.activeForm}
-					shareLinks={trackable.shareSettings.shareLinks}
 					hideTrigger
 					open={shareDialogOpen}
 					onOpenChange={setShareDialogOpen}

@@ -23,6 +23,8 @@ import {
 import { hasAuthenticatedSharedFormSubmission } from "@/lib/shared-form-submissions"
 import { quotaService } from "@/server/subscriptions/quota.service"
 import { assertTrackableKind } from "@/server/services/trackable-kind"
+import { webhookTriggerService } from "@/server/webhooks/webhook-trigger.service.singleton"
+import { logger } from "@/lib/logger"
 
 type SharedFormRuntime = {
   form: TrackableFormSnapshot
@@ -148,6 +150,24 @@ export class SharedFormRuntimeService {
 
       return [submission]
     })
+
+    try {
+      await webhookTriggerService.handleSurveyResponseRecorded({
+        id: createdSubmission.id,
+        occurredAt: createdSubmission.createdAt,
+        trackableId: runtime.shareLink.trackableId,
+        workspaceId: runtime.shareLink.trackable.workspaceId,
+      })
+    } catch (error) {
+      logger.error(
+        {
+          err: error,
+          submissionId: createdSubmission.id,
+          trackableId: runtime.shareLink.trackableId,
+        },
+        "Webhook processing failed after recording a survey response."
+      )
+    }
 
     return {
       id: createdSubmission.id,

@@ -15,9 +15,17 @@ function isBatchSchedulerEnabled() {
 
 export async function bootstrapBatchScheduler() {
   const logger = getBatchLogger()
+  const enabled = isBatchSchedulerEnabled()
 
-  if (!isBatchSchedulerEnabled()) {
-    logger.info("Batch scheduler bootstrap skipped because it is disabled.")
+  if (!enabled) {
+    logger.warn(
+      {
+        enabled,
+        flag: "BATCH_SCHEDULER_ENABLED",
+        configuredValue: process.env.BATCH_SCHEDULER_ENABLED ?? null,
+      },
+      "Batch scheduler bootstrap skipped because it is disabled."
+    )
     return null
   }
 
@@ -34,7 +42,18 @@ export async function bootstrapBatchScheduler() {
 
   globalThis.__trackableBatchSchedulerStarted = true
 
-  logger.info({ jobCount: jobs.length }, "Batch scheduler started.")
+  logger.info(
+    {
+      jobCount: jobs.length,
+      jobs: jobs.map((job) => ({
+        key: job.key,
+        schedule: job.schedule,
+        timeoutMs: job.timeoutMs,
+      })),
+      timeZone: process.env.BATCH_SCHEDULER_TIME_ZONE ?? "UTC",
+    },
+    "Batch scheduler started."
+  )
 
   return scheduler
 }

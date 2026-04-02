@@ -4,18 +4,34 @@ import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 
 import * as schema from "@/db/schema"
-import { logger } from "@/lib/logger"
+import { getLogger, getSanitizedPostgresTarget } from "@/lib/logger"
+
+const logger = getLogger("postgres")
+const databaseTarget = getSanitizedPostgresTarget()
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 })
 
 pool.on("connect", () => {
-  logger.info("Connected to PostgreSQL database successfully")
+  logger.info(
+    {
+      target: databaseTarget,
+      lifecycle: "connect",
+    },
+    "PostgreSQL connection established."
+  )
 })
 
 pool.on("error", (err) => {
-  logger.error({ error: err }, "PostgreSQL database error")
+  logger.error(
+    {
+      err,
+      target: databaseTarget,
+      lifecycle: "error",
+    },
+    "PostgreSQL pool error."
+  )
 })
 
 export const db = drizzle(pool, { casing: "snake_case", schema })

@@ -87,6 +87,8 @@ export function formatFieldKind(value: string) {
       return "Notes"
     case "short_text":
       return "Short text"
+    case "youtube_video":
+      return "YouTube video"
     default:
       return value
   }
@@ -106,6 +108,8 @@ export function formatFieldConfigSummary(config: FormFieldConfig) {
       return config.maxLength
         ? `Up to ${config.maxLength} characters`
         : "Single line"
+    case "youtube_video":
+      return "Embedded player"
     default:
       return "Configured field"
   }
@@ -190,19 +194,14 @@ export function formatUsageFieldLabel(value: string) {
     .replace(/^./, (char) => char.toUpperCase())
 }
 
-export function formatUsageUserAgent(metadata: string | null) {
+export function formatUsageUserAgent(metadata: Record<string, unknown> | null) {
   if (!metadata) {
     return "No user agent"
   }
 
-  try {
-    const parsedMetadata = JSON.parse(metadata) as Record<string, unknown>
-    const userAgent = parsedMetadata.userAgent
+  const userAgent = metadata.userAgent
 
-    return typeof userAgent === "string" && userAgent.trim()
-      ? userAgent
-      : "No user agent"
-  } catch {
-    return "No user agent"
-  }
+  return typeof userAgent === "string" && userAgent.trim()
+    ? userAgent
+    : "No user agent"
 }

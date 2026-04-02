@@ -4,7 +4,6 @@ import {
 	ArrowRight,
 	BarChart3,
 	FormInput,
-	LayoutTemplate,
 	Server,
 } from "lucide-react";
 import Link from "next/link";
@@ -201,7 +200,7 @@ export function LandingPage() {
 				</div>
 			</section>
 
-			{/* Collection Styles */}
+			{/* Collection Styles
 			<section className="relative overflow-hidden border-t py-24 sm:py-32">
 				<div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
 					<div className="mx-auto mb-16 max-w-3xl text-center">
@@ -255,6 +254,31 @@ export function LandingPage() {
 							</div>
 						))}
 					</div>
+				</div>
+			</section> */}
+
+			{/* Self Hosting CTA */}
+			<section className="border-t bg-background py-16 sm:py-24">
+				<div className="mx-auto max-w-4xl px-6 text-center sm:px-8">
+					<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground shadow-sm">
+						<Server className="h-8 w-8" />
+					</div>
+					<h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+						<T>Deploy to your own infrastructure</T>
+					</h2>
+					<p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+						<T>
+							Trackables is fully open-source. For teams requiring strict data
+							ownership or isolated network deployments, self-host in minutes
+							using Docker.
+						</T>
+					</p>
+					<Link
+						href="/self-hosting"
+						className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+					>
+						<T>View Self-Hosting Guide</T>
+					</Link>
 				</div>
 			</section>
 

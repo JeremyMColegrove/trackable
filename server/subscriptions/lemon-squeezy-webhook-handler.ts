@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger"
+import { getBoundedLogExcerpt, getLogger } from "@/lib/logger"
 import type { LemonSqueezySyncService } from "@/server/subscriptions/lemon-squeezy-sync.service"
 
 interface WebhookPayload {
@@ -37,6 +37,8 @@ const SUBSCRIPTION_EVENTS = new Set([
   "subscription_payment_recovered",
 ])
 
+const logger = getLogger("lemon-squeezy-webhook")
+
 export class LemonSqueezyWebhookHandler {
   constructor(
     private readonly dependencies: LemonSqueezyWebhookHandlerDependencies
@@ -44,13 +46,20 @@ export class LemonSqueezyWebhookHandler {
 
   async handle(input: LemonSqueezyWebhookHandlerInput) {
     if (!this.dependencies.subscriptionsEnabled()) {
+      logger.warn(
+        { enabled: false, flag: "SUBSCRIPTION_ENFORCEMENT" },
+        "Ignoring Lemon Squeezy webhook because subscription enforcement is disabled."
+      )
       return new Response("Not Found", { status: 404 })
     }
 
     const webhookSecret = this.dependencies.webhookSecret()
 
     if (!webhookSecret) {
-      logger.error("Missing LEMON_SQUEEZY_WEBHOOK_SECRET")
+      logger.error(
+        { flag: "LEMON_SQUEEZY_WEBHOOK_SECRET" },
+        "Missing Lemon Squeezy webhook secret."
+      )
 
       return Response.json(
         { error: "Webhook secret is not configured." },
@@ -65,6 +74,7 @@ export class LemonSqueezyWebhookHandler {
         webhookSecret
       )
     ) {
+      logger.error("Failed to verify Lemon Squeezy webhook signature.")
       return Response.json(
         { error: "Invalid webhook signature." },
         { status: 400 }
@@ -76,12 +86,14 @@ export class LemonSqueezyWebhookHandler {
     try {
       payload = JSON.parse(input.rawBody) as WebhookPayload
     } catch {
+      logger.warn("Received invalid JSON payload for Lemon Squeezy webhook.")
       return Response.json({ error: "Invalid JSON payload." }, { status: 400 })
     }
 
     const eventName = payload.meta?.event_name
 
     if (!eventName) {
+      logger.warn("Received Lemon Squeezy webhook without event_name.")
       return Response.json(
         { error: "Invalid webhook payload." },
         { status: 400 }
@@ -89,12 +101,14 @@ export class LemonSqueezyWebhookHandler {
     }
 
     if (!SUBSCRIPTION_EVENTS.has(eventName)) {
+      logger.warn({ eventName }, "Ignoring unsupported Lemon Squeezy webhook event.")
       return Response.json({ ok: true })
     }
 
     const subscriptionId = payload.data?.id
 
     if (!subscriptionId) {
+      logger.warn({ eventName }, "Lemon Squeezy webhook is missing subscription id.")
       return Response.json(
         { error: "Missing subscription id." },
         { status: 400 }
@@ -120,10 +134,23 @@ export class LemonSqueezyWebhookHandler {
         workspaceId,
         subscriptionId,
       })
+      logger.info(
+        { eventName, subscriptionId, workspaceId },
+        "Processed Lemon Squeezy webhook."
+      )
     } catch (error) {
       logger.error(
-        { error, eventName, subscriptionId, workspaceId },
-        "Failed to process Lemon Squeezy webhook"
+        {
+          err: error,
+          eventName,
+          subscriptionId,
+          workspaceId,
+          errorExcerpt:
+            error instanceof Error
+              ? getBoundedLogExcerpt(error.message)
+              : null,
+        },
+        "Failed to process Lemon Squeezy webhook."
       )
 
       return Response.json(

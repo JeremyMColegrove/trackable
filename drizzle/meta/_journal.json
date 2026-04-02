@@ -8,6 +8,41 @@
       "when": 1774675859218,
       "tag": "0000_bumpy_ronan",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774989279766,
+      "tag": "0001_woozy_romulus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774993239225,
+      "tag": "0002_green_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775100271406,
+      "tag": "0003_crazy_surge",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775102240795,
+      "tag": "0004_sloppy_firedrake",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775102948196,
+      "tag": "0005_aspiring_valeria_richards",
+      "breakpoints": true
     }
   ]
 }

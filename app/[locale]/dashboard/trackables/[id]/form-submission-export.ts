@@ -2,6 +2,7 @@ import type {
   FormAnswerValue,
   TrackableFormFieldSnapshot,
 } from "@/db/schema/types"
+import { isAnswerableField } from "@/lib/trackable-form-submission"
 import type { TableExportPayload } from "@/lib/table-export"
 
 import { formatDateTime } from "./display-utils"
@@ -51,10 +52,7 @@ export function buildFormSubmissionExportPayload({
     }
   }
 
-  const keyOrder = new Map<
-    string,
-    { position: number; firstSeenAt: number }
-  >()
+  const keyOrder = new Map<string, { position: number; firstSeenAt: number }>()
 
   for (const column of columns) {
     const existing = keyOrder.get(column.key)
@@ -146,9 +144,9 @@ export function buildFormSubmissionExportPayload({
 }
 
 function getOrderedFields(submission: SubmissionRow) {
-  return [...submission.submissionSnapshot.form.fields].sort(
-    (left, right) => left.position - right.position
-  )
+  return [...submission.submissionSnapshot.form.fields]
+    .filter(isAnswerableField)
+    .sort((left, right) => left.position - right.position)
 }
 
 function getFieldSignature(field: TrackableFormFieldSnapshot) {
