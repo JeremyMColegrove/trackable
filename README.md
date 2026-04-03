@@ -66,9 +66,9 @@ Trackables supports two main workflows:
 
 Trackables can be self-hosted with Docker. The repository includes working example files to get started:
 
-- [example/docker-compose.yml](/Users/jeremy/Documents/Github/trackables/example/docker-compose.yml)
-- [example/.env.example](/Users/jeremy/Documents/Github/trackables/example/.env.example)
-- [example/trackables.config.example.json](/Users/jeremy/Documents/Github/trackables/example/trackables.config.example.json)
+- [example/docker-compose.yml](/example/docker-compose.yml)
+- [example/.env.example](/example/.env.example)
+- [example/trackables.config.example.json](/example/trackables.config.example.json)
 
 ### Requirements
 
@@ -79,14 +79,14 @@ Trackables can be self-hosted with Docker. The repository includes working examp
 
 ### Basic Setup
 
-1. Copy [example/.env.example](/Users/jeremy/Documents/Github/trackables/example/.env.example) to `.env` and fill in your secrets and connection values.
-2. Copy [example/trackables.config.example.json](/Users/jeremy/Documents/Github/trackables/example/trackables.config.example.json) to `config.json`.
+1. Copy [example/.env.example](/example/.env.example) to `.env` and fill in your secrets and connection values.
+2. Copy [example/trackables.config.example.json](/example/trackables.config.example.json) to `config.json`.
 3. Keep secrets and infrastructure wiring in `.env`. Keep app behavior, plan metadata, limits, queue settings, and billing display config in `config.json`.
 4. Create a Clerk app and add your publishable key, secret key, and webhook signing secret.
 5. Create a Clerk webhook pointing to `https://<your-domain>/api/clerk/webhook`.
 6. Subscribe that webhook to `user.created`, `user.updated`, and `user.deleted`.
 7. If you want paid billing, enable it in `config.json` and add the Lemon Squeezy API key and webhook secret to `.env`.
-8. Copy [example/docker-compose.yml](/Users/jeremy/Documents/Github/trackables/example/docker-compose.yml) into your deployment directory. It reads container environment variables from `.env` via `env_file`, mounts `config.json` into the container at `/config.json`, and relies on app-side defaults instead of Compose-side env defaulting.
+8. Copy [example/docker-compose.yml](/example/docker-compose.yml) into your deployment directory. It reads container environment variables from `.env` via `env_file`, mounts `config.json` into the container at `/config.json`, and relies on app-side defaults instead of Compose-side env defaulting.
 9. Start the stack with `docker compose up -d`.
 
 After startup, open your app URL and sign in. Clerk handles authentication, while Trackables stores its app data in PostgreSQL and uses Redis for caching and queued work. The app reads deploy-time product/runtime settings from the external JSON config on startup, fills in omitted fields with app defaults, and fails fast only when the file is missing or contains invalid explicit values.
