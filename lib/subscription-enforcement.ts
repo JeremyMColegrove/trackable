@@ -1,11 +1,5 @@
-export function isSubscriptionEnforcementEnabledValue(
-	value: string | undefined,
-): boolean {
-	return value?.trim() === "true";
+export function isSubscriptionEnforcementEnabled(): boolean {
+  return getRuntimeConfig().features.subscriptionEnforcementEnabled
 }
 
-export function isSubscriptionEnforcementEnabled(): boolean {
-	return isSubscriptionEnforcementEnabledValue(
-		process.env.ENABLE_SUBSCRIPTIONS,
-	);
-}
+import { getRuntimeConfig } from "@/lib/runtime-config"

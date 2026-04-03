@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server"
 import { z } from "zod"
 
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import {
   createTRPCRouter,
   getRequiredUserId,
@@ -46,7 +47,7 @@ export const batchRouter = createTRPCRouter({
         lastCompletedAt: record?.lastCompletedAt?.toISOString() ?? null,
         lastStatus: record?.lastStatus ?? null,
         lastSummary: record?.lastSummary ?? null,
-        schedulerEnabled: process.env.BATCH_SCHEDULER_ENABLED !== "false",
+        schedulerEnabled: getRuntimeConfig().features.batchSchedulerEnabled,
       }
     })
   }),

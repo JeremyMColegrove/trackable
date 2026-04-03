@@ -18,13 +18,16 @@ async function readExampleFile(fileName: string) {
 }
 
 export async function getSelfHostingExamples() {
-  const [envExample, dockerComposeExample] = await Promise.all([
-    readExampleFile(".env.example"),
-    readExampleFile("docker-compose.yml"),
-  ])
+  const [envExample, runtimeConfigExample, dockerComposeExample] =
+    await Promise.all([
+      readExampleFile(".env.example"),
+      readExampleFile("trackables.config.example.json"),
+      readExampleFile("docker-compose.yml"),
+    ])
 
   return {
     envExample,
+    runtimeConfigExample,
     dockerComposeExample,
   }
 }

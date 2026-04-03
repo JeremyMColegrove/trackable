@@ -3,6 +3,7 @@ import "server-only"
 import { Queue, Worker } from "bullmq"
 
 import { getLogger } from "@/lib/logger"
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import { createBullRedisConnection } from "@/server/redis/redis-client"
 import { webhookDispatchService } from "@/server/webhooks/webhook-dispatch.service.singleton"
 import {
@@ -21,16 +22,15 @@ declare global {
 }
 
 function isWebhookQueueEnabled() {
-  return process.env.WEBHOOK_QUEUE_ENABLED !== "false"
+  return getRuntimeConfig().webhooks.queue.enabled
 }
 
 function getWebhookWorkerRateLimit() {
-  const duration = Number(process.env.WEBHOOK_QUEUE_RATE_LIMIT_MS ?? "1000")
-  const max = Number(process.env.WEBHOOK_QUEUE_RATE_LIMIT_MAX ?? "1")
+  const queueConfig = getRuntimeConfig().webhooks.queue
 
   return {
-    duration: Number.isFinite(duration) && duration > 0 ? duration : 1000,
-    max: Number.isFinite(max) && max > 0 ? max : 1,
+    duration: queueConfig.rateLimitMs,
+    max: queueConfig.rateLimitMax,
   }
 }
 
@@ -53,8 +53,7 @@ export async function bootstrapWebhookWorker() {
     logger.warn(
       {
         enabled,
-        flag: "WEBHOOK_QUEUE_ENABLED",
-        configuredValue: process.env.WEBHOOK_QUEUE_ENABLED ?? null,
+        source: "runtime-config",
       },
       "Webhook worker bootstrap skipped because it is disabled."
     )

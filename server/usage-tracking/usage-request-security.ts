@@ -4,8 +4,8 @@ import { isIP } from "node:net"
 import { TRPCError } from "@trpc/server"
 
 import { fingerprintValue } from "@/lib/log-sanitization"
+import { getRuntimeConfig } from "@/lib/runtime-config"
 
-const defaultUsagePayloadSizeLimitBytes = 64 * 1024
 const maxHeaderValueLength = 512
 const maxRequestIdLength = 128
 
@@ -38,16 +38,7 @@ function parsePositiveInteger(value: string | null) {
 }
 
 export function getUsagePayloadSizeLimitBytes() {
-  const configuredLimit = Number.parseInt(
-    process.env.API_USAGE_MAX_BODY_BYTES ?? "",
-    10
-  )
-
-  if (Number.isFinite(configuredLimit) && configuredLimit > 0) {
-    return configuredLimit
-  }
-
-  return defaultUsagePayloadSizeLimitBytes
+  return getRuntimeConfig().usage.maxBodyBytes
 }
 
 export function isJsonContentType(contentType: string | null) {

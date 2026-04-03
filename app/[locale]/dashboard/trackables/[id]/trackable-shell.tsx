@@ -259,7 +259,7 @@ function TrackableShellError({
 }
 
 function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
-  const { subscriptionsEnabled } = useAppSettings()
+  const { subscriptionEnforcementEnabled } = useAppSettings()
   const { activeWorkspace } = useWorkspaceContext()
   const gt = useGT()
   const locale = useLocale()
@@ -295,10 +295,10 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
       <SidebarShell
         href={dashboardBaseHref}
         workspaceSelectorEyebrow={
-          subscriptionsEnabled ? undefined : <T>Current workspace</T>
+          subscriptionEnforcementEnabled ? undefined : <T>Current workspace</T>
         }
         footer={
-          subscriptionsEnabled ? (
+          subscriptionEnforcementEnabled ? (
             <WorkspaceTierSection onOpenDialog={handleOpenTierDialog} />
           ) : undefined
         }
@@ -362,7 +362,7 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
         </SidebarGroup>
       </SidebarShell>
 
-      {subscriptionsEnabled ? (
+      {subscriptionEnforcementEnabled ? (
         <WorkspaceTierDialog
           currentTier={dialogTier}
           workspaceId={activeWorkspace?.id ?? ""}

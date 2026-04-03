@@ -1,5 +1,6 @@
 import "server-only"
 
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import { ensureDefaultBatchJobsRegistered } from "@/server/batch/jobs"
 import { getBatchLogger } from "@/server/batch/logger"
 import { syncBatchJobDefinitions } from "@/server/batch/repository"
@@ -10,7 +11,7 @@ declare global {
 }
 
 function isBatchSchedulerEnabled() {
-  return process.env.BATCH_SCHEDULER_ENABLED !== "false"
+  return getRuntimeConfig().features.batchSchedulerEnabled
 }
 
 export async function bootstrapBatchScheduler() {
@@ -21,8 +22,7 @@ export async function bootstrapBatchScheduler() {
     logger.warn(
       {
         enabled,
-        flag: "BATCH_SCHEDULER_ENABLED",
-        configuredValue: process.env.BATCH_SCHEDULER_ENABLED ?? null,
+        source: "runtime-config",
       },
       "Batch scheduler bootstrap skipped because it is disabled."
     )
@@ -50,7 +50,7 @@ export async function bootstrapBatchScheduler() {
         schedule: job.schedule,
         timeoutMs: job.timeoutMs,
       })),
-      timeZone: process.env.BATCH_SCHEDULER_TIME_ZONE ?? "UTC",
+      timeZone: getRuntimeConfig().batch.schedulerTimeZone,
     },
     "Batch scheduler started."
   )

@@ -6,6 +6,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 import { getLogger } from "@/lib/logger"
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import { resolveTierFromVariantId } from "@/lib/subscription-plans"
 import { LemonSqueezySyncService } from "@/server/subscriptions/lemon-squeezy-sync.service"
 import { workspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
@@ -88,7 +89,10 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    )
   }
 
   const parsed = checkoutBodySchema.safeParse(body)
@@ -116,8 +120,13 @@ export async function POST(request: Request) {
     throw error
   }
 
+  const runtimeConfig = getRuntimeConfig()
   const apiKey = process.env.LEMON_SQUEEZY_API_KEY
-  const storeId = process.env.LEMON_SQUEEZY_STORE_ID
+  const storeId = runtimeConfig.billing.lemonSqueezyStoreId
+
+  if (!runtimeConfig.features.workspaceBillingEnabled) {
+    return NextResponse.json({ error: "Billing is disabled." }, { status: 404 })
+  }
 
   if (!apiKey || !storeId) {
     logger.error(

@@ -32,6 +32,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+/config.json
 
 # translation file
 # public/_gt/

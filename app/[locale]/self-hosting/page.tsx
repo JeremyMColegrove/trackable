@@ -85,32 +85,48 @@ function SelfHostingGuideExamplesSkeleton() {
 }
 
 async function SelfHostingGuideExamples() {
-  const { envExample, dockerComposeExample } = await getSelfHostingExamples()
+  const { envExample, runtimeConfigExample, dockerComposeExample } =
+    await getSelfHostingExamples()
 
   return (
     <>
       <Step number="5" title={<T>Configure .env</T>}>
         <p>
-          Create a <code>.env</code> file in your directory. Populate it with
-          the Clerk keys you gathered. Make sure the{" "}
-          <code>NEXT_PUBLIC_APP_URL</code> perfectly matches exactly how you
-          access the app.
+          Create a <code>.env</code> file in your deployment directory. Keep it
+          focused on secrets and wiring: database connection, Clerk keys, Redis,
+          and app URL. Docker Compose loads this file directly with{" "}
+          <code>env_file: .env</code>.
         </p>
         <CodeBlock code={envExample} label=".env.example" />
       </Step>
 
-      <Step number="6" title={<T>Configure docker-compose.yml</T>}>
+      <Step number="6" title={<T>Configure config.json</T>}>
+        <p>
+          Create a <code>config.json</code> file alongside your{" "}
+          <code>.env</code> file. This is where deploy-time app behavior lives:
+          plan metadata, limits, usage settings, billing flags, webhook queue
+          settings, and other runtime product configuration.
+        </p>
+        <CodeBlock
+          code={runtimeConfigExample}
+          label="trackables.config.example.json"
+        />
+      </Step>
+
+      <Step number="7" title={<T>Configure docker-compose.yml</T>}>
         <p>
           Create a <code>docker-compose.yml</code> file alongside your{" "}
-          <code>.env</code> file. The standard configuration pulls the latest
-          image and orchestrates the database and redis containers
-          automatically.
+          <code>.env</code> and <code>config.json</code> files. The standard
+          configuration loads all environment variables from <code>.env</code>,
+          mounts <code>config.json</code> into the container at{" "}
+          <code>/config.json</code>, pulls the latest image, and orchestrates
+          the database and Redis containers automatically.
         </p>
         <CodeBlock code={dockerComposeExample} label="docker-compose.yml" />
       </Step>
 
-      <Step number="7" title={<T>Start & Verify</T>}>
-        <p>With both files prepared, start the stack in detached mode:</p>
+      <Step number="8" title={<T>Start & Verify</T>}>
+        <p>With all three files prepared, start the stack in detached mode:</p>
         <CodeBlock code="docker compose up -d" label="bash" />
         <div className="mt-6 flex items-start gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 text-primary">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />

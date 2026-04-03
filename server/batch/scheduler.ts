@@ -2,11 +2,10 @@ import "server-only"
 
 import { CronJob } from "cron"
 
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import type { BatchJob } from "@/server/batch/job"
 import { getBatchLogger } from "@/server/batch/logger"
 import { batchJobRunner } from "@/server/batch/runner"
-
-const DEFAULT_TIME_ZONE = process.env.BATCH_SCHEDULER_TIME_ZONE ?? "UTC"
 
 export class BatchScheduler {
   private readonly cronJobs: CronJob[] = []
@@ -15,12 +14,13 @@ export class BatchScheduler {
 
   start() {
     const logger = getBatchLogger()
+    const defaultTimeZone = getRuntimeConfig().batch.schedulerTimeZone
 
     for (const job of this.jobs) {
       const cronJob = CronJob.from({
         cronTime: job.schedule,
         start: false,
-        timeZone: DEFAULT_TIME_ZONE,
+        timeZone: defaultTimeZone,
         onTick: () => {
           void batchJobRunner.run(job, "cron")
         },
@@ -33,7 +33,7 @@ export class BatchScheduler {
         {
           jobKey: job.key,
           schedule: job.schedule,
-          timeZone: DEFAULT_TIME_ZONE,
+          timeZone: defaultTimeZone,
           concurrency: job.concurrency,
           timeoutMs: job.timeoutMs,
         },

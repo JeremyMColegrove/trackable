@@ -1,27 +1,11 @@
-import "server-only"
-
 import { TRPCError } from "@trpc/server"
 
 import { CounterCacheRepository } from "@/server/redis/counter-cache.repository"
+import { getInvalidApiKeyAttemptLimit } from "@/server/usage-tracking/usage-ingress-config"
 
 const invalidApiKeyAttemptCache = new CounterCacheRepository(
   "usage-invalid-api-key-attempts"
 )
-
-const defaultInvalidApiKeyAttemptsPerMinute = 30
-
-function getInvalidApiKeyAttemptLimit() {
-  const configuredLimit = Number.parseInt(
-    process.env.API_USAGE_INVALID_KEY_RATE_LIMIT_PER_MINUTE ?? "",
-    10
-  )
-
-  if (Number.isFinite(configuredLimit) && configuredLimit > 0) {
-    return configuredLimit
-  }
-
-  return defaultInvalidApiKeyAttemptsPerMinute
-}
 
 export class UsageIngressRateLimitService {
   async recordInvalidApiKeyAttempt(clientIdentity: string) {

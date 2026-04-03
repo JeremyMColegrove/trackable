@@ -143,7 +143,10 @@ test("GenericWebhookProvider: merges custom headers", () => {
   const provider = new GenericWebhookProvider()
   const { request } = provider.buildRequest(makeGenericContext())
 
-  assert.equal(request.headers["x-custom"], "yes")
+  assert.equal(
+    (request.headers as Record<string, string | undefined>)["x-custom"],
+    "yes"
+  )
 })
 
 test("GenericWebhookProvider: body contains webhook, trigger, and event sections", () => {
@@ -441,7 +444,11 @@ test("DiscordWebhookProvider: omits username when it contains 'discord' (case-in
     }
     const { request } = provider.buildRequest(ctx)
     const body = JSON.parse(request.body) as { username?: string }
-    assert.equal(body.username, undefined, `expected username omitted for "${name}"`)
+    assert.equal(
+      body.username,
+      undefined,
+      `expected username omitted for "${name}"`
+    )
   }
 })
 
@@ -518,14 +525,8 @@ test("DiscordWebhookProvider: survey_response embed includes submitter and sourc
     fields.find((f) => f.name === "Submitter")?.value,
     "alice@example.com"
   )
-  assert.equal(
-    fields.find((f) => f.name === "Source")?.value,
-    "public_link"
-  )
-  assert.equal(
-    fields.find((f) => f.name === "Response ID")?.value,
-    "resp-1"
-  )
+  assert.equal(fields.find((f) => f.name === "Source")?.value, "public_link")
+  assert.equal(fields.find((f) => f.name === "Response ID")?.value, "resp-1")
 })
 
 test("DiscordWebhookProvider: survey_response embed includes Open Response link", () => {

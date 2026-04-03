@@ -561,7 +561,8 @@
     "Enabled": "ممكّن",
     "Not enabled": "غير ممكّن",
     "Loading privacy settings": "جارٍ تحميل إعدادات الخصوصية",
-    "Downgrade": "الرجوع إلى إصدار سابق"
+    "Downgrade": "الرجوع إلى إصدار سابق",
+    "Configure config.json": "قم بتكوين الملف config.json"
   },
   "de": {
     "Tracking for your team.": "Tracking für Ihr Team.",
@@ -1125,7 +1126,8 @@
     "Enabled": "Ermöglicht",
     "Not enabled": "Nicht aktiviert",
     "Loading privacy settings": "Datenschutzeinstellungen werden geladen",
-    "Downgrade": "Downgrade"
+    "Downgrade": "Downgrade",
+    "Configure config.json": "Konfigurieren Sie config.json"
   },
   "es": {
     "Tracking for your team.": "Seguimiento para tu equipo.",
@@ -1689,7 +1691,8 @@
     "Enabled": "Activada",
     "Not enabled": "No habilitado",
     "Loading privacy settings": "Cargando configuración de privacidad",
-    "Downgrade": "Degradar"
+    "Downgrade": "Degradar",
+    "Configure config.json": "Configurar config.json"
   },
   "fr": {
     "Tracking for your team.": "Suivi de votre équipe.",
@@ -2253,7 +2256,8 @@
     "Enabled": "Activé",
     "Not enabled": "Non activé",
     "Loading privacy settings": "Chargement des paramètres de confidentialité",
-    "Downgrade": "Rétrograder"
+    "Downgrade": "Rétrograder",
+    "Configure config.json": "Configurer config.json"
   },
   "hi": {
     "Tracking for your team.": "अपनी टीम के लिए ट्रैकिंग।",
@@ -2817,7 +2821,8 @@
     "Enabled": "सक्रिय",
     "Not enabled": "सक्षम नहीं",
     "Loading privacy settings": "गोपनीयता सेटिंग लोड हो रही है",
-    "Downgrade": "ढाल"
+    "Downgrade": "ढाल",
+    "Configure config.json": "config.json कॉन्फ़िगर करें"
   },
   "id": {
     "Tracking for your team.": "Pelacakan untuk tim Anda.",
@@ -3381,7 +3386,8 @@
     "Enabled": "Diaktifkan",
     "Not enabled": "Tidak diaktifkan",
     "Loading privacy settings": "Memuat pengaturan privasi",
-    "Downgrade": "Turunkan versi"
+    "Downgrade": "Turunkan versi",
+    "Configure config.json": "Konfigurasikan config.json"
   },
   "it": {
     "Tracking for your team.": "Monitoraggio per la tua squadra.",
@@ -3945,7 +3951,8 @@
     "Enabled": "Abilitata",
     "Not enabled": "Non abilitato",
     "Loading privacy settings": "Caricamento delle impostazioni sulla privacy",
-    "Downgrade": "Downgrade"
+    "Downgrade": "Downgrade",
+    "Configure config.json": "Configura config.json"
   },
   "ja": {
     "Tracking for your team.": "チームの追跡。",
@@ -4509,7 +4516,8 @@
     "Enabled": "有効",
     "Not enabled": "有効になっていません",
     "Loading privacy settings": "プライバシー設定を読み込んでいます",
-    "Downgrade": "ダウングレード"
+    "Downgrade": "ダウングレード",
+    "Configure config.json": "config.jsonを構成する"
   },
   "ko": {
     "Tracking for your team.": "팀을 추적합니다.",
@@ -5073,7 +5081,8 @@
     "Enabled": "활성화됨",
     "Not enabled": "활성화되지 않음",
     "Loading privacy settings": "개인정보 보호 설정 로드 중",
-    "Downgrade": "다운그레이드"
+    "Downgrade": "다운그레이드",
+    "Configure config.json": "config.json 구성"
   },
   "nl": {
     "Tracking for your team.": "Volgen voor uw team.",
@@ -5637,7 +5646,8 @@
     "Enabled": "Ingeschakeld",
     "Not enabled": "Niet ingeschakeld",
     "Loading privacy settings": "Privacy-instellingen laden",
-    "Downgrade": "Downgraden"
+    "Downgrade": "Downgraden",
+    "Configure config.json": "Configureer config.json"
   },
   "pl": {
     "Tracking for your team.": "Śledzenie dla Twojego zespołu.",
@@ -6201,7 +6211,8 @@
     "Enabled": "Włączony",
     "Not enabled": "Nie włączone",
     "Loading privacy settings": "Ładowanie ustawień prywatności",
-    "Downgrade": "Nachylenie"
+    "Downgrade": "Nachylenie",
+    "Configure config.json": "Skonfiguruj plik config.json"
   },
   "pt": {
     "Tracking for your team.": "Rastreamento para sua equipe.",
@@ -6765,7 +6776,8 @@
     "Enabled": "Habilitada",
     "Not enabled": "Não ativado",
     "Loading privacy settings": "Carregando configurações de privacidade",
-    "Downgrade": "Downgrade"
+    "Downgrade": "Downgrade",
+    "Configure config.json": "Configurar config.json"
   },
   "ru": {
     "Tracking for your team.": "Отслеживание вашей команды.",
@@ -7329,7 +7341,8 @@
     "Enabled": "Включено",
     "Not enabled": "Не включено",
     "Loading privacy settings": "Загрузка настроек конфиденциальности",
-    "Downgrade": "Понизить версию"
+    "Downgrade": "Понизить версию",
+    "Configure config.json": "Настроить config.json"
   },
   "tr": {
     "Tracking for your team.": "Ekibiniz için takip.",
@@ -7893,7 +7906,8 @@
     "Enabled": "Etkinleştirilmiş",
     "Not enabled": "Etkin değil",
     "Loading privacy settings": "Gizlilik ayarları yükleniyor",
-    "Downgrade": "Sürüm düşürme"
+    "Downgrade": "Sürüm düşürme",
+    "Configure config.json": "Config.json'u yapılandırma"
   },
   "vi": {
     "Tracking for your team.": "Theo dõi cho nhóm của bạn.",
@@ -8457,7 +8471,8 @@
     "Enabled": "Đã bật",
     "Not enabled": "Chưa bật",
     "Loading privacy settings": "Đang tải cài đặt quyền riêng tư",
-    "Downgrade": "Hạ cấp"
+    "Downgrade": "Hạ cấp",
+    "Configure config.json": "Định cấu hình config.json"
   },
   "zh-CN": {
     "Tracking for your team.": "跟踪您的团队。",
@@ -9021,6 +9036,7 @@
     "Enabled": "启用",
     "Not enabled": "未启用",
     "Loading privacy settings": "正在加载隐私设置",
-    "Downgrade": "降级"
+    "Downgrade": "降级",
+    "Configure config.json": "配置config.json"
   }
 }

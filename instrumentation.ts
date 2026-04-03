@@ -16,12 +16,21 @@ export async function register() {
   }
 
   if (!globalThis.__trackablesInfrastructureStartupLogged) {
+    const { getRuntimeConfig, getRuntimeConfigPath } =
+      await import("@/lib/runtime-config")
+    const runtimeConfig = getRuntimeConfig()
+
     getLogger("startup").info(
       {
         ...getLoggerConfiguration(),
+        runtimeConfigPath: getRuntimeConfigPath(),
         features: {
-          batchSchedulerEnabled: process.env.BATCH_SCHEDULER_ENABLED !== "false",
-          webhookQueueEnabled: process.env.WEBHOOK_QUEUE_ENABLED !== "false",
+          batchSchedulerEnabled: runtimeConfig.features.batchSchedulerEnabled,
+          subscriptionEnforcementEnabled:
+            runtimeConfig.features.subscriptionEnforcementEnabled,
+          webhookQueueEnabled: runtimeConfig.webhooks.queue.enabled,
+          workspaceBillingEnabled:
+            runtimeConfig.features.workspaceBillingEnabled,
         },
         env: summarizeEnvPresence({
           databaseUrl: process.env.DATABASE_URL,
