@@ -147,8 +147,12 @@ export type UsageEventSortField = z.infer<typeof usageEventSortFieldSchema>
 export type UsageEventSortDirection = z.infer<
   typeof usageEventSortDirectionSchema
 >
-export type UsageEventContextInput = z.infer<typeof usageEventContextInputSchema>
-export type UsageEventContextBounds = z.infer<typeof usageEventContextBoundsSchema>
+export type UsageEventContextInput = z.infer<
+  typeof usageEventContextInputSchema
+>
+export type UsageEventContextBounds = z.infer<
+  typeof usageEventContextBoundsSchema
+>
 export type UsageEventLevel = z.infer<typeof usageEventLevelSchema>
 export type UsageEventBuiltInColumnId = z.infer<
   typeof usageEventBuiltInColumnIdSchema

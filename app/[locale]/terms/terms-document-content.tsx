@@ -52,10 +52,9 @@ export function getTermsDocumentContent(): LegalDocumentContent {
         heading: <T>User content</T>,
         paragraphs: [
           <T key="terms-user-content-1">
-            You retain ownership of content you submit to the service. You
-            grant us the limited rights necessary to host, process, store, and
-            display that content for the purpose of operating and improving the
-            service.
+            You retain ownership of content you submit to the service. You grant
+            us the limited rights necessary to host, process, store, and display
+            that content for the purpose of operating and improving the service.
           </T>,
         ],
       },
@@ -63,9 +62,8 @@ export function getTermsDocumentContent(): LegalDocumentContent {
         heading: <T>Availability</T>,
         paragraphs: [
           <T key="terms-availability-1">
-            We may modify, suspend, or discontinue all or part of the service
-            at any time. We do not guarantee uninterrupted or error-free
-            operation.
+            We may modify, suspend, or discontinue all or part of the service at
+            any time. We do not guarantee uninterrupted or error-free operation.
           </T>,
         ],
       },
@@ -73,9 +71,9 @@ export function getTermsDocumentContent(): LegalDocumentContent {
         heading: <T>Termination</T>,
         paragraphs: [
           <T key="terms-termination-1">
-            We may suspend or terminate access to the service if these terms
-            are violated or if use of the service creates risk for us, other
-            users, or the platform.
+            We may suspend or terminate access to the service if these terms are
+            violated or if use of the service creates risk for us, other users,
+            or the platform.
           </T>,
         ],
       },
@@ -83,9 +81,9 @@ export function getTermsDocumentContent(): LegalDocumentContent {
         heading: <T>Disclaimer</T>,
         paragraphs: [
           <T key="terms-disclaimer-1">
-            The service is provided &quot;as is&quot; and &quot;as available&quot;
-            without warranties of any kind, whether express or implied, to the
-            fullest extent permitted by law.
+            The service is provided &quot;as is&quot; and &quot;as
+            available&quot; without warranties of any kind, whether express or
+            implied, to the fullest extent permitted by law.
           </T>,
         ],
       },
@@ -95,8 +93,8 @@ export function getTermsDocumentContent(): LegalDocumentContent {
           <T key="terms-liability-1">
             To the fullest extent permitted by law, we are not liable for
             indirect, incidental, special, consequential, or punitive damages,
-            or for loss of data, profits, or business opportunities arising
-            from use of the service.
+            or for loss of data, profits, or business opportunities arising from
+            use of the service.
           </T>,
         ],
       },

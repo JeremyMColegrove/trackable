@@ -101,14 +101,20 @@ export class LemonSqueezyWebhookHandler {
     }
 
     if (!SUBSCRIPTION_EVENTS.has(eventName)) {
-      logger.warn({ eventName }, "Ignoring unsupported Lemon Squeezy webhook event.")
+      logger.warn(
+        { eventName },
+        "Ignoring unsupported Lemon Squeezy webhook event."
+      )
       return Response.json({ ok: true })
     }
 
     const subscriptionId = payload.data?.id
 
     if (!subscriptionId) {
-      logger.warn({ eventName }, "Lemon Squeezy webhook is missing subscription id.")
+      logger.warn(
+        { eventName },
+        "Lemon Squeezy webhook is missing subscription id."
+      )
       return Response.json(
         { error: "Missing subscription id." },
         { status: 400 }
@@ -146,9 +152,7 @@ export class LemonSqueezyWebhookHandler {
           subscriptionId,
           workspaceId,
           errorExcerpt:
-            error instanceof Error
-              ? getBoundedLogExcerpt(error.message)
-              : null,
+            error instanceof Error ? getBoundedLogExcerpt(error.message) : null,
         },
         "Failed to process Lemon Squeezy webhook."
       )

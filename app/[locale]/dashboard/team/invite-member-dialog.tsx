@@ -51,8 +51,7 @@ export function InviteMemberDialog({
   const queryClient = useQueryClient()
 
   const normalizedInput = search.trim()
-  const hasEnoughCharacters =
-    normalizedInput.length >= MEMBER_SEARCH_MIN_LENGTH
+  const hasEnoughCharacters = normalizedInput.length >= MEMBER_SEARCH_MIN_LENGTH
   const shouldSearch =
     open &&
     hasEnoughCharacters &&
@@ -211,7 +210,7 @@ export function InviteMemberDialog({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={gt("Search by name or email")}
-              className="pl-9 pr-28"
+              className="pr-28 pl-9"
             />
             <div className="pointer-events-none absolute top-1/2 right-3 flex min-w-20 -translate-y-1/2 items-center justify-end gap-1.5 text-xs text-muted-foreground">
               {searchStatusLabel ? (
@@ -247,7 +246,10 @@ export function InviteMemberDialog({
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={user.imageUrl ?? undefined} alt={label} />
+                        <AvatarImage
+                          src={user.imageUrl ?? undefined}
+                          alt={label}
+                        />
                         <AvatarFallback>{getInitials(label)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">

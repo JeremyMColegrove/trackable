@@ -79,7 +79,10 @@ export class McpLogService {
     authContext: McpAuthContext,
     input: McpLogSearchInput
   ): Promise<McpLogSearchResult> {
-    const trackable = await mcpTrackableService.assertAccess(trackableId, authContext)
+    const trackable = await mcpTrackableService.assertAccess(
+      trackableId,
+      authContext
+    )
 
     if (trackable.kind !== "api_ingestion") {
       throw new McpToolError(
@@ -129,7 +132,10 @@ export class McpLogService {
     logId: string,
     authContext: McpAuthContext
   ): Promise<McpLogDetail> {
-    const trackable = await mcpTrackableService.assertAccess(trackableId, authContext)
+    const trackable = await mcpTrackableService.assertAccess(
+      trackableId,
+      authContext
+    )
 
     if (trackable.kind !== "api_ingestion") {
       throw new McpToolError(

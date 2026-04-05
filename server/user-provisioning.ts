@@ -8,7 +8,9 @@ import { users } from "@/db/schema"
 import { createDefaultWorkspaceForUser } from "@/server/workspaces"
 
 function getPrimaryEmail(
-  user: Awaited<ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>>
+  user: Awaited<
+    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
+  >
 ) {
   if (user.primaryEmailAddressId) {
     const primaryEmail = user.emailAddresses.find(
@@ -24,7 +26,9 @@ function getPrimaryEmail(
 }
 
 function getDisplayName(
-  user: Awaited<ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>>
+  user: Awaited<
+    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
+  >
 ) {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ")
 
@@ -32,7 +36,9 @@ function getDisplayName(
 }
 
 function getIsProfilePrivate(
-  user: Awaited<ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>>
+  user: Awaited<
+    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
+  >
 ) {
   return user.publicMetadata?.isProfilePrivate === true
 }

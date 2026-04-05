@@ -6,7 +6,8 @@ import { mcpCreateFormToolInputSchema } from "@/lib/mcp-form-tool-schema"
 
 describe("mcpCreateFormToolInputSchema", () => {
   it("uses a discriminated union for field config with typed rating constraints", () => {
-    const formSchema = mcpCreateFormToolInputSchema.form as z.ZodObject<z.ZodRawShape>
+    const formSchema =
+      mcpCreateFormToolInputSchema.form as z.ZodObject<z.ZodRawShape>
     const fieldsSchema = formSchema.shape.fields as z.ZodArray<z.ZodType>
     const fieldSchema = fieldsSchema.element as z.ZodObject<z.ZodRawShape>
     const configSchema = fieldSchema.shape.config as z.ZodType
@@ -17,7 +18,8 @@ describe("mcpCreateFormToolInputSchema", () => {
     )
 
     assert.equal(
-      configSchema.safeParse({ kind: "rating", scale: 5, icon: "star" }).success,
+      configSchema.safeParse({ kind: "rating", scale: 5, icon: "star" })
+        .success,
       true
     )
     assert.equal(
@@ -29,7 +31,8 @@ describe("mcpCreateFormToolInputSchema", () => {
   })
 
   it("documents checkbox options without requiring agent-supplied ids", () => {
-    const formSchema = mcpCreateFormToolInputSchema.form as z.ZodObject<z.ZodRawShape>
+    const formSchema =
+      mcpCreateFormToolInputSchema.form as z.ZodObject<z.ZodRawShape>
     const fieldsSchema = formSchema.shape.fields as z.ZodArray<z.ZodType>
     const fieldSchema = fieldsSchema.element as z.ZodObject<z.ZodRawShape>
     const configSchema = fieldSchema.shape.config as z.ZodType

@@ -10,7 +10,7 @@ import {
   formatUsageUserAgent,
 } from "./display-utils"
 import type { UsageHitRow } from "./table-types"
-import { useGT } from "gt-next";
+import { useGT } from "gt-next"
 
 export const usageHitColumns: ColumnDef<UsageHitRow>[] = [
   {
@@ -27,7 +27,7 @@ export const usageHitColumns: ColumnDef<UsageHitRow>[] = [
       <DataTableColumnHeader column={column} title="Metadata" />
     ),
     cell: ({ row }) => (
-      <div className="whitespace-normal break-words text-muted-foreground">
+      <div className="break-words whitespace-normal text-muted-foreground">
         {formatUsagePayload(row.original.payload) || "No metadata"}
       </div>
     ),
@@ -39,7 +39,7 @@ export const usageHitColumns: ColumnDef<UsageHitRow>[] = [
       <DataTableColumnHeader column={column} title="User Agent" />
     ),
     cell: ({ row }) => (
-      <div className="whitespace-normal break-words text-muted-foreground">
+      <div className="break-words whitespace-normal text-muted-foreground">
         {formatUsageUserAgent(row.original.metadata)}
       </div>
     ),

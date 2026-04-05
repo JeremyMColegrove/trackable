@@ -9,7 +9,10 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import type { McpAuthContext, McpToolName } from "@/server/mcp/auth/mcp-auth-context"
+import type {
+  McpAuthContext,
+  McpToolName,
+} from "@/server/mcp/auth/mcp-auth-context"
 
 /** Every MCP tool class must implement this interface. */
 export interface McpTool {

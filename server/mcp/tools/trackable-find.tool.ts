@@ -21,7 +21,10 @@ export class FindTrackablesTool implements McpTool {
   readonly name = "find_trackables" as const
 
   constructor(
-    private readonly trackableService: Pick<McpTrackableService, "findAccessible">,
+    private readonly trackableService: Pick<
+      McpTrackableService,
+      "findAccessible"
+    >,
     private readonly auditService: Pick<McpAuditService, "record">
   ) {}
 
@@ -49,9 +52,7 @@ export class FindTrackablesTool implements McpTool {
             .trim()
             .max(200)
             .optional()
-            .describe(
-              "Optional fuzzy search text for trackable name or slug."
-            ),
+            .describe("Optional fuzzy search text for trackable name or slug."),
           kind: z
             .enum(["survey", "api_ingestion"])
             .optional()
@@ -71,7 +72,9 @@ export class FindTrackablesTool implements McpTool {
             .max(25)
             .optional()
             .default(10)
-            .describe("Maximum number of results to return (1-25). Default: 10."),
+            .describe(
+              "Maximum number of results to return (1-25). Default: 10."
+            ),
         },
       },
       async (args) => {
@@ -84,12 +87,15 @@ export class FindTrackablesTool implements McpTool {
             )
           }
 
-          const result = await this.trackableService.findAccessible(authContext, {
-            query: args.query,
-            kind: args.kind,
-            workspaceId: args.workspace_id,
-            limit: args.limit,
-          })
+          const result = await this.trackableService.findAccessible(
+            authContext,
+            {
+              query: args.query,
+              kind: args.kind,
+              workspaceId: args.workspace_id,
+              limit: args.limit,
+            }
+          )
 
           this.auditService.record({
             userId: authContext.userId,

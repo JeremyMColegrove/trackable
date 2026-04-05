@@ -56,9 +56,7 @@ export function StatusPageCard({
           )}
         >
           {Icon ? (
-            <div
-              className={cn("rounded-full p-3", variantClassNames[variant])}
-            >
+            <div className={cn("rounded-full p-3", variantClassNames[variant])}>
               <Icon className="size-8" />
             </div>
           ) : null}

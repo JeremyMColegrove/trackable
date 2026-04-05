@@ -13,7 +13,6 @@ export function getPublicAppConfig(): PublicAppConfig {
     workspaceBillingEnabled: getWorkspaceBillingEnabled(),
     workspacePlans: getWorkspaceTierPlans(),
     defaultTierId: getDefaultTierId(),
-    customMCPServerTokens:
-      getRuntimeConfig().features.customMCPServerTokens,
+    customMCPServerTokens: getRuntimeConfig().features.customMCPServerTokens,
   }
 }

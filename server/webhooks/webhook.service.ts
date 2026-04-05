@@ -121,7 +121,10 @@ export class WebhookService {
     return webhooks.map((record) => new WorkspaceWebhookEntity(record))
   }
 
-  async attachWebhookToTrackable(input: AttachWebhookToTrackableInput, userId: string) {
+  async attachWebhookToTrackable(
+    input: AttachWebhookToTrackableInput,
+    userId: string
+  ) {
     const [trackable, webhook] = await Promise.all([
       this.repository.getTrackable(input.trackableId),
       this.requireWorkspaceWebhook(input.webhookId),
@@ -141,7 +144,10 @@ export class WebhookService {
       })
     }
 
-    this.assertTriggerRulesCompatible(trackable.kind, webhook.toRecord().triggerRules)
+    this.assertTriggerRulesCompatible(
+      trackable.kind,
+      webhook.toRecord().triggerRules
+    )
 
     await this.repository.attachWebhookToTrackable({
       trackableId: input.trackableId,
@@ -158,9 +164,7 @@ export class WebhookService {
   }
 
   async saveTrackableWebhook(input: SaveTrackableWebhookInput, userId: string) {
-    const trackable = await this.repository.getTrackable(
-      input.trackableId
-    )
+    const trackable = await this.repository.getTrackable(input.trackableId)
 
     if (!trackable) {
       throw new TRPCError({
@@ -217,15 +221,14 @@ export class WebhookService {
 
     this.assertTriggerRulesCompatible(trackable.kind, input.triggerRules)
 
-    const draftTriggerRules: WebhookTriggerRuleRecord[] = input.triggerRules.map(
-      (rule, index) => ({
+    const draftTriggerRules: WebhookTriggerRuleRecord[] =
+      input.triggerRules.map((rule, index) => ({
         id: `draft-trigger-rule-${index + 1}`,
         webhookId: "draft-trackable-webhook",
         enabled: rule.enabled,
         position: index,
         config: rule.config,
-      })
-    )
+      }))
 
     const triggerRule =
       draftTriggerRules.find((rule) => rule.enabled) ?? draftTriggerRules[0]

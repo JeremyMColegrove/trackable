@@ -48,7 +48,9 @@ export class QuotaService {
       )
 
     if (Number(result.count) >= limits.maxTrackableItems) {
-      throw new LimitReachedError(getTrackableLimitMessage(limits.maxTrackableItems))
+      throw new LimitReachedError(
+        getTrackableLimitMessage(limits.maxTrackableItems)
+      )
     }
   }
 
@@ -116,7 +118,9 @@ export class QuotaService {
       )
 
     if (Number(result.count) >= limits.maxWorkspaceMembers) {
-      throw new LimitReachedError(getWorkspaceMemberLimitMessage(limits.maxWorkspaceMembers))
+      throw new LimitReachedError(
+        getWorkspaceMemberLimitMessage(limits.maxWorkspaceMembers)
+      )
     }
   }
 

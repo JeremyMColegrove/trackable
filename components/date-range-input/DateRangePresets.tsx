@@ -33,7 +33,10 @@ export function DateRangePresets({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div id={labelId} className="px-1 text-[11px] font-medium text-muted-foreground">
+      <div
+        id={labelId}
+        className="px-1 text-[11px] font-medium text-muted-foreground"
+      >
         Presets
       </div>
       <div

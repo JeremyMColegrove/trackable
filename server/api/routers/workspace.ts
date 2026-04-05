@@ -115,7 +115,10 @@ export const workspaceRouter = createTRPCRouter({
     })
 
     if (!workspace) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found." })
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Workspace not found.",
+      })
     }
 
     return workspace
@@ -130,7 +133,8 @@ export const workspaceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = getRequiredUserId(ctx)
 
-      const membership = await accessControlService.resolveActiveWorkspace(userId)
+      const membership =
+        await accessControlService.resolveActiveWorkspace(userId)
 
       await accessControlService.assertWorkspaceManagementAccess(
         userId,
@@ -169,9 +173,7 @@ export const workspaceRouter = createTRPCRouter({
         })
       }
 
-      await db
-        .delete(workspaces)
-        .where(eq(workspaces.id, input.workspaceId))
+      await db.delete(workspaces).where(eq(workspaces.id, input.workspaceId))
 
       return { ok: true }
     }),

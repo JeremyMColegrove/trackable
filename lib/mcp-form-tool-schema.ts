@@ -2,14 +2,13 @@ import { z } from "zod"
 
 const toolRatingConfigSchema = z.object({
   kind: z.literal("rating").describe('Must be "rating".'),
-  scale: z
-    .coerce
+  scale: z.coerce
     .number()
     .int()
     .min(3)
     .max(10)
     .describe(
-      "Number of rating choices. Integer from 3 to 10 — strings like \"5\" are accepted. Use 5 for a standard 1-5 rating."
+      'Number of rating choices. Integer from 3 to 10 — strings like "5" are accepted. Use 5 for a standard 1-5 rating.'
     ),
   icon: z
     .enum(["star", "thumb", "heart"])
@@ -60,20 +59,22 @@ const toolCheckboxesConfigSchema = z.object({
     .boolean()
     .optional()
     .describe("Whether responders can enter an additional free-form option."),
-  minSelections: z
-    .coerce
+  minSelections: z.coerce
     .number()
     .int()
     .min(0)
     .optional()
-    .describe("Optional minimum number of selected options. Strings like \"1\" are accepted."),
-  maxSelections: z
-    .coerce
+    .describe(
+      'Optional minimum number of selected options. Strings like "1" are accepted.'
+    ),
+  maxSelections: z.coerce
     .number()
     .int()
     .min(1)
     .optional()
-    .describe("Optional maximum number of selected options. Strings like \"3\" are accepted."),
+    .describe(
+      'Optional maximum number of selected options. Strings like "3" are accepted.'
+    ),
 })
 
 const toolNotesConfigSchema = z.object({
@@ -83,14 +84,15 @@ const toolNotesConfigSchema = z.object({
     .max(160)
     .optional()
     .describe("Optional placeholder text shown in the textarea."),
-  maxLength: z
-    .coerce
+  maxLength: z.coerce
     .number()
     .int()
     .min(1)
     .max(5000)
     .optional()
-    .describe("Optional maximum character count, from 1 to 5000. Strings like \"500\" are accepted."),
+    .describe(
+      'Optional maximum character count, from 1 to 5000. Strings like "500" are accepted.'
+    ),
 })
 
 const toolShortTextConfigSchema = z.object({
@@ -100,14 +102,15 @@ const toolShortTextConfigSchema = z.object({
     .max(160)
     .optional()
     .describe("Optional placeholder text shown in the input."),
-  maxLength: z
-    .coerce
+  maxLength: z.coerce
     .number()
     .int()
     .min(1)
     .max(500)
     .optional()
-    .describe("Optional maximum character count, from 1 to 500. Strings like \"200\" are accepted."),
+    .describe(
+      'Optional maximum character count, from 1 to 500. Strings like "200" are accepted.'
+    ),
 })
 
 export const mcpToolFieldConfigSchema = z
@@ -118,14 +121,16 @@ export const mcpToolFieldConfigSchema = z
     toolShortTextConfigSchema,
   ])
   .describe(
-    'Field-type-specific configuration. Use the branch that matches the field kind. Required shapes: rating requires scale; checkboxes requires options with label and value; notes supports optional placeholder and maxLength; short_text supports optional placeholder and maxLength.'
+    "Field-type-specific configuration. Use the branch that matches the field kind. Required shapes: rating requires scale; checkboxes requires options with label and value; notes supports optional placeholder and maxLength; short_text supports optional placeholder and maxLength."
   )
 
 export const mcpCreateFormToolInputSchema = {
   trackable_id: z
     .string()
     .uuid("trackable_id must be a valid UUID")
-    .describe("UUID of an existing survey-kind trackable to create the form on."),
+    .describe(
+      "UUID of an existing survey-kind trackable to create the form on."
+    ),
   form: z
     .object({
       title: z
@@ -137,7 +142,9 @@ export const mcpCreateFormToolInputSchema = {
         .string()
         .max(280)
         .optional()
-        .describe("Optional description shown below the title (max 280 characters)."),
+        .describe(
+          "Optional description shown below the title (max 280 characters)."
+        ),
       status: z
         .enum(["draft", "published"])
         .optional()
@@ -156,7 +163,9 @@ export const mcpCreateFormToolInputSchema = {
         .string()
         .max(280)
         .optional()
-        .describe("Message shown to responders after submitting (max 280 characters)."),
+        .describe(
+          "Message shown to responders after submitting (max 280 characters)."
+        ),
       fields: z
         .array(
           z.object({
@@ -186,7 +195,9 @@ export const mcpCreateFormToolInputSchema = {
               .boolean()
               .optional()
               .default(false)
-              .describe("Whether this field must be filled before submission. Defaults to false if omitted."),
+              .describe(
+                "Whether this field must be filled before submission. Defaults to false if omitted."
+              ),
             config: mcpToolFieldConfigSchema,
           })
         )

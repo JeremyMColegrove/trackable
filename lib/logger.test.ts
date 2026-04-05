@@ -10,7 +10,9 @@ import {
 
 test("getSanitizedPostgresTarget returns a safe host summary", () => {
   assert.deepEqual(
-    getSanitizedPostgresTarget("postgresql://trackables:secret@db.internal:5432/app"),
+    getSanitizedPostgresTarget(
+      "postgresql://trackables:secret@db.internal:5432/app"
+    ),
     {
       protocol: "postgresql",
       host: "db.internal",

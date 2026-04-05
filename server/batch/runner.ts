@@ -96,7 +96,10 @@ export class BatchJobRunner {
       getBatchLogger({
         jobKey: jobRecord.key,
         trigger,
-      }).warn({ status: "skipped" }, "Skipped batch job run because the job is disabled.")
+      }).warn(
+        { status: "skipped" },
+        "Skipped batch job run because the job is disabled."
+      )
 
       return {
         status: "skipped" as const,
@@ -121,7 +124,10 @@ export class BatchJobRunner {
       getBatchLogger({
         jobKey: jobRecord.key,
         trigger,
-      }).warn({ status: "skipped" }, "Skipped batch job run because another run already holds the lease.")
+      }).warn(
+        { status: "skipped" },
+        "Skipped batch job run because another run already holds the lease."
+      )
 
       return {
         status: "skipped" as const,

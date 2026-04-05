@@ -44,10 +44,7 @@ export function WebhooksPageClient() {
 
   if (!trackable.permissions.canManageSettings) {
     return (
-      <TrackablePageFrame
-        title={gt("Webhooks")}
-        description={description}
-      >
+      <TrackablePageFrame title={gt("Webhooks")} description={description}>
         <div className="rounded-2xl border border-dashed px-6 py-10 text-sm text-muted-foreground">
           <T>
             You have view access to this trackable, but only editors can manage
@@ -59,10 +56,7 @@ export function WebhooksPageClient() {
   }
 
   return (
-    <TrackablePageFrame
-      title={gt("Webhooks")}
-      description={description}
-    >
+    <TrackablePageFrame title={gt("Webhooks")} description={description}>
       <Tabs defaultValue="generic" className="w-full">
         <TabsList className="grid w-full max-w-[400px] grid-cols-2">
           <TabsTrigger value="generic">
@@ -75,16 +69,10 @@ export function WebhooksPageClient() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="generic">
-          <TrackableWebhookTab 
-            trackableId={trackable.id} 
-            provider="generic" 
-          />
+          <TrackableWebhookTab trackableId={trackable.id} provider="generic" />
         </TabsContent>
         <TabsContent value="discord">
-          <TrackableWebhookTab 
-            trackableId={trackable.id} 
-            provider="discord" 
-          />
+          <TrackableWebhookTab trackableId={trackable.id} provider="discord" />
         </TabsContent>
       </Tabs>
     </TrackablePageFrame>

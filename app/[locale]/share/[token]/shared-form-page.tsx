@@ -68,7 +68,8 @@ export function SharedFormPage({ token }: { token: string }) {
 
   if (
     sharedFormQuery.error?.data?.code === "PRECONDITION_FAILED" &&
-    sharedFormQuery.error.message === "This shared form link is no longer active."
+    sharedFormQuery.error.message ===
+      "This shared form link is no longer active."
   ) {
     return (
       <SharedFormStatusCard

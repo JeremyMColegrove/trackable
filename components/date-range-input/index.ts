@@ -12,10 +12,7 @@ export {
   formatExpandedDateTime,
 } from "./utils/format-date-range"
 export { parseDateRange } from "./utils/parse-date-range"
-export {
-  defaultDateRangePresets,
-  getPresetByKey,
-} from "./utils/presets"
+export { defaultDateRangePresets, getPresetByKey } from "./utils/presets"
 export type {
   DateRangeChangeMeta,
   DateRangeCommitReason,

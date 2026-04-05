@@ -82,7 +82,8 @@ export const MCP_TOOL_DEFINITIONS = [
   {
     name: "get_response_stats",
     label: "Get response stats",
-    description: "Aggregate statistics across all responses for a survey trackable.",
+    description:
+      "Aggregate statistics across all responses for a survey trackable.",
   },
   {
     name: "list_api_keys",

@@ -15,7 +15,10 @@ test("parseDateRange parses relative ranges ending at now", () => {
     return
   }
 
-  assert.equal(result.value.start.getTime(), new Date(2026, 2, 24, 8, 45, 0).getTime())
+  assert.equal(
+    result.value.start.getTime(),
+    new Date(2026, 2, 24, 8, 45, 0).getTime()
+  )
   assert.equal(result.value.end.getTime(), fixedNow.getTime())
   assert.equal(result.value.source, "custom")
 })
@@ -45,8 +48,14 @@ test("parseDateRange parses explicit typed ranges and swaps reversed values", ()
     return
   }
 
-  assert.equal(result.value.start.getTime(), new Date(2026, 2, 20, 9, 0, 0).getTime())
-  assert.equal(result.value.end.getTime(), new Date(2026, 2, 24, 9, 0, 0).getTime())
+  assert.equal(
+    result.value.start.getTime(),
+    new Date(2026, 2, 20, 9, 0, 0).getTime()
+  )
+  assert.equal(
+    result.value.end.getTime(),
+    new Date(2026, 2, 24, 9, 0, 0).getTime()
+  )
 })
 
 test("parseDateRange uses chrono-node dates for split inputs", () => {
@@ -79,8 +88,14 @@ test("parseDateRange handles natural language intervals", () => {
     return
   }
 
-  assert.equal(result.value.start.getTime(), new Date(2026, 2, 23, 9, 0, 0).getTime())
-  assert.equal(result.value.end.getTime(), new Date(2026, 2, 27, 17, 0, 0).getTime())
+  assert.equal(
+    result.value.start.getTime(),
+    new Date(2026, 2, 23, 9, 0, 0).getTime()
+  )
+  assert.equal(
+    result.value.end.getTime(),
+    new Date(2026, 2, 27, 17, 0, 0).getTime()
+  )
 })
 
 test("parseDateRange rejects future ranges by default", () => {

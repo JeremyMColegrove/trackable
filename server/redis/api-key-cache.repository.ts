@@ -29,7 +29,9 @@ export class ApiKeyCacheRepository extends BaseCacheRepository<CachedApiKeyValid
     super("api-key-validation", 300) // 5 minutes TTL
   }
 
-  protected async fetchFallback(combinedId: string): Promise<CachedApiKeyValidation | null> {
+  protected async fetchFallback(
+    combinedId: string
+  ): Promise<CachedApiKeyValidation | null> {
     const [keyPrefix, secretHash] = combinedId.split(":")
 
     const apiKey = await db.query.apiKeys.findFirst({
@@ -71,11 +73,17 @@ export class ApiKeyCacheRepository extends BaseCacheRepository<CachedApiKeyValid
     return { apiKey, project }
   }
 
-  async getValidation(keyPrefix: string, secretHash: string): Promise<CachedApiKeyValidation | null> {
+  async getValidation(
+    keyPrefix: string,
+    secretHash: string
+  ): Promise<CachedApiKeyValidation | null> {
     return this.get(`${keyPrefix}:${secretHash}`)
   }
 
-  async invalidateValidation(keyPrefix: string, secretHash: string): Promise<void> {
+  async invalidateValidation(
+    keyPrefix: string,
+    secretHash: string
+  ): Promise<void> {
     await this.delete(`${keyPrefix}:${secretHash}`)
   }
 }

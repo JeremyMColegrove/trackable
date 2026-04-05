@@ -136,8 +136,7 @@ export class McpFormService {
       return {
         hasForm: false,
         trackableId,
-        message:
-          "This trackable has no form yet. Use create_form to add one.",
+        message: "This trackable has no form yet. Use create_form to add one.",
       }
     }
 

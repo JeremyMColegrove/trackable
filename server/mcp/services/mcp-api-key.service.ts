@@ -140,10 +140,7 @@ export class McpApiKeyService {
     await this.assertApiIngestionAccess(trackableId, authContext)
 
     const existingKey = await db.query.apiKeys.findFirst({
-      where: and(
-        eq(apiKeys.id, apiKeyId),
-        eq(apiKeys.projectId, trackableId)
-      ),
+      where: and(eq(apiKeys.id, apiKeyId), eq(apiKeys.projectId, trackableId)),
       columns: {
         id: true,
         status: true,

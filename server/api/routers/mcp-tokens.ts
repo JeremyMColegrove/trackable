@@ -52,9 +52,7 @@ export const mcpTokensRouter = createTRPCRouter({
       const userId = getRequiredUserId(ctx)
 
       // Generate token: trk_mcp_<32 chars base64url>
-      const rawSuffix = randomBytes(24)
-        .toString("base64url")
-        .slice(0, 32)
+      const rawSuffix = randomBytes(24).toString("base64url").slice(0, 32)
       const rawToken = `trk_mcp_${rawSuffix}`
 
       const keyPrefix = rawToken.slice(0, 20)

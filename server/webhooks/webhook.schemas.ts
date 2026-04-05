@@ -27,7 +27,11 @@ export const logMatchTriggerConfigSchema = z.object({
 export const logCountMatchTriggerConfigSchema = z.object({
   type: z.literal("log_count_match"),
   liqeQuery: z.string().trim().min(1).max(500),
-  windowMinutes: z.number().int().min(1).max(24 * 60),
+  windowMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60),
   matchCount: z.number().int().min(1).max(100_000),
 })
 
@@ -93,7 +97,9 @@ export const saveTrackableWebhookInputSchema = z.object({
     .max(20),
 })
 
-export type SaveTrackableWebhookInput = z.infer<typeof saveTrackableWebhookInputSchema>
+export type SaveTrackableWebhookInput = z.infer<
+  typeof saveTrackableWebhookInputSchema
+>
 
 export const testTrackableWebhookInputSchema = saveTrackableWebhookInputSchema
 

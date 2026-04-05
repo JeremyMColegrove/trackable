@@ -104,7 +104,10 @@ export class McpResponseService {
     authContext: McpAuthContext,
     input: McpResponseListInput = {}
   ): Promise<McpResponseListResult> {
-    const trackable = await mcpTrackableService.assertAccess(trackableId, authContext)
+    const trackable = await mcpTrackableService.assertAccess(
+      trackableId,
+      authContext
+    )
 
     if (trackable.kind !== "survey") {
       throw new McpToolError(
@@ -149,7 +152,8 @@ export class McpResponseService {
     const nextCursor = hasMore ? (pageRows.at(-1)?.id ?? null) : null
 
     const responses: McpResponseSummary[] = pageRows.map((row) => {
-      const snapshot = row.submissionSnapshot as TrackableSubmissionSnapshot | null
+      const snapshot =
+        row.submissionSnapshot as TrackableSubmissionSnapshot | null
       const fieldSummaries: Record<string, string> = {}
 
       if (snapshot?.answers) {
@@ -282,7 +286,8 @@ export class McpResponseService {
     >()
 
     for (const row of rows) {
-      const snapshot = row.submissionSnapshot as TrackableSubmissionSnapshot | null
+      const snapshot =
+        row.submissionSnapshot as TrackableSubmissionSnapshot | null
       if (!snapshot?.answers) continue
 
       for (const answer of snapshot.answers) {
@@ -307,7 +312,11 @@ export class McpResponseService {
           }
         } else if (fieldKind === "notes" || fieldKind === "short_text") {
           if (!textAccum.has(fieldKey)) {
-            textAccum.set(fieldKey, { label: fieldLabel, kind: fieldKind, samples: [] })
+            textAccum.set(fieldKey, {
+              label: fieldLabel,
+              kind: fieldKind,
+              samples: [],
+            })
           }
           const acc = textAccum.get(fieldKey)!
           const text = (value.value as string)?.trim()
@@ -327,9 +336,10 @@ export class McpResponseService {
         kind: "rating",
         label: acc.label,
         responseCount,
-        average: responseCount > 0
-          ? Math.round((acc.sum / responseCount) * 100) / 100
-          : 0,
+        average:
+          responseCount > 0
+            ? Math.round((acc.sum / responseCount) * 100) / 100
+            : 0,
         distribution: acc.dist,
       })
     }
@@ -380,7 +390,9 @@ function summarizeAnswer(value: { kind: string; value: unknown }): string {
     case "rating":
       return String(value.value)
     case "checkboxes":
-      return Array.isArray(value.value) ? value.value.join(", ") : String(value.value)
+      return Array.isArray(value.value)
+        ? value.value.join(", ")
+        : String(value.value)
     case "notes":
     case "short_text":
       return typeof value.value === "string" ? value.value : String(value.value)

@@ -23,7 +23,9 @@ export class WebhookDispatchService {
     >
   ) {}
 
-  async dispatch(context: WebhookDeliveryContext): Promise<WebhookExecutionResult> {
+  async dispatch(
+    context: WebhookDeliveryContext
+  ): Promise<WebhookExecutionResult> {
     const provider = this.providerRegistry.get(context.webhook.provider)
     const deliveryRequest = provider.buildRequest(context)
     const target = getWebhookTargetSummary(deliveryRequest.request.url)
@@ -59,7 +61,9 @@ export class WebhookDispatchService {
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown webhook delivery failure."
+        error instanceof Error
+          ? error.message
+          : "Unknown webhook delivery failure."
 
       logger.error(
         {
@@ -101,7 +105,9 @@ export class WebhookDispatchService {
     }
   }
 
-  async sendTest(context: WebhookDeliveryContext): Promise<WebhookExecutionResult> {
+  async sendTest(
+    context: WebhookDeliveryContext
+  ): Promise<WebhookExecutionResult> {
     const provider = this.providerRegistry.get(context.webhook.provider)
     const deliveryRequest = provider.buildRequest(context)
 

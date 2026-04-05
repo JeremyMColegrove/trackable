@@ -29,12 +29,19 @@ export class UsageEventResultBuilder {
     }
 
     const rows = input.rows.map((row) =>
-      buildGroupedUsageEventRow(row, input.aggregateField, input.totalMatchedEvents)
+      buildGroupedUsageEventRow(
+        row,
+        input.aggregateField,
+        input.totalMatchedEvents
+      )
     )
 
     return {
       availableAggregateFields: input.availableAggregateFields,
-      columns: buildUsageEventColumns(input.input.aggregation, input.aggregateField),
+      columns: buildUsageEventColumns(
+        input.input.aggregation,
+        input.aggregateField
+      ),
       hasMore: input.hasMore,
       nextCursor: input.nextCursor,
       rows,

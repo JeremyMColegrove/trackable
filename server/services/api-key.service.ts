@@ -109,7 +109,10 @@ export class ApiKeyService {
         status: apiKeys.status,
       })
 
-    await apiKeyCache.invalidateValidation(existingKey.keyPrefix, existingKey.secretHash)
+    await apiKeyCache.invalidateValidation(
+      existingKey.keyPrefix,
+      existingKey.secretHash
+    )
 
     return revokedKey
   }

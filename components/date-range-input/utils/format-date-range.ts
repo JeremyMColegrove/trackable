@@ -34,7 +34,9 @@ function isSameYear(left: Date, right: Date) {
 }
 
 function formatDateTime(date: Date, includeYear: boolean) {
-  const dateLabel = includeYear ? formatMonthDayYear(date) : formatMonthDay(date)
+  const dateLabel = includeYear
+    ? formatMonthDayYear(date)
+    : formatMonthDay(date)
 
   return `${dateLabel}, ${formatTime(date)}`
 }

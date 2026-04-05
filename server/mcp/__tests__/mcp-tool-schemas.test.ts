@@ -24,12 +24,18 @@ const VALID_UUID_2 = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 
 function passes(schema: z.ZodTypeAny, value: unknown): void {
   const result = schema.safeParse(value)
-  assert.ok(result.success, `Expected schema to accept ${JSON.stringify(value)}`)
+  assert.ok(
+    result.success,
+    `Expected schema to accept ${JSON.stringify(value)}`
+  )
 }
 
 function fails(schema: z.ZodTypeAny, value: unknown): void {
   const result = schema.safeParse(value)
-  assert.ok(!result.success, `Expected schema to reject ${JSON.stringify(value)}`)
+  assert.ok(
+    !result.success,
+    `Expected schema to reject ${JSON.stringify(value)}`
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -132,7 +138,11 @@ describe("create_trackable input schema", () => {
   })
 
   it("rejects description longer than 500 characters", () => {
-    fails(schema, { kind: "survey", name: "Test", description: "D".repeat(501) })
+    fails(schema, {
+      kind: "survey",
+      name: "Test",
+      description: "D".repeat(501),
+    })
   })
 
   it("rejects non-UUID workspace_id", () => {
@@ -376,7 +386,12 @@ describe("create_api_key input schema", () => {
   })
 
   it("accepts all expiration values", () => {
-    for (const expiration of ["never", "30_days", "60_days", "90_days"] as const) {
+    for (const expiration of [
+      "never",
+      "30_days",
+      "60_days",
+      "90_days",
+    ] as const) {
       passes(schema, { trackable_id: VALID_UUID, name: "Key", expiration })
     }
   })
@@ -395,7 +410,11 @@ describe("create_api_key input schema", () => {
   })
 
   it("rejects invalid expiration", () => {
-    fails(schema, { trackable_id: VALID_UUID, name: "Key", expiration: "7_days" })
+    fails(schema, {
+      trackable_id: VALID_UUID,
+      name: "Key",
+      expiration: "7_days",
+    })
   })
 
   it("rejects non-UUID trackable_id", () => {

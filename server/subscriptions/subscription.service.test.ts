@@ -1,10 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import {
-  getDefaultTierId,
-  getLimitsForTier,
-} from "@/lib/subscription-plans"
+import { getDefaultTierId, getLimitsForTier } from "@/lib/subscription-plans"
 import { SubscriptionService } from "@/server/subscriptions/subscription.service"
 import type {
   WorkspaceSubscriptionState,

@@ -230,8 +230,7 @@ function stripRegexNoOpFlags(query: string) {
     const flags = query.slice(closingSlashIndex + 1, flagIndex)
     const normalizedFlags = flags.replaceAll("o", "").replaceAll("O", "")
 
-    result +=
-      query.slice(index, closingSlashIndex + 1) + normalizedFlags
+    result += query.slice(index, closingSlashIndex + 1) + normalizedFlags
     index = flagIndex
   }
 

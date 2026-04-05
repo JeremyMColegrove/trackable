@@ -257,13 +257,19 @@ export function WorkspaceTierDialog({
                 isMostPopular && !isCurrent && !isCurrentTierAboveMostPopular
               const isFree = !plan.lemonSqueezyVariantId
               const isPreSelected =
-                initialTier !== undefined && tierId === initialTier && !isCurrent
+                initialTier !== undefined &&
+                tierId === initialTier &&
+                !isCurrent
               const isLoadingThisPlan =
                 !isFree &&
                 plan.lemonSqueezyVariantId !== null &&
                 loadingVariantId === plan.lemonSqueezyVariantId
               const isAnyLoading = loadingVariantId !== null
-              const ctaLabel = getPlanCtaLabel(plan.rank, currentRank, isCurrent)
+              const ctaLabel = getPlanCtaLabel(
+                plan.rank,
+                currentRank,
+                isCurrent
+              )
 
               return (
                 <div

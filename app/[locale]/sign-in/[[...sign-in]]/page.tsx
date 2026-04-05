@@ -10,12 +10,11 @@ import { SignInPageEntry } from "./sign-in-page-entry"
 
 export const metadata: Metadata = createNoIndexMetadata({
   title: "Sign in",
-  description: "Sign in to manage forms, responses, and API usage in Trackables.",
+  description:
+    "Sign in to manage forms, responses, and API usage in Trackables.",
 })
 
-function resolveRedirectUrl(
-  redirectUrl: string | string[] | undefined
-) {
+function resolveRedirectUrl(redirectUrl: string | string[] | undefined) {
   return typeof redirectUrl === "string" && redirectUrl.length > 0
     ? redirectUrl
     : "/dashboard"

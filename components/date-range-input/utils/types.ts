@@ -37,13 +37,9 @@ export type ParseDateRangeFailure = {
   error: string
 }
 
-export type ParseDateRangeResult =
-  | ParseDateRangeSuccess
-  | ParseDateRangeFailure
+export type ParseDateRangeResult = ParseDateRangeSuccess | ParseDateRangeFailure
 
-export function normalizeDateRangeValue(
-  value: DateRangeValue
-): DateRangeValue {
+export function normalizeDateRangeValue(value: DateRangeValue): DateRangeValue {
   if (value.start.getTime() <= value.end.getTime()) {
     return value
   }

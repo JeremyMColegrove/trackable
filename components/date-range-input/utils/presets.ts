@@ -52,10 +52,7 @@ export const defaultDateRangePresets: DateRangePreset[] = [
   createRelativePreset("past_90_days", "Past 90 days", 90 * DAY_IN_MS),
 ]
 
-export function getPresetByKey(
-  presets: DateRangePreset[],
-  presetKey?: string
-) {
+export function getPresetByKey(presets: DateRangePreset[], presetKey?: string) {
   if (!presetKey) {
     return null
   }

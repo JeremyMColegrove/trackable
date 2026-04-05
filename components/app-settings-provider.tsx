@@ -83,7 +83,8 @@ export function AppSettingsProvider({
         defaultTierId,
         customMCPServerTokens: settings?.customMCPServerTokens ?? false,
         getWorkspacePlan: (tierId) => plansByTierId[tierId],
-        getTierLimits: (tierId) => plansByTierId[tierId]?.limits ?? UNLIMITED_LIMITS,
+        getTierLimits: (tierId) =>
+          plansByTierId[tierId]?.limits ?? UNLIMITED_LIMITS,
         resolveWorkspaceTierFromVariantId: (variantId) =>
           workspacePlans.find(
             (plan) => plan.lemonSqueezyVariantId === variantId

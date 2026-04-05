@@ -54,9 +54,7 @@ class StubDeliveryRepository {
   }
 }
 
-function buildContext(
-  provider: "discord" | "generic"
-): WebhookDeliveryContext {
+function buildContext(provider: "discord" | "generic"): WebhookDeliveryContext {
   return {
     webhook: {
       id: "webhook-1",
@@ -173,7 +171,10 @@ test("Discord webhook delivery sends an embed-shaped payload", async () => {
   )
 
   const body = JSON.parse(httpClient.requests[0]?.body ?? "{}") as {
-    embeds?: Array<{ title: string; fields: Array<{ name: string; value: string }> }>
+    embeds?: Array<{
+      title: string
+      fields: Array<{ name: string; value: string }>
+    }>
     username?: string
   }
   assert.equal(body.username, "Trackable Bot")

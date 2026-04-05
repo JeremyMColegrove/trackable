@@ -1,7 +1,4 @@
-import {
-  getDefaultTierId,
-  getLimitsForTier,
-} from "@/lib/subscription-plans"
+import { getDefaultTierId, getLimitsForTier } from "@/lib/subscription-plans"
 import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
 import type {
   ResolvedSubscriptionState,

@@ -38,7 +38,9 @@ class InMemoryWebhookRepository {
   ) {}
 
   async listWorkspaceWebhooks(workspaceId: string) {
-    return this.webhooks.filter((webhook) => webhook.workspaceId === workspaceId)
+    return this.webhooks.filter(
+      (webhook) => webhook.workspaceId === workspaceId
+    )
   }
 
   async getWorkspaceWebhookById(webhookId: string) {
@@ -68,7 +70,8 @@ class InMemoryWebhookRepository {
     trackableId: string
     webhookId: string
   }) {
-    const existing = this.attachments.get(input.trackableId) ?? new Set<string>()
+    const existing =
+      this.attachments.get(input.trackableId) ?? new Set<string>()
     existing.add(input.webhookId)
     this.attachments.set(input.trackableId, existing)
   }
@@ -80,7 +83,9 @@ class InMemoryWebhookRepository {
     this.attachments.get(input.trackableId)?.delete(input.webhookId)
   }
 
-  async listTrackableWebhooks(trackableId: string): Promise<AttachedWebhookRecord[]> {
+  async listTrackableWebhooks(
+    trackableId: string
+  ): Promise<AttachedWebhookRecord[]> {
     const attachedIds = this.attachments.get(trackableId) ?? new Set<string>()
 
     return this.webhooks
@@ -120,14 +125,14 @@ function buildWebhookRecord(): WorkspaceWebhookRecord {
 }
 
 test("workspace webhooks can be reused across multiple trackables in the same workspace", async () => {
-  const repository = new InMemoryWebhookRepository(
-    [buildWebhookRecord()],
-    {
-      "trackable-1": { workspaceId: "workspace-1" },
-      "trackable-2": { workspaceId: "workspace-1" },
-    }
+  const repository = new InMemoryWebhookRepository([buildWebhookRecord()], {
+    "trackable-1": { workspaceId: "workspace-1" },
+    "trackable-2": { workspaceId: "workspace-1" },
+  })
+  const service = new WebhookService(
+    repository as never,
+    new StubDispatchService() as never
   )
-  const service = new WebhookService(repository as never, new StubDispatchService() as never)
 
   await service.attachWebhookToTrackable(
     {
@@ -206,12 +211,9 @@ test("webhook test delivery throws when the downstream webhook request fails", a
 })
 
 test("trackable webhook drafts can be tested before they are saved", async () => {
-  const repository = new InMemoryWebhookRepository(
-    [],
-    {
-      "trackable-1": { workspaceId: "workspace-1" },
-    }
-  )
+  const repository = new InMemoryWebhookRepository([], {
+    "trackable-1": { workspaceId: "workspace-1" },
+  })
   const dispatchService = new StubDispatchService()
   const service = new WebhookService(
     repository as never,

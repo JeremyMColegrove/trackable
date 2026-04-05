@@ -4,7 +4,10 @@ import type { WebhookProvider } from "@/db/schema/types"
 import type { WebhookProviderContract } from "@/server/webhooks/webhook.types"
 
 export class WebhookProviderRegistry {
-  private readonly providers = new Map<WebhookProvider, WebhookProviderContract>()
+  private readonly providers = new Map<
+    WebhookProvider,
+    WebhookProviderContract
+  >()
 
   constructor(providers: WebhookProviderContract[]) {
     for (const provider of providers) {

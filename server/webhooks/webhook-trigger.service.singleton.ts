@@ -16,7 +16,9 @@ function getWebhookTriggerService() {
 }
 
 export const webhookTriggerService = {
-  handleUsageEventRecorded(event: Parameters<WebhookTriggerService["handleUsageEventRecorded"]>[0]) {
+  handleUsageEventRecorded(
+    event: Parameters<WebhookTriggerService["handleUsageEventRecorded"]>[0]
+  ) {
     return getWebhookTriggerService().handleUsageEventRecorded(event)
   },
   handleSurveyResponseRecorded(

@@ -68,7 +68,7 @@ export class LogSearchTool implements McpTool {
             .optional()
             .describe(
               "Optional payload field to group matching log events by. " +
-                'Examples: `event`, `route`, `status`.'
+                "Examples: `event`, `route`, `status`."
             ),
           from: z
             .string()

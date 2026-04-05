@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server"
 
 const MARKDOWN = `# Trackables MCP Server
 
@@ -53,14 +53,14 @@ All requests require a valid OAuth access token issued by Clerk. The token opera
 - When the user does not specify a workspace, omit the workspace ID — tools default to the active workspace.
 - Use \`find_trackables\` before any action that targets an existing trackable — it is faster than \`list_trackables\` and handles partial name matches.
 - \`create_form\` replaces the existing form definition; fetch the current one first if you intend to make partial edits.
-`;
+`
 
 export async function GET(_req: NextRequest): Promise<Response> {
-	return new NextResponse(MARKDOWN, {
-		status: 200,
-		headers: {
-			"Content-Type": "text/markdown; charset=utf-8",
-			"Cache-Control": "public, max-age=3600",
-		},
-	});
+  return new NextResponse(MARKDOWN, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/markdown; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  })
 }

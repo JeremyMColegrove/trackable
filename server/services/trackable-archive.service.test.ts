@@ -24,14 +24,12 @@ let TrackableQueryService: typeof TrackableQueryServiceType
 
 before(async () => {
   ;({ db } = await import("@/db"))
-  ;({ accessControlService, AccessControlService } = await import(
-    "@/server/services/access-control.service"
-  ))
+  ;({ accessControlService, AccessControlService } =
+    await import("@/server/services/access-control.service"))
   ;({ TrackableMutationService, assertTrackableArchiveConfirmation } =
     await import("@/server/services/trackable-mutation.service"))
-  ;({ TrackableQueryService } = await import(
-    "@/server/services/trackable-query.service"
-  ))
+  ;({ TrackableQueryService } =
+    await import("@/server/services/trackable-query.service"))
 })
 
 test("assertTrackableArchiveConfirmation rejects a mismatched confirmation name", () => {
@@ -67,25 +65,30 @@ test("TrackableMutationService.archive archives a trackable for a manager", asyn
 
   let archivedAtValue: Date | null = null
 
-  mock.method(db, "update", () => ({
-    set(values: { archivedAt: Date }) {
-      archivedAtValue = values.archivedAt
+  mock.method(
+    db,
+    "update",
+    () =>
+      ({
+        set(values: { archivedAt: Date }) {
+          archivedAtValue = values.archivedAt
 
-      return {
-        where() {
           return {
-            returning: async () => [
-              {
-                id: "trackable-1",
-                name: "Customer Feedback",
-                archivedAt: values.archivedAt,
-              },
-            ],
+            where() {
+              return {
+                returning: async () => [
+                  {
+                    id: "trackable-1",
+                    name: "Customer Feedback",
+                    archivedAt: values.archivedAt,
+                  },
+                ],
+              }
+            },
           }
         },
-      }
-    },
-  }) as never)
+      }) as never
+  )
 
   const service = new TrackableMutationService()
   const archived = await service.archive({
@@ -152,16 +155,12 @@ test("TrackableMutationService.archive rejects a mismatched confirmation name", 
 test("TrackableMutationService.archive rejects non-managers", async (t) => {
   t.after(() => mock.restoreAll())
 
-  mock.method(
-    accessControlService,
-    "assertTrackableAccess",
-    async () => {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Trackable not found.",
-      })
-    }
-  )
+  mock.method(accessControlService, "assertTrackableAccess", async () => {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Trackable not found.",
+    })
+  })
 
   const service = new TrackableMutationService()
 

@@ -89,7 +89,9 @@ export function useDateRangeInput({
     nextValue: DateRangeValue | null,
     meta: DateRangeChangeMeta
   ) {
-    const normalizedValue = nextValue ? normalizeDateRangeValue(nextValue) : null
+    const normalizedValue = nextValue
+      ? normalizeDateRangeValue(nextValue)
+      : null
 
     if (!isControlled) {
       setUncontrolledValue(normalizedValue)
@@ -157,7 +159,10 @@ export function useDateRangeInput({
     setError(null)
     setIsDirty(false)
     setDraftText(formatExpandedDateRange(parsedRange.value))
-    publishValue(parsedRange.value, createMeta(nextDraft, previousValue, reason))
+    publishValue(
+      parsedRange.value,
+      createMeta(nextDraft, previousValue, reason)
+    )
     return true
   }
 

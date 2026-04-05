@@ -1,4 +1,8 @@
-import type { BillingTierConfig, LimitsEntry, RuntimeConfig } from "@/lib/runtime-config"
+import type {
+  BillingTierConfig,
+  LimitsEntry,
+  RuntimeConfig,
+} from "@/lib/runtime-config"
 import { getRuntimeConfig } from "@/lib/runtime-config"
 import type { TierLimits } from "@/server/subscriptions/types"
 

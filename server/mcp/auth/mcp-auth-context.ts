@@ -37,17 +37,14 @@ export class McpAuthContextImpl implements McpAuthContext {
   readonly userId: string
   readonly scopes: readonly string[]
 
-  constructor(params: {
-    userId: string
-    scopes: readonly string[]
-  }) {
+  constructor(params: { userId: string; scopes: readonly string[] }) {
     this.userId = params.userId
     this.scopes = params.scopes
   }
 
   canUseTool(tool: McpToolName): boolean {
-    // Current behavior: Clerk doesn't support custom scopes yet, so we allow 
-    // all tools natively inside the MCP server. Permissions are enforced by the API 
+    // Current behavior: Clerk doesn't support custom scopes yet, so we allow
+    // all tools natively inside the MCP server. Permissions are enforced by the API
     // data layers dynamically based on userId.
     return true
   }

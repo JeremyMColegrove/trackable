@@ -196,8 +196,12 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle><T>Sidebar</T></SheetTitle>
-            <SheetDescription><T>Displays the mobile sidebar.</T></SheetDescription>
+            <SheetTitle>
+              <T>Sidebar</T>
+            </SheetTitle>
+            <SheetDescription>
+              <T>Displays the mobile sidebar.</T>
+            </SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -272,13 +276,15 @@ function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only"><T>Toggle Sidebar</T></span>
+      <span className="sr-only">
+        <T>Toggle Sidebar</T>
+      </span>
     </Button>
   )
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-    const gt = useGT();
+  const gt = useGT()
   const { toggleSidebar } = useSidebar()
 
   return (

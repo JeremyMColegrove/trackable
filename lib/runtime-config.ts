@@ -77,7 +77,10 @@ export const RuntimeConfigShape = runtimeConfigObjectShape.superRefine(
 
       const billingTierIds = new Set(value.billing.tiers.map((t) => t.id))
       for (const [index, entry] of value.limits.entries()) {
-        if (entry.billingTier !== null && !billingTierIds.has(entry.billingTier)) {
+        if (
+          entry.billingTier !== null &&
+          !billingTierIds.has(entry.billingTier)
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `Limits entry "${entry.id}" references unknown billing tier "${entry.billingTier}".`,
@@ -355,7 +358,8 @@ function mergeRuntimeConfig(
         overrides.billing?.lemonSqueezyStoreId ??
         DEFAULT_RUNTIME_CONFIG.billing.lemonSqueezyStoreId,
       manageUrl:
-        overrides.billing?.manageUrl ?? DEFAULT_RUNTIME_CONFIG.billing.manageUrl,
+        overrides.billing?.manageUrl ??
+        DEFAULT_RUNTIME_CONFIG.billing.manageUrl,
       tiers: overrides.billing?.tiers ?? DEFAULT_RUNTIME_CONFIG.billing.tiers,
     },
     usage: {

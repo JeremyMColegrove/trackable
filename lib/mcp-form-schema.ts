@@ -141,7 +141,9 @@ export const mcpFormFieldSchema = z
             message: `"${issue.input}" is not a supported field type. Supported types: rating, checkboxes, notes, short_text. Note: file_upload and youtube_video are not supported for MCP form creation.`,
           }
         }
-        return { message: "kind is required and must be a supported field type" }
+        return {
+          message: "kind is required and must be a supported field type",
+        }
       },
     }),
     label: z
@@ -184,7 +186,9 @@ export const mcpFormSchema = z
     }),
     submit_label: z.string().trim().max(60).optional(),
     success_message: z.string().trim().max(280).optional(),
-    fields: z.array(mcpFormFieldSchema).min(1, "fields must contain at least one field"),
+    fields: z
+      .array(mcpFormFieldSchema)
+      .min(1, "fields must contain at least one field"),
   })
   .superRefine((form, ctx) => {
     if (form.status === "published" && form.fields.length === 0) {
@@ -233,7 +237,9 @@ export type McpFormValidationResult =
  *
  * No database writes occur — this is pure validation, safe to call anywhere.
  */
-export function validateMcpFormPayload(payload: unknown): McpFormValidationResult {
+export function validateMcpFormPayload(
+  payload: unknown
+): McpFormValidationResult {
   const result = mcpFormSchema.safeParse(payload)
 
   if (result.success) {

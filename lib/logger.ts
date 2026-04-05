@@ -53,8 +53,8 @@ export function getSanitizedPostgresTarget(
 }
 
 export function getSanitizedRedisTarget(
-  connectionString: string | null | undefined =
-    process.env.REDIS_URL || "redis://localhost:6379"
+  connectionString: string | null | undefined = process.env.REDIS_URL ||
+    "redis://localhost:6379"
 ) {
   return parseSanitizedConnectionTarget(connectionString)
 }

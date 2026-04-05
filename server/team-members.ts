@@ -7,7 +7,8 @@ import { workspaceMembers } from "@/db/schema"
 import { accessControlService } from "@/server/services/access-control.service"
 
 export async function getConnectedTeamUserIds(userId: string) {
-  const activeWorkspace = await accessControlService.resolveActiveWorkspace(userId)
+  const activeWorkspace =
+    await accessControlService.resolveActiveWorkspace(userId)
   const members = await db.query.workspaceMembers.findMany({
     where: and(
       eq(workspaceMembers.workspaceId, activeWorkspace.workspaceId),
@@ -26,7 +27,8 @@ export async function getTeamUserIds(userId: string) {
 }
 
 export async function getTeamOwnerId(userId: string) {
-  const activeWorkspace = await accessControlService.resolveActiveWorkspace(userId)
+  const activeWorkspace =
+    await accessControlService.resolveActiveWorkspace(userId)
   const owner = await db.query.workspaceMembers.findFirst({
     where: and(
       eq(workspaceMembers.workspaceId, activeWorkspace.workspaceId),

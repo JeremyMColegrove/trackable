@@ -36,11 +36,11 @@ export function setupTestDom() {
     globalThis.HTMLElement.prototype.scrollIntoView = () => {}
   }
 
-  const htmlElementPrototype = globalThis.HTMLElement.prototype as
-    HTMLElement & {
-      attachEvent?: () => void
-      detachEvent?: () => void
-    }
+  const htmlElementPrototype = globalThis.HTMLElement
+    .prototype as HTMLElement & {
+    attachEvent?: () => void
+    detachEvent?: () => void
+  }
 
   if (!htmlElementPrototype.attachEvent) {
     htmlElementPrototype.attachEvent = () => {}

@@ -1,7 +1,11 @@
 import { relations, sql } from "drizzle-orm"
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 
-import { nullableTimestamp, timestamps, uuidPrimaryKey } from "@/db/schema/_shared"
+import {
+  nullableTimestamp,
+  timestamps,
+  uuidPrimaryKey,
+} from "@/db/schema/_shared"
 import { subscriptionStatusEnum } from "@/db/schema/enums"
 import { workspaces } from "@/db/schema/team"
 

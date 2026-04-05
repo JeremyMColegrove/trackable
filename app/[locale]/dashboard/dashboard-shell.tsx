@@ -8,11 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { DashboardHeader } from "./DashboardHeader"
 import { DashboardSidebar } from "./DashboardSidebar"
 
-export function DashboardShell({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function DashboardShell({ children }: { children: React.ReactNode }) {
   const locale = useLocale()
   const pathname = usePathname()
   const localizedDashboardPrefix = `/${locale}/dashboard/trackables/`

@@ -2,9 +2,7 @@ import assert from "node:assert/strict"
 import { Buffer } from "node:buffer"
 import test from "node:test"
 
-import {
-  type UsageEventSearchInput,
-} from "@/lib/usage-event-search"
+import { type UsageEventSearchInput } from "@/lib/usage-event-search"
 import { USAGE_EVENT_PAGE_SIZE } from "@/server/usage-tracking/usage-event-config"
 import { UsageEventQueryPlanner } from "@/server/usage-tracking/usage-event-query-planner"
 import { UsageEventSearchParser } from "@/server/usage-tracking/usage-event-search-parser"
@@ -65,7 +63,8 @@ test("UsageEventSqlRepository builds the exact flat count SQL", () => {
   const plan = planner.plan(
     parser.parse(
       createSearchInput({
-        query: 'event:"signup" AND apiKey.name:primary AND metadata.route:/billing/',
+        query:
+          'event:"signup" AND apiKey.name:primary AND metadata.route:/billing/',
       })
     )
   )
@@ -154,7 +153,8 @@ test("UsageEventSqlRepository builds the exact flat fetch SQL", () => {
   const plan = planner.plan(
     parser.parse(
       createSearchInput({
-        query: 'event:"signup" AND apiKey.name:primary AND metadata.route:/billing/',
+        query:
+          'event:"signup" AND apiKey.name:primary AND metadata.route:/billing/',
       })
     )
   )
@@ -625,10 +625,15 @@ test("UsageEventSqlRepository keeps bare keyword SQL compact enough to avoid dup
       })
     )
   )
-  const query = normalizeSql(repository.buildFetchFlatRowsQuery(plan).toSQL().sql)
+  const query = normalizeSql(
+    repository.buildFetchFlatRowsQuery(plan).toSQL().sql
+  )
 
   assert.match(query, /with recursive json_values\(value\) as/)
-  assert.equal(query.match(/with recursive json_values\(value\) as/g)?.length ?? 0, 1)
+  assert.equal(
+    query.match(/with recursive json_values\(value\) as/g)?.length ?? 0,
+    1
+  )
   assert.equal(query.match(/exists \(/g)?.length ?? 0, 1)
   assert.match(query, /"api_keys"\."id"::text ~/)
 })

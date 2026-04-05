@@ -61,7 +61,11 @@ export class McpFormSharingService {
           isActive: true,
         })
       }
-    } else if (input.enablePublicLink === false && shareLink && !shareLink.revokedAt) {
+    } else if (
+      input.enablePublicLink === false &&
+      shareLink &&
+      !shareLink.revokedAt
+    ) {
       shareLink = await shareLinkService.updateShareLink({
         trackableId,
         userId: authContext.userId,

@@ -36,7 +36,9 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanPreviousPage()}
         >
           <ChevronsLeft className="size-4" />
-          <span className="sr-only"><T>First page</T></span>
+          <span className="sr-only">
+            <T>First page</T>
+          </span>
         </Button>
         <Button
           variant="outline"
@@ -45,7 +47,9 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanPreviousPage()}
         >
           <ChevronLeft className="size-4" />
-          <span className="sr-only"><T>Previous page</T></span>
+          <span className="sr-only">
+            <T>Previous page</T>
+          </span>
         </Button>
         <Button
           variant="outline"
@@ -54,7 +58,9 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanNextPage()}
         >
           <ChevronRight className="size-4" />
-          <span className="sr-only"><T>Next page</T></span>
+          <span className="sr-only">
+            <T>Next page</T>
+          </span>
         </Button>
         <Button
           variant="outline"
@@ -63,7 +69,9 @@ export function DataTablePagination<TData>({
           disabled={!table.getCanNextPage()}
         >
           <ChevronsRight className="size-4" />
-          <span className="sr-only"><T>Last page</T></span>
+          <span className="sr-only">
+            <T>Last page</T>
+          </span>
         </Button>
       </div>
     </div>

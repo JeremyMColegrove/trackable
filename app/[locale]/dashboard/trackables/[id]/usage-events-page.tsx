@@ -376,7 +376,9 @@ export function UsageEventsPage() {
       </div>
       <TrackablePageFrame
         title={gt("Logs")}
-        description={gt("Review, filter, and export the logs you've collected.")}
+        description={gt(
+          "Review, filter, and export the logs you've collected."
+        )}
         search={
           <div ref={searchSectionRef} className="flex flex-col gap-3">
             <div className="flex flex-row items-center gap-3">
@@ -397,7 +399,9 @@ export function UsageEventsPage() {
                   type="button"
                   onClick={() => void handleUpdateTable()}
                   className="h-12 rounded-2xl px-4"
-                  disabled={usageEventTableQuery.isLoading || !hasPendingTableChange}
+                  disabled={
+                    usageEventTableQuery.isLoading || !hasPendingTableChange
+                  }
                 >
                   <FilterIcon />
                   <T>Apply filter</T>
@@ -437,7 +441,9 @@ export function UsageEventsPage() {
             }
             actionLabel={<T>Refresh data</T>}
             onAction={() => void handleRefreshTable()}
-            isActionPending={isRefreshingTable || usageEventTableQuery.isLoading}
+            isActionPending={
+              isRefreshingTable || usageEventTableQuery.isLoading
+            }
           />
         ) : usageEventTableData ? (
           <UsageEventsTable

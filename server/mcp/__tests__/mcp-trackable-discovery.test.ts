@@ -21,22 +21,24 @@ function createAuthContext(overrides?: {
 }) {
   return new McpAuthContextImpl({
     userId: "user-1",
-    scopes: overrides?.tools === "all" ? ["*"] : overrides?.tools ?? [],
+    scopes: overrides?.tools === "all" ? ["*"] : (overrides?.tools ?? []),
   })
 }
 
-function createService(rows: Array<{
-  id: string
-  workspaceId: string
-  name: string
-  slug: string
-  kind: "survey" | "api_ingestion"
-  submissionCount: number
-  apiUsageCount: number
-  lastSubmissionAt: Date | null
-  lastApiUsageAt: Date | null
-  archivedAt: Date | null
-}>) {
+function createService(
+  rows: Array<{
+    id: string
+    workspaceId: string
+    name: string
+    slug: string
+    kind: "survey" | "api_ingestion"
+    submissionCount: number
+    apiUsageCount: number
+    lastSubmissionAt: Date | null
+    lastApiUsageAt: Date | null
+    archivedAt: Date | null
+  }>
+) {
   return new McpTrackableService({
     listAccessibleWorkspaces: async () => [workspaceAlpha, workspaceBeta],
     listTrackableRows: async ({ workspaceIds, trackableIds }) =>
@@ -113,7 +115,6 @@ const workspaceGamma = {
   canCreateTrackables: false,
   isActive: false,
 }
-
 
 describe("McpTrackableService.findAccessible", () => {
   it("returns only rows from authorized workspaces", async () => {
@@ -431,7 +432,10 @@ describe("FindTrackablesTool", () => {
     )
     assert.equal(schema.safeParse({ query: "alpha", limit: 5 }).success, true)
     assert.equal(schema.safeParse({ limit: 26 }).success, false)
-    assert.equal(schema.safeParse({ workspace_id: "not-a-uuid" }).success, false)
+    assert.equal(
+      schema.safeParse({ workspace_id: "not-a-uuid" }).success,
+      false
+    )
   })
 
   it("returns structured JSON results on success", async () => {
@@ -445,7 +449,8 @@ describe("FindTrackablesTool", () => {
         submissionCount: 2,
         apiUsageCount: 0,
         lastActivityAt: "2026-04-01T10:00:00.000Z",
-        adminUrl: "https://trackable.test/dashboard/trackables/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        adminUrl:
+          "https://trackable.test/dashboard/trackables/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       },
       workspace: workspaceAlpha,
       match: {

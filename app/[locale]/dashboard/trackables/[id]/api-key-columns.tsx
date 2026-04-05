@@ -8,7 +8,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 
 import { formatDateTime, formatStatusLabel } from "./display-utils"
 import type { ApiKeyRow } from "./table-types"
-import { T, useGT } from "gt-next";
+import { T, useGT } from "gt-next"
 
 type ApiKeyColumnsOptions = {
   onRevoke: (apiKey: ApiKeyRow) => void
@@ -95,9 +95,13 @@ export function getApiKeyColumns({
     },
     {
       id: "actions",
-      header: () => <div className="pr-4 text-right"><T>Actions</T></div>,
+      header: () => (
+        <div className="pr-4 text-right">
+          <T>Actions</T>
+        </div>
+      ),
       cell: ({ row }) => {
-          const gt = useGT();
+        const gt = useGT()
         const apiKey = row.original
         const isRevoking = revokingKeyId === apiKey.id
 

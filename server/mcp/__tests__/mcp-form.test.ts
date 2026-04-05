@@ -116,7 +116,10 @@ describe("McpFormService.validateFormPayload", () => {
 
   describe("missing required fields", () => {
     it("fails when title is missing", () => {
-      const payload = { status: "draft", fields: [validFormPayload().fields[0]] }
+      const payload = {
+        status: "draft",
+        fields: [validFormPayload().fields[0]],
+      }
       const result = mcpFormService.validateFormPayload(payload)
       assert.equal(result.valid, false)
       assert.ok(
@@ -129,14 +132,18 @@ describe("McpFormService.validateFormPayload", () => {
       const payload = { title: "Test", fields: [validFormPayload().fields[0]] }
       const result = mcpFormService.validateFormPayload(payload)
       assert.equal(result.valid, false)
-      assert.ok(!result.valid && result.errors.some((e) => e.path.includes("status")))
+      assert.ok(
+        !result.valid && result.errors.some((e) => e.path.includes("status"))
+      )
     })
 
     it("fails when fields array is empty", () => {
       const payload = { title: "Test", status: "draft", fields: [] }
       const result = mcpFormService.validateFormPayload(payload)
       assert.equal(result.valid, false)
-      assert.ok(!result.valid && result.errors.some((e) => e.path.includes("fields")))
+      assert.ok(
+        !result.valid && result.errors.some((e) => e.path.includes("fields"))
+      )
     })
 
     it("fails when fields is missing entirely", () => {
@@ -170,7 +177,9 @@ describe("McpFormService.validateFormPayload", () => {
       assert.ok(
         !result.valid &&
           result.errors.some(
-            (e) => e.path.includes("kind") || e.issue.toLowerCase().includes("file_upload")
+            (e) =>
+              e.path.includes("kind") ||
+              e.issue.toLowerCase().includes("file_upload")
           ),
         "Expected error about unsupported field type"
       )
@@ -238,7 +247,9 @@ describe("McpFormService.validateFormPayload", () => {
       assert.equal(result.valid, false)
       assert.ok(
         !result.valid &&
-          result.errors.some((e) => e.path.includes("scale") || e.issue.includes("3")),
+          result.errors.some(
+            (e) => e.path.includes("scale") || e.issue.includes("3")
+          ),
         `Expected scale validation error, got: ${JSON.stringify(result)}`
       )
     })
@@ -377,7 +388,8 @@ describe("McpFormService.validateFormPayload", () => {
       const result = mcpFormService.validateFormPayload(payload)
       assert.equal(result.valid, false)
       assert.ok(
-        !result.valid && result.errors.some((e) => e.issue.includes("rating_1")),
+        !result.valid &&
+          result.errors.some((e) => e.issue.includes("rating_1")),
         `Expected duplicate key error mentioning 'rating_1', got: ${JSON.stringify(!result.valid ? result.errors : [])}`
       )
     })
@@ -413,7 +425,11 @@ describe("McpFormService.validateFormPayload", () => {
 
   describe("published form constraints", () => {
     it("fails when status is 'published' but fields array is empty", () => {
-      const payload = { title: "Empty published form", status: "published", fields: [] }
+      const payload = {
+        title: "Empty published form",
+        status: "published",
+        fields: [],
+      }
       const result = mcpFormService.validateFormPayload(payload)
       assert.equal(result.valid, false)
     })
@@ -431,9 +447,18 @@ describe("McpFormService.validateFormPayload", () => {
 
       if (!result.valid) {
         for (const error of result.errors) {
-          assert.ok(typeof error.path === "string", "error.path must be a string")
-          assert.ok(typeof error.issue === "string", "error.issue must be a string")
-          assert.ok(typeof error.expected === "string", "error.expected must be a string")
+          assert.ok(
+            typeof error.path === "string",
+            "error.path must be a string"
+          )
+          assert.ok(
+            typeof error.issue === "string",
+            "error.issue must be a string"
+          )
+          assert.ok(
+            typeof error.expected === "string",
+            "error.expected must be a string"
+          )
         }
       }
     })
@@ -457,7 +482,10 @@ describe("McpFormService.validateFormPayload", () => {
 
       if (!result.valid) {
         const scaleError = result.errors.find((e) => e.path.includes("scale"))
-        assert.ok(scaleError, "Should have a specific error on the 'scale' path")
+        assert.ok(
+          scaleError,
+          "Should have a specific error on the 'scale' path"
+        )
         assert.ok(
           scaleError.path.startsWith("fields[0]"),
           `Path should start with 'fields[0]', got '${scaleError.path}'`

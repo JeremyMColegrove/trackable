@@ -1,0 +1,42 @@
+{
+  "admins": ["your-email@example.com"],
+  "features": {
+    "subscriptionEnforcementEnabled": false,
+    "workspaceBillingEnabled": false,
+    "batchSchedulerEnabled": true,
+    "customMCPServerTokens": false
+  },
+  "limits": [
+    {
+      "id": "default",
+      "maxTrackableItems": 25,
+      "maxResponsesPerSurvey": null,
+      "maxWorkspaceMembers": null,
+      "maxApiLogsPerMinute": 120,
+      "maxApiPayloadBytes": 102400,
+      "logRetentionDays": 90,
+      "maxCreatedWorkspaces": null,
+      "billingTier": null
+    }
+  ],
+  "billing": {
+    "lemonSqueezyStoreId": null,
+    "manageUrl": null,
+    "tiers": []
+  },
+  "usage": {
+    "invalidApiKeyRateLimitPerMinute": 10,
+    "maxBodyBytes": 102400,
+    "pageSize": 50
+  },
+  "webhooks": {
+    "queue": {
+      "enabled": true,
+      "rateLimitMs": 1000,
+      "rateLimitMax": 10
+    }
+  },
+  "batch": {
+    "schedulerTimeZone": "UTC"
+  }
+}

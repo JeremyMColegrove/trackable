@@ -7,10 +7,7 @@ const DATE_TIME_SEPARATOR = " - "
 const DATE_TIME_PATTERN =
   /^([A-Za-z]{3,9}) (\d{1,2}), (?:(\d{4}), )?(\d{1,2}):(\d{2}) (am|pm)$/
 
-function getDateTimeSegments(
-  value: string,
-  offset: number
-): SelectionRange[] {
+function getDateTimeSegments(value: string, offset: number): SelectionRange[] {
   const match = DATE_TIME_PATTERN.exec(value)
   const month = match?.[1]
   const day = match?.[2]

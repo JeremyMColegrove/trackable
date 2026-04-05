@@ -24,7 +24,10 @@ describe("zodPathToString", () => {
   })
 
   it("converts a nested path", () => {
-    assert.equal(zodPathToString(["fields", 0, "config", "scale"]), "fields[0].config.scale")
+    assert.equal(
+      zodPathToString(["fields", 0, "config", "scale"]),
+      "fields[0].config.scale"
+    )
   })
 
   it("converts an empty path to an empty string", () => {
@@ -42,7 +45,9 @@ describe("zodPathToString", () => {
 
 describe("McpToolError", () => {
   it("carries code, message, and optional details", () => {
-    const err = new McpToolError("NOT_FOUND", "Resource not found.", { id: "123" })
+    const err = new McpToolError("NOT_FOUND", "Resource not found.", {
+      id: "123",
+    })
     assert.equal(err.code, "NOT_FOUND")
     assert.equal(err.message, "Resource not found.")
     assert.deepEqual(err.details, { id: "123" })

@@ -21,7 +21,7 @@ export function DateRangePopover({
   return (
     <div
       className={cn(
-        "absolute top-[calc(100%+0.375rem)] left-0 z-[80] min-w-full max-w-[min(90vw,30rem)] rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
+        "absolute top-[calc(100%+0.375rem)] left-0 z-[80] max-w-[min(90vw,30rem)] min-w-full rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg ring-1 ring-foreground/10",
         className
       )}
       {...props}

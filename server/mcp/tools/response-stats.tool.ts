@@ -46,7 +46,9 @@ export class ResponseStatsTool implements McpTool {
           trackable_id: z
             .string()
             .uuid("trackable_id must be a valid UUID")
-            .describe("UUID of the survey trackable to compute response stats for."),
+            .describe(
+              "UUID of the survey trackable to compute response stats for."
+            ),
         },
       },
       async (args) => {

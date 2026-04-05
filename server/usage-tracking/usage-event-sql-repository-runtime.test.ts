@@ -379,7 +379,9 @@ test("UsageEventSqlRepository executes an apiKey.id search by casting the UUID t
     const repository = new UsageEventSqlRepository({
       async execute(query: SQLWrapper) {
         const built = (
-          query as unknown as { toSQL: () => { sql: string; params: unknown[] } }
+          query as unknown as {
+            toSQL: () => { sql: string; params: unknown[] }
+          }
         ).toSQL()
         const result = await client.query(built.sql, built.params)
 

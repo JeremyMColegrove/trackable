@@ -1,9 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import {
-  type UsageEventSearchInput,
-} from "@/lib/usage-event-search"
+import { type UsageEventSearchInput } from "@/lib/usage-event-search"
 import { USAGE_EVENT_PAGE_SIZE } from "@/server/usage-tracking/usage-event-config"
 import type { UsageEventQueryExpression } from "@/server/usage-tracking/usage-event-query.types"
 import { UsageEventSearchParser } from "@/server/usage-tracking/usage-event-search-parser"

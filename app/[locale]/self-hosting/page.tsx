@@ -111,6 +111,19 @@ async function SelfHostingGuideExamples() {
           code={runtimeConfigExample}
           label="trackables.config.example.json"
         />
+        <p>
+          <T>See the</T>{" "}
+          <Link
+            href="/self-hosting/config"
+            className="font-medium text-primary underline underline-offset-4 hover:no-underline"
+          >
+            <T>Config Field Reference</T>
+          </Link>{" "}
+          <T>
+            for a full description of every field and how to configure billing
+            tiers, limits, and webhooks.
+          </T>
+        </p>
       </Step>
 
       <Step number="7" title={<T>Configure docker-compose.yml</T>}>

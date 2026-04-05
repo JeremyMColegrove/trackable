@@ -24,12 +24,12 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
     logger.info({ path, type, durationMs }, "tRPC request successful")
   } else {
     logger.error(
-      { 
-        path, 
-        type, 
-        durationMs, 
-        error: result.error.message, 
-        code: result.error.code 
+      {
+        path,
+        type,
+        durationMs,
+        error: result.error.message,
+        code: result.error.code,
       },
       "tRPC request failed"
     )

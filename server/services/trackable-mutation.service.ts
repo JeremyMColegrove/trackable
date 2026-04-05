@@ -269,10 +269,7 @@ export class TrackableMutationService {
       })
     }
 
-    assertTrackableArchiveConfirmation(
-      trackableRecord,
-      input.confirmationName
-    )
+    assertTrackableArchiveConfirmation(trackableRecord, input.confirmationName)
 
     const [updated] = await db
       .update(trackableItems)

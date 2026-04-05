@@ -33,7 +33,10 @@ test("workspace tier plans expose highlights derived from enforced limits", () =
     assert.equal(plusPlan.mostPopular, true)
   }
   if (proPlan) {
-    assert.deepEqual(proPlan.highlights, buildExpectedHighlights(proPlan.limits))
+    assert.deepEqual(
+      proPlan.highlights,
+      buildExpectedHighlights(proPlan.limits)
+    )
   }
 
   const plans = getWorkspaceTierPlans()

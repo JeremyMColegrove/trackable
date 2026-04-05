@@ -14,9 +14,7 @@ export const metadata: Metadata = createNoIndexMetadata({
     "Create a Trackables account to manage forms, responses, and API usage.",
 })
 
-function resolveRedirectUrl(
-  redirectUrl: string | string[] | undefined
-) {
+function resolveRedirectUrl(redirectUrl: string | string[] | undefined) {
   return typeof redirectUrl === "string" && redirectUrl.length > 0
     ? redirectUrl
     : "/dashboard"

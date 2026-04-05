@@ -10,11 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 
-import {
-  occurredAt,
-  timestamps,
-  uuidPrimaryKey,
-} from "@/db/schema/_shared"
+import { occurredAt, timestamps, uuidPrimaryKey } from "@/db/schema/_shared"
 import {
   webhookDeliveryStatusEnum,
   webhookProviderEnum,
@@ -22,7 +18,10 @@ import {
 } from "@/db/schema/enums"
 import { workspaces } from "@/db/schema/team"
 import { trackableApiUsageEvents } from "@/db/schema/api-usage"
-import { trackableFormSubmissions, trackableItems } from "@/db/schema/trackables"
+import {
+  trackableFormSubmissions,
+  trackableItems,
+} from "@/db/schema/trackables"
 import type {
   WebhookDeliveryRequestPayload,
   WebhookDeliveryResponsePayload,
@@ -109,7 +108,9 @@ export const webhookDeliveryAttempts = pgTable(
       .references(() => workspaceWebhooks.id, { onDelete: "cascade" }),
     triggerRuleId: uuid("trigger_rule_id")
       .notNull()
-      .references(() => workspaceWebhookTriggerRules.id, { onDelete: "cascade" }),
+      .references(() => workspaceWebhookTriggerRules.id, {
+        onDelete: "cascade",
+      }),
     trackableId: uuid("trackable_id")
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
@@ -126,8 +127,9 @@ export const webhookDeliveryAttempts = pgTable(
     requestPayload: jsonb("request_payload")
       .$type<WebhookDeliveryRequestPayload>()
       .notNull(),
-    responsePayload: jsonb("response_payload")
-      .$type<WebhookDeliveryResponsePayload | null>(),
+    responsePayload: jsonb(
+      "response_payload"
+    ).$type<WebhookDeliveryResponsePayload | null>(),
     errorMessage: text("error_message"),
     attemptedAt: occurredAt("attempted_at"),
   },

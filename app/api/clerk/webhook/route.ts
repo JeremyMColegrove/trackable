@@ -65,7 +65,10 @@ export async function POST(request: Request) {
         }
         break
       default:
-        logger.warn({ eventType: event.type }, "Ignoring unsupported Clerk webhook event.")
+        logger.warn(
+          { eventType: event.type },
+          "Ignoring unsupported Clerk webhook event."
+        )
         break
     }
   } catch (error) {

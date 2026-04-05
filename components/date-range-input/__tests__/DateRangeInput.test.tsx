@@ -10,7 +10,9 @@ import { setupTestDom } from "./test-dom"
 
 const fixedNow = new Date(2026, 2, 24, 9, 0, 0)
 
-function renderInput(props: Partial<ComponentProps<typeof DateRangeInput>> = {}) {
+function renderInput(
+  props: Partial<ComponentProps<typeof DateRangeInput>> = {}
+) {
   return render(
     <DateRangeInput
       aria-label="Log range"
@@ -32,7 +34,10 @@ test("preset selection shows expanded values while active and the preset label w
     await user.click(input)
     await user.click(view.getByRole("option", { name: "Past 4 days" }))
 
-    assert.equal((input as HTMLInputElement).value, "2026-03-20 09:00 -> 2026-03-24 09:00")
+    assert.equal(
+      (input as HTMLInputElement).value,
+      "2026-03-20 09:00 -> 2026-03-24 09:00"
+    )
     assert.equal(view.getByText("4d").textContent, "4d")
 
     const outsideButton = document.createElement("button")
@@ -86,14 +91,23 @@ test("preset buttons support arrow-key navigation", async () => {
     await user.click(input)
     await user.tab()
 
-    assert.equal(document.activeElement?.textContent?.includes("Past 15 minutes"), true)
+    assert.equal(
+      document.activeElement?.textContent?.includes("Past 15 minutes"),
+      true
+    )
 
     await user.keyboard("{ArrowDown}")
-    assert.equal(document.activeElement?.textContent?.includes("Past 30 minutes"), true)
+    assert.equal(
+      document.activeElement?.textContent?.includes("Past 30 minutes"),
+      true
+    )
 
     await user.keyboard("{Enter}")
 
-    assert.equal((input as HTMLInputElement).value, "2026-03-24 08:30 -> 2026-03-24 09:00")
+    assert.equal(
+      (input as HTMLInputElement).value,
+      "2026-03-24 08:30 -> 2026-03-24 09:00"
+    )
   } finally {
     teardown()
   }
@@ -116,7 +130,10 @@ test("custom entry commits on outside blur and collapses to a compact summary", 
     document.body.append(outsideButton)
     await user.click(outsideButton)
 
-    assert.equal((input as HTMLInputElement).value, "Mar 20 09:00 -> Mar 24 09:00")
+    assert.equal(
+      (input as HTMLInputElement).value,
+      "Mar 20 09:00 -> Mar 24 09:00"
+    )
     assert.equal(view.getByText("4d").textContent, "4d")
   } finally {
     teardown()

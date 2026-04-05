@@ -44,18 +44,20 @@ const workspaceGamma = {
   isActive: false,
 }
 
-function makeRow(overrides: Partial<{
-  id: string
-  workspaceId: string
-  name: string
-  slug: string
-  kind: "survey" | "api_ingestion"
-  submissionCount: number
-  apiUsageCount: number
-  lastSubmissionAt: Date | null
-  lastApiUsageAt: Date | null
-  archivedAt: Date | null
-}> = {}) {
+function makeRow(
+  overrides: Partial<{
+    id: string
+    workspaceId: string
+    name: string
+    slug: string
+    kind: "survey" | "api_ingestion"
+    submissionCount: number
+    apiUsageCount: number
+    lastSubmissionAt: Date | null
+    lastApiUsageAt: Date | null
+    archivedAt: Date | null
+  }> = {}
+) {
   return {
     id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     workspaceId: workspaceAlpha.id,
@@ -71,7 +73,9 @@ function makeRow(overrides: Partial<{
   }
 }
 
-function makeTrackableRecord(overrides: Partial<McpTrackableRecord> = {}): McpTrackableRecord {
+function makeTrackableRecord(
+  overrides: Partial<McpTrackableRecord> = {}
+): McpTrackableRecord {
   return {
     id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     workspaceId: workspaceAlpha.id,
@@ -93,7 +97,7 @@ function createAuthContext(overrides?: {
 }) {
   return new McpAuthContextImpl({
     userId: "user-1",
-    scopes: overrides?.tools === "all" ? ["*"] : overrides?.tools ?? [],
+    scopes: overrides?.tools === "all" ? ["*"] : (overrides?.tools ?? []),
   })
 }
 
@@ -103,7 +107,12 @@ function createService(
 ) {
   return new McpTrackableService({
     listAccessibleWorkspaces: async () => [workspaceAlpha, workspaceBeta],
-    listTrackableRows: async ({ workspaceIds, kind, includeArchived, trackableIds }) =>
+    listTrackableRows: async ({
+      workspaceIds,
+      kind,
+      includeArchived,
+      trackableIds,
+    }) =>
       rows.filter((row) => {
         if (!workspaceIds.includes(row.workspaceId)) return false
         if (kind && row.kind !== kind) return false
@@ -111,8 +120,7 @@ function createService(
         if (trackableIds && !trackableIds.includes(row.id)) return false
         return true
       }),
-    findTrackableById: async (id) =>
-      record?.id === id ? record : undefined,
+    findTrackableById: async (id) => (record?.id === id ? record : undefined),
     findTrackableByName: async () => undefined,
     createTrackable: async () => {
       throw new Error("Not implemented in this test")
@@ -128,9 +136,21 @@ function createService(
 describe("McpTrackableService.listAccessible", () => {
   it("returns all trackables in the active workspace when no workspace_id is specified", async () => {
     const service = createService([
-      makeRow({ id: "aaa-1", workspaceId: workspaceAlpha.id, name: "Survey A" }),
-      makeRow({ id: "aaa-2", workspaceId: workspaceAlpha.id, name: "Survey B" }),
-      makeRow({ id: "bbb-1", workspaceId: workspaceBeta.id, name: "Beta Survey" }),
+      makeRow({
+        id: "aaa-1",
+        workspaceId: workspaceAlpha.id,
+        name: "Survey A",
+      }),
+      makeRow({
+        id: "aaa-2",
+        workspaceId: workspaceAlpha.id,
+        name: "Survey B",
+      }),
+      makeRow({
+        id: "bbb-1",
+        workspaceId: workspaceBeta.id,
+        name: "Beta Survey",
+      }),
     ])
 
     const result = await service.listAccessible(createAuthContext(), {})
@@ -140,8 +160,16 @@ describe("McpTrackableService.listAccessible", () => {
 
   it("returns trackables from the explicitly requested workspace", async () => {
     const service = createService([
-      makeRow({ id: "aaa-1", workspaceId: workspaceAlpha.id, name: "Alpha Survey" }),
-      makeRow({ id: "bbb-1", workspaceId: workspaceBeta.id, name: "Beta Survey" }),
+      makeRow({
+        id: "aaa-1",
+        workspaceId: workspaceAlpha.id,
+        name: "Alpha Survey",
+      }),
+      makeRow({
+        id: "bbb-1",
+        workspaceId: workspaceBeta.id,
+        name: "Beta Survey",
+      }),
     ])
 
     const result = await service.listAccessible(createAuthContext(), {
@@ -153,15 +181,29 @@ describe("McpTrackableService.listAccessible", () => {
 
   it("filters by kind", async () => {
     const service = createService([
-      makeRow({ id: "s-1", workspaceId: workspaceAlpha.id, name: "Survey One", kind: "survey" }),
-      makeRow({ id: "a-1", workspaceId: workspaceAlpha.id, name: "API One", kind: "api_ingestion" }),
+      makeRow({
+        id: "s-1",
+        workspaceId: workspaceAlpha.id,
+        name: "Survey One",
+        kind: "survey",
+      }),
+      makeRow({
+        id: "a-1",
+        workspaceId: workspaceAlpha.id,
+        name: "API One",
+        kind: "api_ingestion",
+      }),
     ])
 
-    const surveys = await service.listAccessible(createAuthContext(), { kind: "survey" })
+    const surveys = await service.listAccessible(createAuthContext(), {
+      kind: "survey",
+    })
     assert.equal(surveys.length, 1)
     assert.equal(surveys[0]!.kind, "survey")
 
-    const apis = await service.listAccessible(createAuthContext(), { kind: "api_ingestion" })
+    const apis = await service.listAccessible(createAuthContext(), {
+      kind: "api_ingestion",
+    })
     assert.equal(apis.length, 1)
     assert.equal(apis[0]!.kind, "api_ingestion")
   })
@@ -169,7 +211,11 @@ describe("McpTrackableService.listAccessible", () => {
   it("excludes archived trackables by default", async () => {
     const service = createService([
       makeRow({ id: "active-1", name: "Active", archivedAt: null }),
-      makeRow({ id: "archived-1", name: "Archived", archivedAt: new Date("2025-01-01") }),
+      makeRow({
+        id: "archived-1",
+        name: "Archived",
+        archivedAt: new Date("2025-01-01"),
+      }),
     ])
 
     const result = await service.listAccessible(createAuthContext(), {})
@@ -181,7 +227,10 @@ describe("McpTrackableService.listAccessible", () => {
     const allowedId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
     const service = createService([
       makeRow({ id: allowedId, name: "Allowed" }),
-      makeRow({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Not Allowed" }),
+      makeRow({
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Not Allowed",
+      }),
     ])
 
     const result = await service.listAccessible(
@@ -231,8 +280,11 @@ describe("McpTrackableService.listAccessible", () => {
       listTrackableRows: async () => [],
       findTrackableById: async () => undefined,
       findTrackableByName: async () => undefined,
-      createTrackable: async () => { throw new Error("Not implemented") },
-      buildAdminUrl: (id) => `https://trackable.test/dashboard/trackables/${id}`,
+      createTrackable: async () => {
+        throw new Error("Not implemented")
+      },
+      buildAdminUrl: (id) =>
+        `https://trackable.test/dashboard/trackables/${id}`,
     })
 
     await assert.rejects(

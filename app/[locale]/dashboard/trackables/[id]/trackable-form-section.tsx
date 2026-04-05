@@ -1,50 +1,50 @@
-"use client";
+"use client"
 
-import { useGT } from "gt-next";
+import { useGT } from "gt-next"
 import {
-	TrackablePageFrame,
-	UnsupportedPageState,
-} from "./components/trackable-page-frame";
-import { FormBuilder } from "./form-builder";
-import { SurveyShareDialog } from "./survey-share-dialog";
-import { useTrackableDetails } from "./trackable-shell";
+  TrackablePageFrame,
+  UnsupportedPageState,
+} from "./components/trackable-page-frame"
+import { FormBuilder } from "./form-builder"
+import { SurveyShareDialog } from "./survey-share-dialog"
+import { useTrackableDetails } from "./trackable-shell"
 
 export function TrackableFormSection() {
-	const gt = useGT();
-	const trackable = useTrackableDetails();
+  const gt = useGT()
+  const trackable = useTrackableDetails()
 
-	return (
-		<TrackablePageFrame
-			title={gt("Form Builder")}
-			description={gt(
-				"Build and update the public survey form shown to respondents.",
-			)}
-			headerActions={
-				trackable.kind === "survey" && trackable.permissions.canManageForm ? (
-					<SurveyShareDialog />
-				) : null
-			}
-		>
-			{trackable.kind !== "survey" ? (
-				<UnsupportedPageState
-					title={gt("Form builder unavailable")}
-					description={gt("Only survey trackables have a form builder.")}
-				/>
-			) : !trackable.permissions.canManageForm ? (
-				<UnsupportedPageState
-					title={gt("Form builder restricted")}
-					description={gt(
-						"You have view access to this trackable, but only editors can change the form.",
-					)}
-				/>
-			) : (
-				<FormBuilder
-					key={trackable.activeForm?.id ?? "empty-form"}
-					trackableId={trackable.id}
-					trackableName={trackable.name}
-					activeForm={trackable.activeForm}
-				/>
-			)}
-		</TrackablePageFrame>
-	);
+  return (
+    <TrackablePageFrame
+      title={gt("Form Builder")}
+      description={gt(
+        "Build and update the public survey form shown to respondents."
+      )}
+      headerActions={
+        trackable.kind === "survey" && trackable.permissions.canManageForm ? (
+          <SurveyShareDialog />
+        ) : null
+      }
+    >
+      {trackable.kind !== "survey" ? (
+        <UnsupportedPageState
+          title={gt("Form builder unavailable")}
+          description={gt("Only survey trackables have a form builder.")}
+        />
+      ) : !trackable.permissions.canManageForm ? (
+        <UnsupportedPageState
+          title={gt("Form builder restricted")}
+          description={gt(
+            "You have view access to this trackable, but only editors can change the form."
+          )}
+        />
+      ) : (
+        <FormBuilder
+          key={trackable.activeForm?.id ?? "empty-form"}
+          trackableId={trackable.id}
+          trackableName={trackable.name}
+          activeForm={trackable.activeForm}
+        />
+      )}
+    </TrackablePageFrame>
+  )
 }

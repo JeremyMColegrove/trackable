@@ -4,11 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
 
-export function RedirectIfSignedIn({
-  href,
-}: {
-  href: string
-}) {
+export function RedirectIfSignedIn({ href }: { href: string }) {
   const { isLoaded, userId } = useAuth()
   const router = useRouter()
 

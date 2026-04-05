@@ -122,7 +122,9 @@ export interface McpTrackableServiceDependencies {
   listTrackableRows(
     options: TrackableRowQueryOptions
   ): Promise<TrackableDiscoveryRow[]>
-  findTrackableById(trackableId: string): Promise<McpTrackableRecord | undefined>
+  findTrackableById(
+    trackableId: string
+  ): Promise<McpTrackableRecord | undefined>
   findTrackableByName(
     workspaceId: string,
     name: string
@@ -135,11 +137,7 @@ export interface McpTrackableServiceDependencies {
 }
 
 function normalizeSearchValue(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
+  return value.trim().toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ")
 }
 
 function tokenizeSearchValue(value: string): string[] {
@@ -195,9 +193,7 @@ interface RankedMatch {
 }
 
 export class McpTrackableService {
-  constructor(
-    private readonly deps: McpTrackableServiceDependencies
-  ) {}
+  constructor(private readonly deps: McpTrackableServiceDependencies) {}
 
   async listAccessible(
     authContext: McpAuthContext,
@@ -243,7 +239,9 @@ export class McpTrackableService {
 
     const results = rows
       .filter((row) => this.isAuthorizedRow(row, authContext, workspaceMap))
-      .map((row) => this.buildSearchResult(row, workspaceMap, normalizedQuery, queryTokens))
+      .map((row) =>
+        this.buildSearchResult(row, workspaceMap, normalizedQuery, queryTokens)
+      )
       .filter((result): result is McpTrackableSearchResult => result !== null)
       .sort(compareSearchResults)
       .slice(0, limit)
@@ -297,7 +295,10 @@ export class McpTrackableService {
       )
     }
 
-    const existing = await this.deps.findTrackableByName(workspaceId, input.name)
+    const existing = await this.deps.findTrackableByName(
+      workspaceId,
+      input.name
+    )
     if (existing) {
       throw new ConflictError(
         `A trackable named "${input.name}" already exists in this workspace (id: ${existing.id}). Use find_trackables to locate it, or choose a different name.`

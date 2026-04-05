@@ -6,7 +6,12 @@ import { getNextDateRangeSelection } from "../utils/date-range-selection"
 const value = "Mar 24, 4:30 pm - Mar 24, 5:30 pm"
 
 test("left arrow selection walks backward across date-time segments", () => {
-  const meridiem = getNextDateRangeSelection(value, value.length, value.length, "left")
+  const meridiem = getNextDateRangeSelection(
+    value,
+    value.length,
+    value.length,
+    "left"
+  )
 
   assert.deepEqual(meridiem, { start: 31, end: 33 })
 

@@ -48,7 +48,9 @@ export class ApiKeyRevokeTool implements McpTool {
           api_key_id: z
             .string()
             .uuid("api_key_id must be a valid UUID")
-            .describe("UUID of the API key to revoke. Use list_api_keys to find key IDs."),
+            .describe(
+              "UUID of the API key to revoke. Use list_api_keys to find key IDs."
+            ),
         },
       },
       async (args) => {
