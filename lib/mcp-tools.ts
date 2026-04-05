@@ -6,9 +6,11 @@ export const MCP_TOOL_NAMES = [
   "search_logs",
   "get_log",
   "create_form",
+  "get_form",
   "update_form_sharing",
   "list_responses",
   "get_response",
+  "get_response_stats",
   "list_api_keys",
   "create_api_key",
   "revoke_api_key",
@@ -57,6 +59,11 @@ export const MCP_TOOL_DEFINITIONS = [
     description: "Create form definitions for survey-style trackables.",
   },
   {
+    name: "get_form",
+    label: "Get form",
+    description: "Read the current form definition for a survey trackable.",
+  },
+  {
     name: "update_form_sharing",
     label: "Update form sharing",
     description:
@@ -71,6 +78,11 @@ export const MCP_TOOL_DEFINITIONS = [
     name: "get_response",
     label: "Get response details",
     description: "Inspect an individual response in detail.",
+  },
+  {
+    name: "get_response_stats",
+    label: "Get response stats",
+    description: "Aggregate statistics across all responses for a survey trackable.",
   },
   {
     name: "list_api_keys",

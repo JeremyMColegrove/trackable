@@ -1,4 +1,4 @@
-export type SubscriptionTier = "free" | "plus" | "pro"
+export type SubscriptionTier = string
 export type SubscriptionStatus =
   | "active"
   | "cancelled"
@@ -19,6 +19,8 @@ export interface TierLimits {
   maxApiPayloadBytes: number | null
   /** Maximum log retention in days. `null` = forever. */
   logRetentionDays: number | null
+  /** Maximum workspaces a user can create. `null` = unlimited. */
+  maxCreatedWorkspaces: number | null
 }
 
 export interface WorkspaceSubscriptionState {

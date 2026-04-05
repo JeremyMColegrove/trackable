@@ -5,85 +5,113 @@
  * Each POST request is stateless and independent.
  *
  * Auth flow:
- * 1. Extract Bearer token from Authorization header
- * 2. Validate via McpTokenService — 401 on any auth failure
- * 3. Build a scoped McpServer with the resolved auth context
- * 4. Delegate to WebStandardStreamableHTTPServerTransport
+ * 1. Authenticate via Clerk (`auth()`) requiring an OAuth token.
+ * 2. Build a scoped McpServer with the resolved auth context
+ * 3. Delegate to WebStandardStreamableHTTPServerTransport
  *
  * The business layer never receives raw tokens — only McpAuthContext.
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
+import { logger } from "@/lib/logger";
+import { getRuntimeConfig } from "@/lib/runtime-config";
+import { validateCustomMcpToken } from "@/server/mcp/auth/custom-token-auth";
+import {
+	McpAuthContextImpl,
+	type McpAuthContext,
+} from "@/server/mcp/auth/mcp-auth-context";
+import { buildMcpServer } from "@/server/mcp/mcp-server";
+import { auth } from "@clerk/nextjs/server";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { type NextRequest, NextResponse } from "next/server";
 
-import { logger } from "@/lib/logger"
-import { mcpTokenService } from "@/server/mcp/auth/mcp-token.service"
-import { McpAuthError } from "@/server/mcp/errors/mcp-errors"
-import { buildMcpServer } from "@/server/mcp/mcp-server"
+const CORS_HEADERS = {
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, Mcp-Session-Id",
+	"Access-Control-Max-Age": "86400",
+};
 
-/** Extracts the Bearer token from the Authorization header. */
-function extractBearerToken(req: NextRequest): string | null {
-  const authHeader =
-    req.headers.get("Authorization") ?? req.headers.get("authorization")
-  if (!authHeader) return null
-  const match = authHeader.match(/^Bearer\s+(.+)$/i)
-  return match?.[1]?.trim() ?? null
+/**
+ * Resolves the MCP auth context from the incoming request.
+ *
+ * When `customMCPServerTokens` is enabled in config, tokens beginning with
+ * `trk_mcp_` are validated against the local mcp_access_tokens table.
+ * All other tokens (or when the flag is disabled) fall through to Clerk auth.
+ */
+async function resolveMcpAuth(
+	req: NextRequest,
+): Promise<McpAuthContext | null> {
+	const config = getRuntimeConfig();
+
+	if (config.features.customMCPServerTokens) {
+		const raw =
+			req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+		if (raw.startsWith("trk_mcp_")) {
+			return validateCustomMcpToken(raw);
+		}
+	}
+
+	const context = await auth({ acceptsToken: ["oauth_token", "api_key"] });
+	if (!context.isAuthenticated || !context.userId) return null;
+	return new McpAuthContextImpl({
+		userId: context.userId,
+		scopes: context.scopes ?? [],
+	});
+}
+
+export async function OPTIONS(_req: NextRequest): Promise<Response> {
+	return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const rawToken = extractBearerToken(req)
+	logger.info(
+		{
+			hasAuth: req.headers.has("authorization"),
+			authPrefix: req.headers.get("authorization")?.substring(0, 30),
+			method: req.method,
+			contentType: req.headers.get("content-type"),
+		},
+		"MCP request received",
+	);
 
-  if (!rawToken) {
-    logger.warn("MCP request received with no Authorization header.")
-    return NextResponse.json(
-      {
-        error: true,
-        code: "UNAUTHORIZED",
-        message: "Authorization header with Bearer token is required.",
-      },
-      { status: 401 }
-    )
-  }
+	const authContext = await resolveMcpAuth(req);
 
-  let authContext
-  try {
-    authContext = await mcpTokenService.validateToken(rawToken)
-  } catch (error) {
-    if (error instanceof McpAuthError) {
-      logger.warn({ code: error.code }, `MCP auth failed: ${error.message}`)
-      return NextResponse.json(
-        { error: true, code: error.code, message: error.message },
-        { status: 401 }
-      )
-    }
+	if (!authContext) {
+		logger.warn("Attempted to access MCP server without valid token.");
+		return NextResponse.json(
+			{
+				error: true,
+				code: "UNAUTHORIZED",
+				message: "Valid access token is required.",
+			},
+			{ status: 401, headers: CORS_HEADERS },
+		);
+	}
 
-    logger.error(
-      { err: error },
-      "Unexpected error during MCP token validation."
-    )
-    return NextResponse.json(
-      {
-        error: true,
-        code: "INTERNAL_ERROR",
-        message: "Authentication failed.",
-      },
-      { status: 500 }
-    )
-  }
+	const server = buildMcpServer(authContext);
 
-  // Build a scoped server for this request — stateless, no shared state
-  const server = buildMcpServer(authContext)
+	const transport = new WebStandardStreamableHTTPServerTransport({
+		// Stateless mode: no session ID, no in-memory state between requests
+		sessionIdGenerator: undefined,
+		// Return JSON responses instead of SSE streams for simple request/response tools
+		enableJsonResponse: true,
+	});
 
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    // Stateless mode: no session ID, no in-memory state between requests
-    sessionIdGenerator: undefined,
-    // Return JSON responses instead of SSE streams for simple request/response tools
-    enableJsonResponse: true,
-  })
+	await server.connect(transport);
 
-  await server.connect(transport)
+	const response = await transport.handleRequest(req);
 
-  return transport.handleRequest(req)
+	// Attach CORS headers to the MCP response
+	const headers = new Headers(response.headers);
+	for (const [key, value] of Object.entries(CORS_HEADERS)) {
+		headers.set(key, value);
+	}
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
 }
 
 /**
@@ -91,46 +119,37 @@ export async function POST(req: NextRequest): Promise<Response> {
  * Currently responds with a guidance message — stateless JSON mode is preferred.
  */
 export async function GET(req: NextRequest): Promise<Response> {
-  const rawToken = extractBearerToken(req)
+	const authContext = await resolveMcpAuth(req);
 
-  if (!rawToken) {
-    return NextResponse.json(
-      {
-        error: true,
-        code: "UNAUTHORIZED",
-        message: "Authorization header with Bearer token is required.",
-      },
-      { status: 401 }
-    )
-  }
+	if (!authContext) {
+		return NextResponse.json(
+			{
+				error: true,
+				code: "UNAUTHORIZED",
+				message: "Valid auth context is required.",
+			},
+			{ status: 401, headers: CORS_HEADERS },
+		);
+	}
 
-  let authContext
-  try {
-    authContext = await mcpTokenService.validateToken(rawToken)
-  } catch (error) {
-    if (error instanceof McpAuthError) {
-      return NextResponse.json(
-        { error: true, code: error.code, message: error.message },
-        { status: 401 }
-      )
-    }
-    return NextResponse.json(
-      {
-        error: true,
-        code: "INTERNAL_ERROR",
-        message: "Authentication failed.",
-      },
-      { status: 500 }
-    )
-  }
+	const server = buildMcpServer(authContext);
 
-  const server = buildMcpServer(authContext)
+	const transport = new WebStandardStreamableHTTPServerTransport({
+		sessionIdGenerator: undefined,
+	});
 
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  })
+	await server.connect(transport);
 
-  await server.connect(transport)
+	const response = await transport.handleRequest(req);
 
-  return transport.handleRequest(req)
+	const headers = new Headers(response.headers);
+	for (const [key, value] of Object.entries(CORS_HEADERS)) {
+		headers.set(key, value);
+	}
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
 }

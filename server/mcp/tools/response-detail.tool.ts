@@ -30,9 +30,17 @@ export class ResponseDetailTool implements McpTool {
       "get_response",
       {
         description:
-          "Retrieve a single form response in full structured detail. " +
-          "Returns the complete answer snapshot suitable for LLM analysis. " +
-          "Use list_responses to discover response IDs first.",
+          "Use this when you need all field answers for a single form submission, for example to summarize, analyze sentiment, or extract themes. " +
+          "Returns: { id, submittedAt, source, formSnapshot: { title, fields }, answers: [ { fieldKey, fieldLabel, kind, value } ] }. " +
+          "The form snapshot captures the form structure at submission time, so field labels are always accurate even if the form has changed since. " +
+          "Use list_responses first to discover valid response_id values — do not guess IDs. " +
+          "Do not use this to list multiple responses — use list_responses for that. " +
+          "Do not use this on api_ingestion trackables — it only works on survey-kind trackables.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -61,8 +69,7 @@ export class ResponseDetailTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "get_response",
             targetResourceId: args.response_id,
             success: true,
@@ -80,8 +87,7 @@ export class ResponseDetailTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "get_response",
             targetResourceId: args.response_id,
             success: false,

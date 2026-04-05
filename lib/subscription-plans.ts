@@ -1,84 +1,106 @@
-import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
+import type { BillingTierConfig, LimitsEntry, RuntimeConfig } from "@/lib/runtime-config"
 import { getRuntimeConfig } from "@/lib/runtime-config"
+import type { TierLimits } from "@/server/subscriptions/types"
 
-export interface FreeTierUserLimits {
-  maxCreatedWorkspaces: number | null
+const UNLIMITED_LIMITS: TierLimits = {
+  maxTrackableItems: null,
+  maxResponsesPerSurvey: null,
+  maxWorkspaceMembers: null,
+  maxApiLogsPerMinute: null,
+  maxApiPayloadBytes: null,
+  logRetentionDays: null,
+  maxCreatedWorkspaces: null,
 }
 
-export interface SubscriptionPlanDefinition {
-  tier: SubscriptionTier
-  rank: number
-  lemonSqueezyVariantId: string | null
-  limits: TierLimits
+const SYNTHETIC_DEFAULT_LIMITS_ENTRY: LimitsEntry = {
+  id: "default",
+  billingTier: null,
+  ...UNLIMITED_LIMITS,
 }
 
-export function getSubscriptionPlans(): readonly SubscriptionPlanDefinition[] {
-  return [...buildSubscriptionPlanList()].sort(
-    (left, right) => left.rank - right.rank
+// Internal Map cache — rebuilt whenever the runtime config reference changes.
+let _limitsMapConfig: RuntimeConfig | null = null
+let _limitsMap: Map<string, LimitsEntry> = new Map()
+
+function getLimitsMap(): Map<string, LimitsEntry> {
+  const config = getRuntimeConfig()
+  if (config !== _limitsMapConfig) {
+    const entries = config.limits ?? [SYNTHETIC_DEFAULT_LIMITS_ENTRY]
+    _limitsMap = new Map(entries.map((e) => [e.id, e]))
+    _limitsMapConfig = config
+  }
+  return _limitsMap
+}
+
+/** Returns limits entries from config. If none configured, returns a single unlimited entry. */
+export function getLimitsEntries(): LimitsEntry[] {
+  return getRuntimeConfig().limits ?? [SYNTHETIC_DEFAULT_LIMITS_ENTRY]
+}
+
+/** Returns the default limits entry — the one with billingTier: null (the unsubscribed/free tier).
+ *  Falls back to the entry whose billing tier has no LemonSqueezy variant, or the first entry. */
+export function getDefaultLimitsEntry(): LimitsEntry {
+  const entries = getLimitsEntries()
+
+  // Prefer an entry explicitly marked as having no billing tier.
+  const explicitDefault = entries.find((e) => e.billingTier === null)
+  if (explicitDefault) return explicitDefault
+
+  // Fall back to the entry whose billing tier has no LemonSqueezy variant (free).
+  const config = getRuntimeConfig()
+  const freeBillingTierIds = new Set(
+    config.billing.tiers
+      .filter((t) => t.lemonSqueezyVariantId === null)
+      .map((t) => t.id)
   )
+  const freeTierEntry = entries.find(
+    (e) => e.billingTier !== null && freeBillingTierIds.has(e.billingTier)
+  )
+  if (freeTierEntry) return freeTierEntry
+
+  return entries[0]
 }
 
-export function getSubscriptionPlan(
-  tier: SubscriptionTier
-): SubscriptionPlanDefinition {
-  return buildSubscriptionPlansByTier()[tier]
+/** Returns the tier ID for the default (unsubscribed/free) tier. */
+export function getDefaultTierId(): string {
+  return getDefaultLimitsEntry().id
 }
 
-export function getLimitsForTier(tier: SubscriptionTier): TierLimits {
-  return getSubscriptionPlan(tier).limits
+/** Returns limits for a given tier ID. Falls back to unlimited limits if not found. */
+export function getLimitsForTier(tierId: string): TierLimits {
+  const entry = getLimitsMap().get(tierId)
+  if (!entry) return UNLIMITED_LIMITS
+  const { id: _id, billingTier: _billingTier, ...limits } = entry
+  return limits
 }
 
-export function getFreeTierUserLimits(): FreeTierUserLimits {
-  return getRuntimeConfig().subscriptionTiers.freeTierUserLimits
+/**
+ * Resolves a tier ID from a LemonSqueezy variant ID.
+ * Looks up the billing tier by variantId, then finds the limits entry that
+ * references that billing tier.
+ */
+export function resolveTierFromVariantId(variantId: string): string | null {
+  const billingTier = getRuntimeConfig().billing.tiers.find(
+    (t) => t.lemonSqueezyVariantId === variantId
+  )
+  if (!billingTier) return null
+
+  const entries = getLimitsEntries()
+  const limitsEntry = entries.find((e) => e.billingTier === billingTier.id)
+  return limitsEntry?.id ?? null
 }
 
+/** Returns the max workspaces a user can create, from the default limits entry. */
 export function getFreeTierCreatedWorkspaceLimit(): number | null {
-  return getFreeTierUserLimits().maxCreatedWorkspaces
+  return getDefaultLimitsEntry().maxCreatedWorkspaces
 }
 
-export function resolveTierFromVariantId(
-  variantId: string
-): SubscriptionTier | null {
-  const matchingPlan = buildSubscriptionPlanList().find(
-    (plan) => plan.lemonSqueezyVariantId === variantId
-  )
-
-  return matchingPlan?.tier ?? null
+/** Returns all billing tiers from config. */
+export function getBillingTiers(): BillingTierConfig[] {
+  return getRuntimeConfig().billing.tiers
 }
 
-export function isTierAtLeast(
-  current: SubscriptionTier,
-  required: SubscriptionTier
-): boolean {
-  const tierRanks = buildTierRanks()
-  return tierRanks[current] >= tierRanks[required]
-}
-
-function buildSubscriptionPlanList(): SubscriptionPlanDefinition[] {
-  return getRuntimeConfig().subscriptionTiers.plans.map((plan) => ({
-    tier: plan.tier,
-    rank: plan.rank,
-    lemonSqueezyVariantId: plan.lemonSqueezyVariantId,
-    limits: plan.limits,
-  }))
-}
-
-function buildSubscriptionPlansByTier() {
-  return buildSubscriptionPlanList().reduce(
-    (plans, plan) => {
-      plans[plan.tier] = plan
-      return plans
-    },
-    {} as Record<SubscriptionTier, SubscriptionPlanDefinition>
-  )
-}
-
-function buildTierRanks() {
-  return buildSubscriptionPlanList().reduce(
-    (ranks, plan) => {
-      ranks[plan.tier] = plan.rank
-      return ranks
-    },
-    {} as Record<SubscriptionTier, number>
-  )
+/** Returns a billing tier by its ID, or undefined. */
+export function getBillingTierById(id: string): BillingTierConfig | undefined {
+  return getRuntimeConfig().billing.tiers.find((t) => t.id === id)
 }

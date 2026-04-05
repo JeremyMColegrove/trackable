@@ -2,10 +2,7 @@ import { relations, sql } from "drizzle-orm"
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core"
 
 import { nullableTimestamp, timestamps, uuidPrimaryKey } from "@/db/schema/_shared"
-import {
-  subscriptionStatusEnum,
-  subscriptionTierEnum,
-} from "@/db/schema/enums"
+import { subscriptionStatusEnum } from "@/db/schema/enums"
 import { workspaces } from "@/db/schema/team"
 
 export const workspaceSubscriptions = pgTable(
@@ -18,7 +15,7 @@ export const workspaceSubscriptions = pgTable(
     lemonSqueezySubscriptionId: text("lemon_squeezy_subscription_id"),
     lemonSqueezyCustomerId: text("lemon_squeezy_customer_id"),
     variantId: text("variant_id"),
-    tier: subscriptionTierEnum("tier").default("free").notNull(),
+    tier: text("tier").default("free").notNull(),
     status: subscriptionStatusEnum("status").default("active").notNull(),
     currentPeriodEnd: nullableTimestamp("current_period_end"),
     ...timestamps,

@@ -5,19 +5,29 @@ import { createContext, useContext, useMemo } from "react"
 
 import type {
   PublicAppConfig,
-  PublicWorkspaceTierPlan,
+  PublicWorkspacePlan,
 } from "@/lib/public-app-config-types"
-import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
+import type { TierLimits } from "@/server/subscriptions/types"
+
+const UNLIMITED_LIMITS: TierLimits = {
+  maxTrackableItems: null,
+  maxResponsesPerSurvey: null,
+  maxWorkspaceMembers: null,
+  maxApiLogsPerMinute: null,
+  maxApiPayloadBytes: null,
+  logRetentionDays: null,
+  maxCreatedWorkspaces: null,
+}
 
 type AppSettings = {
   subscriptionEnforcementEnabled: boolean
   workspaceBillingEnabled: boolean
-  workspaceTierPlans: readonly PublicWorkspaceTierPlan[]
-  getWorkspaceTierPlan: (tier: SubscriptionTier) => PublicWorkspaceTierPlan
-  getTierLimits: (tier: SubscriptionTier) => TierLimits
-  resolveWorkspaceTierFromVariantId: (
-    variantId: string
-  ) => SubscriptionTier | null
+  workspacePlans: readonly PublicWorkspacePlan[]
+  defaultTierId: string
+  customMCPServerTokens: boolean
+  getWorkspacePlan: (tierId: string) => PublicWorkspacePlan | undefined
+  getTierLimits: (tierId: string) => TierLimits
+  resolveWorkspaceTierFromVariantId: (variantId: string) => string | null
   isLoading: boolean
   isReady: boolean
   refresh: () => Promise<void>
@@ -37,74 +47,6 @@ async function fetchAppSettings() {
   return (await response.json()) as PublicAppConfig
 }
 
-function buildFallbackTierPlans(): PublicWorkspaceTierPlan[] {
-  return [
-    {
-      tier: "free",
-      rank: 0,
-      name: "Free",
-      mostPopular: false,
-      priceLabel: "$0",
-      priceInterval: "/workspace",
-      summary: "",
-      highlights: [],
-      lemonSqueezyVariantId: null,
-      manageUrl: null,
-      limits: {
-        maxTrackableItems: null,
-        maxResponsesPerSurvey: null,
-        maxWorkspaceMembers: null,
-        maxApiLogsPerMinute: null,
-        maxApiPayloadBytes: null,
-        logRetentionDays: null,
-      },
-      tone: "neutral",
-    },
-    {
-      tier: "plus",
-      rank: 1,
-      name: "Plus",
-      mostPopular: false,
-      priceLabel: "",
-      priceInterval: "",
-      summary: "",
-      highlights: [],
-      lemonSqueezyVariantId: null,
-      manageUrl: null,
-      limits: {
-        maxTrackableItems: null,
-        maxResponsesPerSurvey: null,
-        maxWorkspaceMembers: null,
-        maxApiLogsPerMinute: null,
-        maxApiPayloadBytes: null,
-        logRetentionDays: null,
-      },
-      tone: "accent",
-    },
-    {
-      tier: "pro",
-      rank: 2,
-      name: "Pro",
-      mostPopular: false,
-      priceLabel: "",
-      priceInterval: "",
-      summary: "",
-      highlights: [],
-      lemonSqueezyVariantId: null,
-      manageUrl: null,
-      limits: {
-        maxTrackableItems: null,
-        maxResponsesPerSurvey: null,
-        maxWorkspaceMembers: null,
-        maxApiLogsPerMinute: null,
-        maxApiPayloadBytes: null,
-        logRetentionDays: null,
-      },
-      tone: "strong",
-    },
-  ]
-}
-
 export function AppSettingsProvider({
   children,
 }: {
@@ -116,18 +58,19 @@ export function AppSettingsProvider({
     staleTime: 60_000,
   })
   const settings = settingsQuery.data
-  const workspaceTierPlans =
-    settings?.workspaceTierPlans ?? buildFallbackTierPlans()
-  const plansByTier = useMemo(
+  const workspacePlans = settings?.workspacePlans ?? []
+  const defaultTierId = settings?.defaultTierId ?? "free"
+
+  const plansByTierId = useMemo(
     () =>
-      workspaceTierPlans.reduce(
-        (plans, plan) => {
-          plans[plan.tier] = plan
-          return plans
+      workspacePlans.reduce(
+        (acc, plan) => {
+          acc[plan.tierId] = plan
+          return acc
         },
-        {} as Record<SubscriptionTier, PublicWorkspaceTierPlan>
+        {} as Record<string, PublicWorkspacePlan>
       ),
-    [workspaceTierPlans]
+    [workspacePlans]
   )
 
   return (
@@ -136,13 +79,15 @@ export function AppSettingsProvider({
         subscriptionEnforcementEnabled:
           settings?.subscriptionEnforcementEnabled ?? false,
         workspaceBillingEnabled: settings?.workspaceBillingEnabled ?? false,
-        workspaceTierPlans,
-        getWorkspaceTierPlan: (tier) => plansByTier[tier],
-        getTierLimits: (tier) => plansByTier[tier].limits,
+        workspacePlans,
+        defaultTierId,
+        customMCPServerTokens: settings?.customMCPServerTokens ?? false,
+        getWorkspacePlan: (tierId) => plansByTierId[tierId],
+        getTierLimits: (tierId) => plansByTierId[tierId]?.limits ?? UNLIMITED_LIMITS,
         resolveWorkspaceTierFromVariantId: (variantId) =>
-          workspaceTierPlans.find(
+          workspacePlans.find(
             (plan) => plan.lemonSqueezyVariantId === variantId
-          )?.tier ?? null,
+          )?.tierId ?? null,
         isLoading: settingsQuery.isLoading,
         isReady: settingsQuery.isFetched,
         refresh: async () => {

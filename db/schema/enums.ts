@@ -83,12 +83,6 @@ export const batchJobTriggerEnum = pgEnum("batch_job_trigger", [
   "manual",
 ])
 
-export const subscriptionTierEnum = pgEnum("subscription_tier", [
-  "free",
-  "plus",
-  "pro",
-])
-
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "active",
   "cancelled",

@@ -18,7 +18,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { useTRPC } from "@/trpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { T } from "gt-next"
@@ -35,14 +34,13 @@ export function DashboardSidebar() {
   const { setOpenMobile } = useSidebar()
   const navItems = getDashboardNavItems(hasAdminControls)
   const [tierDialogOpen, setTierDialogOpen] = React.useState(false)
-  const [dialogTier, setDialogTier] =
-    React.useState<SubscriptionTier>(currentTier)
+  const [dialogTier, setDialogTier] = React.useState<string>(currentTier)
   const myInvitationsQuery = useQuery(
     trpc.team.listMyPendingInvitations.queryOptions()
   )
   const myInvitationCount = myInvitationsQuery.data?.length
 
-  function handleOpenTierDialog(tier: SubscriptionTier) {
+  function handleOpenTierDialog(tier: string) {
     setDialogTier(tier)
     setTierDialogOpen(true)
   }

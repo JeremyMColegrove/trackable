@@ -27,7 +27,6 @@ import {
   getTrackableKindShortLabel,
   getTrackableKindVisuals,
 } from "@/lib/trackable-kind"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { useTRPC } from "@/trpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { T, useGT, useLocale } from "gt-next"
@@ -266,7 +265,7 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
   const [tierDialogOpen, setTierDialogOpen] = useState(false)
-  const [dialogTier, setDialogTier] = useState<SubscriptionTier>("free")
+  const [dialogTier, setDialogTier] = useState<string>("free")
   const dashboardBaseHref =
     locale === "en" ? "/dashboard" : `/${locale}/dashboard`
   const trackableNavItems = getTrackableNavItems(
@@ -285,7 +284,7 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
     }
   }
 
-  function handleOpenTierDialog(tier: SubscriptionTier) {
+  function handleOpenTierDialog(tier: string) {
     setDialogTier(tier)
     setTierDialogOpen(true)
   }

@@ -30,9 +30,16 @@ export class LogDetailTool implements McpTool {
       "get_log",
       {
         description:
-          "Retrieve a single log event in full detail. " +
-          "Returns the complete payload, metadata, API key info, and a UI deep link. " +
-          "Use search_logs to discover log IDs first.",
+          "Use this when you need the complete payload and metadata for a single API ingestion log event. " +
+          "Returns: { id, occurredAt, payload, metadata, apiKeyInfo: { id, name, lastFour }, uiLink }. " +
+          "Use search_logs first to discover valid log_id values — do not guess IDs. " +
+          "Do not use this to list multiple events — use search_logs for that. " +
+          "Do not use this on survey trackables — it only works on api_ingestion-kind trackables.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -63,8 +70,7 @@ export class LogDetailTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "get_log",
             targetResourceId: args.log_id,
             success: true,
@@ -82,8 +88,7 @@ export class LogDetailTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "get_log",
             targetResourceId: args.log_id,
             success: false,

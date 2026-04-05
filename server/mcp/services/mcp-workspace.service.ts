@@ -19,9 +19,9 @@ export class McpWorkspaceService {
     authContext: McpAuthContext
   ): Promise<McpWorkspaceSummary[]> {
     const activeWorkspace =
-      await accessControlService.resolveActiveWorkspace(authContext.ownerUserId)
+      await accessControlService.resolveActiveWorkspace(authContext.userId)
     const memberships =
-      (await userMembershipsCache.get(authContext.ownerUserId)) ?? []
+      (await userMembershipsCache.get(authContext.userId)) ?? []
 
     return memberships
       .filter((membership) =>

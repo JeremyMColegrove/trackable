@@ -9,8 +9,7 @@ import type { McpErrorCode } from "@/server/mcp/errors/mcp-errors"
  * Captured for every request regardless of success or failure.
  */
 export interface McpAuditEntry {
-  tokenId: string
-  ownerUserId: string
+  userId: string
   workspaceId?: string
   tool: McpToolName | string
   /** Primary resource ID targeted by the tool, if applicable */
@@ -38,8 +37,7 @@ export class McpAuditService {
   record(entry: McpAuditEntry): void {
     const logFields = {
       mcp: true,
-      tokenId: entry.tokenId,
-      ownerUserId: entry.ownerUserId,
+      userId: entry.userId,
       workspaceId: entry.workspaceId,
       tool: entry.tool,
       targetResourceId: entry.targetResourceId,

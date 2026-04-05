@@ -56,7 +56,6 @@ export async function ensureUserProvisioned(userId: string) {
       where: eq(users.id, clerkUser.id),
       columns: {
         id: true,
-        hasAdminControls: true,
       },
     })
 
@@ -75,18 +74,11 @@ export async function ensureUserProvisioned(userId: string) {
       return
     }
 
-    const [{ count }] = await tx
-      .select({
-        count: sql<number>`count(*)::int`,
-      })
-      .from(users)
-
     await tx.insert(users).values({
       id: clerkUser.id,
       primaryEmail,
       displayName,
       imageUrl: clerkUser.imageUrl,
-      hasAdminControls: count === 0,
       isProfilePrivate,
     })
   })

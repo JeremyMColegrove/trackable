@@ -20,8 +20,22 @@ export class WorkspaceDiscoveryTool implements McpTool {
       "list_workspaces",
       {
         description:
-          "List all workspaces accessible to this MCP token. " +
-          "The active workspace is marked with isActive=true, and workspace-scoped tools default to it when workspace_id is omitted.",
+          "Use this when you need to discover which workspaces are accessible to this token, " +
+          "or when you need to resolve a workspace_id before calling a workspace-scoped tool. " +
+          "Returns: { workspaces: [ { id, name, slug, role, canCreateTrackables, isActive } ] }. " +
+          "role is one of: owner, admin, member, viewer. " +
+          "canCreateTrackables indicates whether the user has permission to create trackables in that workspace. " +
+          "isActive marks the default workspace used by all other tools when workspace_id is omitted. " +
+          "Returns an empty array if the token has no accessible workspaces. " +
+          "Do not call this to retrieve trackables, forms, or logs — use list_trackables or find_trackables for that. " +
+          "Do not call this preemptively before every tool invocation — only call it when you genuinely need to resolve a workspace_id you do not already have. " +
+          "Do not call this to get user profile info, billing details, subscription status, account age, or plan information — those fields are not in this response and cannot be retrieved via MCP. " +
+          "Do not call this to answer general questions about how Trackables works, feature explanations, or account setup guidance — those require no tool calls.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {},
       },
       async () => {
@@ -38,8 +52,7 @@ export class WorkspaceDiscoveryTool implements McpTool {
             await mcpWorkspaceService.listAccessible(authContext)
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_workspaces",
             success: true,
             durationMs: Date.now() - start,
@@ -56,8 +69,7 @@ export class WorkspaceDiscoveryTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_workspaces",
             success: false,
             errorCode: (error as { code?: McpErrorCode }).code,

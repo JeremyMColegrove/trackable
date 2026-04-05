@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { useTRPC } from "@/trpc/client"
 import { useUser } from "@clerk/nextjs"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -608,7 +607,7 @@ function TeamPageContent() {
       </Dialog>
       {subscriptionEnforcementEnabled ? (
         <WorkspaceTierDialog
-          currentTier={currentTier as SubscriptionTier}
+          currentTier={currentTier}
           workspaceId={activeWorkspace?.id ?? ""}
           open={tierDialogOpen}
           onOpenChange={setTierDialogOpen}

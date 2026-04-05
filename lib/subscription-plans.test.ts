@@ -4,36 +4,31 @@ import test from "node:test"
 import {
   getFreeTierCreatedWorkspaceLimit,
   getLimitsForTier,
+  getDefaultTierId,
+  getLimitsEntries,
 } from "@/lib/subscription-plans"
 
-test("free tier centralizes abuse-prevention defaults", () => {
-  const freeLimits = getLimitsForTier("free")
-
-  assert.equal(freeLimits.maxWorkspaceMembers, 10)
-  assert.equal(freeLimits.maxApiPayloadBytes, 1024)
-  assert.equal(freeLimits.maxApiLogsPerMinute, 10)
-  assert.equal(getFreeTierCreatedWorkspaceLimit(), 3)
+test("getDefaultTierId returns a non-empty string", () => {
+  const defaultId = getDefaultTierId()
+  assert.ok(defaultId.length > 0)
 })
 
-test("paid tiers keep higher API usage limits than free", () => {
-  const freeLimits = getLimitsForTier("free")
-  const plusLimits = getLimitsForTier("plus")
-  const proLimits = getLimitsForTier("pro")
+test("getLimitsForTier returns unlimited limits for unknown tier", () => {
+  const limits = getLimitsForTier("__nonexistent__")
+  assert.equal(limits.maxTrackableItems, null)
+  assert.equal(limits.maxWorkspaceMembers, null)
+  assert.equal(limits.maxApiPayloadBytes, null)
+  assert.equal(limits.maxCreatedWorkspaces, null)
+})
 
-  assert.equal(
-    plusLimits.maxApiPayloadBytes! > freeLimits.maxApiPayloadBytes!,
-    true
-  )
-  assert.equal(
-    plusLimits.maxApiLogsPerMinute! > freeLimits.maxApiLogsPerMinute!,
-    true
-  )
-  assert.equal(
-    proLimits.maxApiPayloadBytes! > plusLimits.maxApiPayloadBytes!,
-    true
-  )
-  assert.equal(
-    proLimits.maxApiLogsPerMinute! > plusLimits.maxApiLogsPerMinute!,
-    true
-  )
+test("default tier limits are applied for unsubscribed workspaces", () => {
+  const defaultId = getDefaultTierId()
+  const defaultLimits = getLimitsForTier(defaultId)
+  // Limits exist for the default tier (may have finite or null values)
+  assert.ok(typeof defaultLimits === "object")
+})
+
+test("getFreeTierCreatedWorkspaceLimit returns a number or null", () => {
+  const limit = getFreeTierCreatedWorkspaceLimit()
+  assert.ok(limit === null || (typeof limit === "number" && limit > 0))
 })

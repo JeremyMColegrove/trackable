@@ -22,8 +22,50 @@ test("loadRuntimeConfigFromPath parses a valid runtime config file", () => {
   const config = loadRuntimeConfigFromPath(exampleConfigPath)
 
   assert.equal(config.features.subscriptionEnforcementEnabled, true)
-  assert.equal(config.subscriptionTiers.plans.length, 3)
+  assert.equal(config.features.customMCPServerTokens, false)
+  assert.equal(config.limits?.length, 3)
+  assert.equal(config.billing.tiers.length, 3)
   assert.equal(config.usage.pageSize, 101)
+})
+
+test("loadRuntimeConfigFromPath defaults customMCPServerTokens to false when omitted", () => {
+  const tempDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "trackables-runtime-config-")
+  )
+  const sparseConfigPath = path.join(tempDirectory, "sparse-config.json")
+
+  fs.writeFileSync(
+    sparseConfigPath,
+    JSON.stringify({ features: { workspaceBillingEnabled: false } }),
+    "utf8"
+  )
+
+  try {
+    const config = loadRuntimeConfigFromPath(sparseConfigPath)
+    assert.equal(config.features.customMCPServerTokens, false)
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true })
+  }
+})
+
+test("loadRuntimeConfigFromPath enables customMCPServerTokens when set to true", () => {
+  const tempDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "trackables-runtime-config-")
+  )
+  const configPath = path.join(tempDirectory, "config.json")
+
+  fs.writeFileSync(
+    configPath,
+    JSON.stringify({ features: { customMCPServerTokens: true } }),
+    "utf8"
+  )
+
+  try {
+    const config = loadRuntimeConfigFromPath(configPath)
+    assert.equal(config.features.customMCPServerTokens, true)
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true })
+  }
 })
 
 test("loadRuntimeConfigFromPath merges sparse config files with app defaults", () => {
@@ -40,14 +82,17 @@ test("loadRuntimeConfigFromPath merges sparse config files with app defaults", (
       },
       billing: {
         lemonSqueezyStoreId: "12345",
-      },
-      subscriptionTiers: {
-        plans: [
+        tiers: [
           {
-            tier: "plus",
-            display: {
-              priceLabel: "$29",
-            },
+            id: "plus",
+            name: "Plus",
+            priceLabel: "$29",
+            priceInterval: "/workspace",
+            description: "More room for growing teams.",
+            tone: "accent",
+            mostPopular: true,
+            lemonSqueezyVariantId: "1482028",
+            enabled: true,
           },
         ],
       },
@@ -63,16 +108,12 @@ test("loadRuntimeConfigFromPath merges sparse config files with app defaults", (
     assert.equal(config.billing.lemonSqueezyStoreId, "12345")
     assert.equal(config.billing.manageUrl, null)
     assert.equal(
-      config.subscriptionTiers.plans.find((plan) => plan.tier === "plus")
-        ?.display.priceLabel,
+      config.billing.tiers.find((t) => t.id === "plus")?.priceLabel,
       "$29"
     )
-    assert.equal(
-      config.subscriptionTiers.plans.find((plan) => plan.tier === "plus")
-        ?.display.summary,
-      "More room for growing teams and heavier usage."
-    )
     assert.equal(config.usage.pageSize, 101)
+    // limits not specified — should be undefined (unlimited)
+    assert.equal(config.limits, undefined)
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })
   }
@@ -90,7 +131,7 @@ test("getRuntimeConfig loads the fixed config.json file from the project root", 
 
     const config = getRuntimeConfig()
 
-    assert.equal(config.subscriptionTiers.plans.length, 3)
+    assert.equal(config.limits?.length, 3)
     assert.equal(config.usage.pageSize, 101)
   } finally {
     if (previousConfig === null) {
@@ -152,15 +193,21 @@ test("loadRuntimeConfigFromPath throws useful validation errors for explicit inv
   fs.writeFileSync(
     invalidConfigPath,
     JSON.stringify({
-      subscriptionTiers: {
-        plans: [
-          {
-            tier: "plus",
-            display: {
-              name: "",
-            },
-          },
-        ],
+      limits: [
+        {
+          id: "free",
+          maxTrackableItems: 10,
+          maxResponsesPerSurvey: 100,
+          maxWorkspaceMembers: 10,
+          maxApiLogsPerMinute: 10,
+          maxApiPayloadBytes: 1024,
+          logRetentionDays: 3,
+          maxCreatedWorkspaces: 3,
+          billingTier: "nonexistent",
+        },
+      ],
+      billing: {
+        tiers: [],
       },
       usage: {
         pageSize: 0,
@@ -172,7 +219,7 @@ test("loadRuntimeConfigFromPath throws useful validation errors for explicit inv
   try {
     assert.throws(
       () => loadRuntimeConfigFromPath(invalidConfigPath),
-      /subscriptionTiers\.plans\.0\.display\.name|usage\.pageSize/
+      /nonexistent|usage\.pageSize/
     )
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })

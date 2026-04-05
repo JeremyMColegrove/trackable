@@ -1,5 +1,7 @@
 import type { PublicAppConfig } from "@/lib/public-app-config-types"
 import { isSubscriptionEnforcementEnabled } from "@/lib/subscription-enforcement"
+import { getDefaultTierId } from "@/lib/subscription-plans"
+import { getRuntimeConfig } from "@/lib/runtime-config"
 import {
   getWorkspaceBillingEnabled,
   getWorkspaceTierPlans,
@@ -9,6 +11,9 @@ export function getPublicAppConfig(): PublicAppConfig {
   return {
     subscriptionEnforcementEnabled: isSubscriptionEnforcementEnabled(),
     workspaceBillingEnabled: getWorkspaceBillingEnabled(),
-    workspaceTierPlans: getWorkspaceTierPlans(),
+    workspacePlans: getWorkspaceTierPlans(),
+    defaultTierId: getDefaultTierId(),
+    customMCPServerTokens:
+      getRuntimeConfig().features.customMCPServerTokens,
   }
 }

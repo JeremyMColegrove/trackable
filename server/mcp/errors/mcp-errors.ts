@@ -6,14 +6,18 @@
  * raw database details.
  */
 
+import { ConflictError, LimitReachedError } from "@/server/errors"
+
 /** Stable error codes used in all MCP error responses. */
 export type McpErrorCode =
-  | "UNAUTHORIZED"    // Token missing, invalid, expired, or revoked
-  | "FORBIDDEN"       // Token valid but lacks permission
-  | "NOT_FOUND"       // Resource does not exist or is out of scope
+  | "UNAUTHORIZED"     // Token missing, invalid, expired, or revoked
+  | "FORBIDDEN"        // Token valid but lacks permission
+  | "NOT_FOUND"        // Resource does not exist or is out of scope
   | "VALIDATION_ERROR" // Payload failed deterministic validation
-  | "SCOPE_ERROR"     // Token does not have capability for the requested tool/resource
-  | "INTERNAL_ERROR"  // Unexpected server-side failure (safe message only)
+  | "SCOPE_ERROR"      // Token does not have capability for the requested tool/resource
+  | "LIMIT_REACHED"    // A subscription quota or plan limit has been hit
+  | "CONFLICT"         // A resource with the same identity already exists
+  | "INTERNAL_ERROR"   // Unexpected server-side failure (safe message only)
 
 /**
  * A single validation error pointing to a specific location in the payload.
@@ -63,6 +67,23 @@ interface McpErrorEnvelope {
   code: McpErrorCode
   message: string
   details?: unknown
+}
+
+/**
+ * Translates a known domain error into the equivalent McpToolError.
+ * Uses instanceof checks — never inspects message content.
+ * Forwards the error message 1:1 so callers see the original explanation.
+ */
+export function translateServiceError(error: Error): McpToolError {
+  if (error instanceof LimitReachedError) {
+    return new McpToolError("LIMIT_REACHED", error.message)
+  }
+
+  if (error instanceof ConflictError) {
+    return new McpToolError("CONFLICT", error.message)
+  }
+
+  return new McpToolError("INTERNAL_ERROR", "An unexpected error occurred.")
 }
 
 /**

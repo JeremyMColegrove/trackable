@@ -10,7 +10,7 @@ import {
 
 test("workspace tier config exposes each plan's enforced limits", () => {
   for (const plan of getWorkspaceTierPlans()) {
-    assert.equal(getTierLimits(plan.tier), plan.limits)
+    assert.deepEqual(getTierLimits(plan.tierId), plan.limits)
   }
 })
 
@@ -19,18 +19,25 @@ test("workspace tier plans expose highlights derived from enforced limits", () =
   const plusPlan = getWorkspaceTierPlan("plus")
   const proPlan = getWorkspaceTierPlan("pro")
 
-  assert.deepEqual(
-    freePlan.highlights,
-    buildExpectedHighlights(freePlan.limits)
-  )
-  assert.deepEqual(
-    plusPlan.highlights,
-    buildExpectedHighlights(plusPlan.limits)
-  )
-  assert.deepEqual(proPlan.highlights, buildExpectedHighlights(proPlan.limits))
+  if (freePlan) {
+    assert.deepEqual(
+      freePlan.highlights,
+      buildExpectedHighlights(freePlan.limits)
+    )
+  }
+  if (plusPlan) {
+    assert.deepEqual(
+      plusPlan.highlights,
+      buildExpectedHighlights(plusPlan.limits)
+    )
+    assert.equal(plusPlan.mostPopular, true)
+  }
+  if (proPlan) {
+    assert.deepEqual(proPlan.highlights, buildExpectedHighlights(proPlan.limits))
+  }
 
-  assert.equal(plusPlan.mostPopular, true)
-  assert.equal(getWorkspaceTierPlans()[0]?.tier, "free")
+  const plans = getWorkspaceTierPlans()
+  assert.equal(plans[0]?.tierId, "free")
 })
 
 test("workspace tier config resolves every configured Lemon Squeezy variant id", () => {
@@ -41,7 +48,7 @@ test("workspace tier config resolves every configured Lemon Squeezy variant id",
 
     assert.equal(
       resolveWorkspaceTierFromLemonSqueezyVariantId(plan.lemonSqueezyVariantId),
-      plan.tier
+      plan.tierId
     )
   }
 

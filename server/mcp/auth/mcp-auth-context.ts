@@ -11,31 +11,14 @@ import type { McpToolName as SharedMcpToolName } from "@/lib/mcp-tools"
 export type McpToolName = SharedMcpToolName
 
 /**
- * Capabilities granted to an MCP token.
- *
- * - tools: "all" grants every tool; an array restricts to named tools only
- * - workspaceIds: optional workspace UUID allowlist; omitting grants access to
- *   every workspace the token owner can currently access
- * - trackableIds: optional whitelist of trackable UUIDs; omitting grants
- *   access to all accessible trackables in allowed workspaces
- */
-export interface McpCapabilities {
-  tools: "all" | McpToolName[]
-  workspaceIds?: string[]
-  trackableIds?: string[]
-}
-
-/**
  * The resolved, normalized auth context for an MCP request.
  *
- * Tool handlers receive this object — never a raw token string.
+ * Tool handlers receive this object.
  * All access decisions are made through this interface.
  */
 export interface McpAuthContext {
-  readonly tokenId: string
-  readonly ownerUserId: string
-  readonly allowedWorkspaceIds: readonly string[]
-  readonly capabilities: McpCapabilities
+  readonly userId: string
+  readonly scopes: readonly string[]
 
   /** Returns true if the token is allowed to invoke the given tool. */
   canUseTool(tool: McpToolName): boolean
@@ -45,44 +28,38 @@ export interface McpAuthContext {
 
   /**
    * Returns true if the token's capability scope includes the given trackable.
-   * When no trackableIds whitelist is set, all accessible trackables are allowed.
    */
   canAccessTrackable(trackableId: string): boolean
 }
 
-/** Concrete implementation of McpAuthContext built from a validated token record. */
+/** Concrete implementation of McpAuthContext built from standard Clerk Context. */
 export class McpAuthContextImpl implements McpAuthContext {
-  readonly tokenId: string
-  readonly ownerUserId: string
-  readonly allowedWorkspaceIds: readonly string[]
-  readonly capabilities: McpCapabilities
+  readonly userId: string
+  readonly scopes: readonly string[]
 
   constructor(params: {
-    tokenId: string
-    ownerUserId: string
-    allowedWorkspaceIds: readonly string[]
-    capabilities: McpCapabilities
+    userId: string
+    scopes: readonly string[]
   }) {
-    this.tokenId = params.tokenId
-    this.ownerUserId = params.ownerUserId
-    this.allowedWorkspaceIds = params.allowedWorkspaceIds
-    this.capabilities = params.capabilities
+    this.userId = params.userId
+    this.scopes = params.scopes
   }
 
   canUseTool(tool: McpToolName): boolean {
-    const { tools } = this.capabilities
-    if (tools === "all") return true
-    return (tools as McpToolName[]).includes(tool)
+    // Current behavior: Clerk doesn't support custom scopes yet, so we allow 
+    // all tools natively inside the MCP server. Permissions are enforced by the API 
+    // data layers dynamically based on userId.
+    return true
   }
 
   canAccessWorkspace(workspaceId: string): boolean {
-    return this.allowedWorkspaceIds.includes(workspaceId)
+    // Current behavior: Workspace access relies on data-layer access validations.
+    // The oauth context operates on behalf of the user entirely.
+    return true
   }
 
   canAccessTrackable(trackableId: string): boolean {
-    const { trackableIds } = this.capabilities
-    // No whitelist = access to all trackables within allowed workspaces
-    if (!trackableIds) return true
-    return trackableIds.includes(trackableId)
+    // Current behavior: Trackable access relies on data-layer access validations.
+    return true
   }
 }

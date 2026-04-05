@@ -3,12 +3,13 @@ import { z } from "zod"
 const toolRatingConfigSchema = z.object({
   kind: z.literal("rating").describe('Must be "rating".'),
   scale: z
+    .coerce
     .number()
     .int()
     .min(3)
     .max(10)
     .describe(
-      "Number of rating choices. Must be an integer from 3 to 10. Use 5 for a standard 1-5 rating."
+      "Number of rating choices. Integer from 3 to 10 — strings like \"5\" are accepted. Use 5 for a standard 1-5 rating."
     ),
   icon: z
     .enum(["star", "thumb", "heart"])
@@ -60,17 +61,19 @@ const toolCheckboxesConfigSchema = z.object({
     .optional()
     .describe("Whether responders can enter an additional free-form option."),
   minSelections: z
+    .coerce
     .number()
     .int()
     .min(0)
     .optional()
-    .describe("Optional minimum number of selected options."),
+    .describe("Optional minimum number of selected options. Strings like \"1\" are accepted."),
   maxSelections: z
+    .coerce
     .number()
     .int()
     .min(1)
     .optional()
-    .describe("Optional maximum number of selected options."),
+    .describe("Optional maximum number of selected options. Strings like \"3\" are accepted."),
 })
 
 const toolNotesConfigSchema = z.object({
@@ -81,12 +84,13 @@ const toolNotesConfigSchema = z.object({
     .optional()
     .describe("Optional placeholder text shown in the textarea."),
   maxLength: z
+    .coerce
     .number()
     .int()
     .min(1)
     .max(5000)
     .optional()
-    .describe("Optional maximum character count, from 1 to 5000."),
+    .describe("Optional maximum character count, from 1 to 5000. Strings like \"500\" are accepted."),
 })
 
 const toolShortTextConfigSchema = z.object({
@@ -97,12 +101,13 @@ const toolShortTextConfigSchema = z.object({
     .optional()
     .describe("Optional placeholder text shown in the input."),
   maxLength: z
+    .coerce
     .number()
     .int()
     .min(1)
     .max(500)
     .optional()
-    .describe("Optional maximum character count, from 1 to 500."),
+    .describe("Optional maximum character count, from 1 to 500. Strings like \"200\" are accepted."),
 })
 
 export const mcpToolFieldConfigSchema = z
@@ -135,8 +140,10 @@ export const mcpCreateFormToolInputSchema = {
         .describe("Optional description shown below the title (max 280 characters)."),
       status: z
         .enum(["draft", "published"])
+        .optional()
+        .default("draft")
         .describe(
-          '"draft" saves without publishing. "published" makes the form immediately live. A published form must have at least one field.'
+          'Optional. "draft" saves without publishing (default). "published" makes the form immediately live. A published form must have at least one field.'
         ),
       submit_label: z
         .string()
@@ -177,7 +184,9 @@ export const mcpCreateFormToolInputSchema = {
               .describe("Optional help text shown below the label."),
             required: z
               .boolean()
-              .describe("Whether this field must be filled before submission."),
+              .optional()
+              .default(false)
+              .describe("Whether this field must be filled before submission. Defaults to false if omitted."),
             config: mcpToolFieldConfigSchema,
           })
         )

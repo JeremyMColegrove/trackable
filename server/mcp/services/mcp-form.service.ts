@@ -2,6 +2,12 @@ import "server-only"
 
 import { randomUUID } from "node:crypto"
 
+import { eq } from "drizzle-orm"
+
+import { db } from "@/db"
+import { trackableItems } from "@/db/schema"
+import type { FormFieldConfig } from "@/db/schema/types"
+import { buildAbsoluteUrl } from "@/lib/site-config"
 import {
   validateMcpFormPayload,
   type McpFormInput,
@@ -16,6 +22,38 @@ import type { EditableTrackableForm } from "@/lib/project-form-builder"
 
 // Re-export types for callers that import from this module
 export type { McpFormInput, McpFormValidationResult }
+
+/** A single field in the form definition returned by get_form. */
+export interface McpFormField {
+  key: string
+  kind: string
+  label: string
+  description: string | null
+  required: boolean
+  config: FormFieldConfig
+}
+
+/** Result returned by the get_form tool. */
+export interface McpFormDetail {
+  hasForm: true
+  formId: string
+  trackableId: string
+  version: number
+  title: string
+  description: string | null
+  status: string
+  submitLabel: string | null
+  successMessage: string | null
+  fieldCount: number
+  fields: McpFormField[]
+  uiLink: string
+}
+
+export interface McpFormDetailEmpty {
+  hasForm: false
+  trackableId: string
+  message: string
+}
 
 /** Result returned to the create_form tool handler. */
 export interface McpFormCreationResult {
@@ -59,6 +97,77 @@ export class McpFormService {
         ...option,
         id: randomUUID(),
       })),
+    }
+  }
+
+  /**
+   * Returns the current active form definition for a survey trackable.
+   *
+   * Returns McpFormDetailEmpty when the trackable exists but has no form yet.
+   * Throws McpToolError for non-survey trackables or access failures.
+   */
+  async getForm(
+    trackableId: string,
+    authContext: McpAuthContext
+  ): Promise<McpFormDetail | McpFormDetailEmpty> {
+    const trackable = await mcpTrackableService.assertAccess(
+      trackableId,
+      authContext
+    )
+
+    if (trackable.kind !== "survey") {
+      throw new McpToolError(
+        "FORBIDDEN",
+        `Trackable "${trackable.name}" is of kind "${trackable.kind}". Only survey trackables have forms.`
+      )
+    }
+
+    const record = await db.query.trackableItems.findFirst({
+      where: eq(trackableItems.id, trackableId),
+      columns: { id: true },
+      with: {
+        activeForm: {
+          with: { fields: true },
+        },
+      },
+    })
+
+    if (!record?.activeForm) {
+      return {
+        hasForm: false,
+        trackableId,
+        message:
+          "This trackable has no form yet. Use create_form to add one.",
+      }
+    }
+
+    const form = record.activeForm
+    const fields = [...form.fields]
+      .sort((a, b) => a.position - b.position)
+      .map((field) => ({
+        key: field.key,
+        kind: field.kind,
+        label: field.label,
+        description: field.description,
+        required: field.required,
+        config: field.config as FormFieldConfig,
+      }))
+
+    return {
+      hasForm: true,
+      formId: form.id,
+      trackableId,
+      version: form.version,
+      title: form.title,
+      description: form.description,
+      status: form.status,
+      submitLabel: form.submitLabel,
+      successMessage: form.successMessage,
+      fieldCount: fields.length,
+      fields,
+      uiLink: buildAbsoluteUrl(
+        `/dashboard/trackables/${trackableId}`
+      ).toString(),
     }
   }
 
@@ -136,7 +245,7 @@ export class McpFormService {
     // Step 4: Persist via the existing form service
     const savedForm = await formService.saveForm(
       trackableId,
-      authContext.ownerUserId,
+      authContext.userId,
       editableForm
     )
 

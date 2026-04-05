@@ -18,6 +18,7 @@ import {
   getWorkspaceMemberLimitMessage,
 } from "@/lib/subscription-limit-messages"
 import { isSubscriptionEnforcementEnabled } from "@/lib/subscription-enforcement"
+import { LimitReachedError } from "@/server/errors"
 import { CounterCacheRepository } from "@/server/redis/counter-cache.repository"
 import { getUsagePayloadSizeBytes } from "@/server/subscriptions/quota-limit-utils"
 import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
@@ -47,10 +48,7 @@ export class QuotaService {
       )
 
     if (Number(result.count) >= limits.maxTrackableItems) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: getTrackableLimitMessage(limits.maxTrackableItems),
-      })
+      throw new LimitReachedError(getTrackableLimitMessage(limits.maxTrackableItems))
     }
   }
 
@@ -118,10 +116,7 @@ export class QuotaService {
       )
 
     if (Number(result.count) >= limits.maxWorkspaceMembers) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: getWorkspaceMemberLimitMessage(limits.maxWorkspaceMembers),
-      })
+      throw new LimitReachedError(getWorkspaceMemberLimitMessage(limits.maxWorkspaceMembers))
     }
   }
 

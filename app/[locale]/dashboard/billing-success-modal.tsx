@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import {
   AlertTriangleIcon,
   ArrowRightLeftIcon,
@@ -20,9 +19,9 @@ import {
 } from "lucide-react"
 
 export type BillingSuccessScenario =
-  | { type: "new"; toTier: SubscriptionTier }
-  | { type: "upgrade"; fromTier: SubscriptionTier; toTier: SubscriptionTier }
-  | { type: "downgrade"; fromTier: SubscriptionTier; toTier: SubscriptionTier }
+  | { type: "new"; toTier: string }
+  | { type: "upgrade"; fromTier: string; toTier: string }
+  | { type: "downgrade"; fromTier: string; toTier: string }
 
 interface BillingSuccessModalProps {
   open: boolean
@@ -32,41 +31,39 @@ interface BillingSuccessModalProps {
 
 function getScenarioContent(
   scenario: BillingSuccessScenario,
-  getWorkspaceTierPlan: ReturnType<
-    typeof useAppSettings
-  >["getWorkspaceTierPlan"]
+  getWorkspacePlan: ReturnType<typeof useAppSettings>["getWorkspacePlan"]
 ) {
-  const toPlan = getWorkspaceTierPlan(scenario.toTier)
-  const toPrice = toPlan.priceLabel
+  const toPlan = getWorkspacePlan(scenario.toTier)
+  const toPrice = toPlan?.priceLabel ?? ""
 
   switch (scenario.type) {
     case "new":
       return {
         icon: <SparklesIcon className="size-8 text-white/90" />,
-        title: `Welcome to ${toPlan.name}!`,
+        title: `Welcome to ${toPlan?.name ?? scenario.toTier}!`,
         subtitle: "Your workspace is now upgraded and ready to go.",
         billingNote: `Your subscription is active at ${toPrice}/month per workspace. You can manage or cancel anytime from the billing portal.`,
         warningNote: null,
         ctaLabel: "Get Started",
       }
     case "upgrade": {
-      const fromPlan = getWorkspaceTierPlan(scenario.fromTier)
+      const fromPlan = getWorkspacePlan(scenario.fromTier)
       return {
         icon: <SparklesIcon className="size-8 text-white/90" />,
-        title: `Upgraded to ${toPlan.name}!`,
-        subtitle: `You've upgraded from ${fromPlan.name} to ${toPlan.name}.`,
+        title: `Upgraded to ${toPlan?.name ?? scenario.toTier}!`,
+        subtitle: `You've upgraded from ${fromPlan?.name ?? scenario.fromTier} to ${toPlan?.name ?? scenario.toTier}.`,
         billingNote: `A prorated charge has been applied for the remainder of your current billing period. Future invoices will be ${toPrice}/month.`,
         warningNote: null,
         ctaLabel: "Got it",
       }
     }
     case "downgrade": {
-      const fromPlan = getWorkspaceTierPlan(scenario.fromTier)
+      const fromPlan = getWorkspacePlan(scenario.fromTier)
       return {
         icon: <ArrowRightLeftIcon className="size-7 text-white/90" />,
-        title: `Switched to ${toPlan.name}`,
-        subtitle: `You've switched from ${fromPlan.name} to ${toPlan.name}.`,
-        billingNote: `A prorated credit for unused time on your ${fromPlan.name} plan has been applied to your account. Your new rate of ${toPrice}/month takes effect on the next invoice.`,
+        title: `Switched to ${toPlan?.name ?? scenario.toTier}`,
+        subtitle: `You've switched from ${fromPlan?.name ?? scenario.fromTier} to ${toPlan?.name ?? scenario.toTier}.`,
+        billingNote: `A prorated credit for unused time on your ${fromPlan?.name ?? scenario.fromTier} plan has been applied to your account. Your new rate of ${toPrice}/month takes effect on the next invoice.`,
         warningNote:
           "Some limits have been reduced. Make sure your current usage stays within the new plan's limits.",
         ctaLabel: "Got it",
@@ -80,11 +77,11 @@ export function BillingSuccessModal({
   onOpenChange,
   scenario,
 }: BillingSuccessModalProps) {
-  const { getWorkspaceTierPlan } = useAppSettings()
-  const toPlan = getWorkspaceTierPlan(scenario.toTier)
-  const toTierRank = toPlan.rank
+  const { getWorkspacePlan } = useAppSettings()
+  const toPlan = getWorkspacePlan(scenario.toTier)
+  const toTierRank = toPlan?.rank ?? 0
   const isDowngrade = scenario.type === "downgrade"
-  const content = getScenarioContent(scenario, getWorkspaceTierPlan)
+  const content = getScenarioContent(scenario, getWorkspacePlan)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,10 +115,10 @@ export function BillingSuccessModal({
           {/* Plan highlights */}
           <div>
             <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              {toPlan.name} includes
+              {toPlan?.name ?? scenario.toTier} includes
             </p>
             <ul className="space-y-2">
-              {toPlan.highlights.map((highlight) => (
+              {(toPlan?.highlights ?? []).map((highlight) => (
                 <li
                   key={highlight}
                   className="flex items-start gap-2.5 text-sm text-foreground/85"

@@ -28,9 +28,17 @@ export class FormSharingTool implements McpTool {
       "update_form_sharing",
       {
         description:
-          "Update public sharing settings for an existing survey form. " +
-          "Can enable or disable the public survey link, toggle anonymous responses, " +
-          "and returns the full generated public link when one is active.",
+          "Use this when you need to enable or disable the public survey link for a survey-kind trackable, or toggle whether anonymous responders can submit. " +
+          "Returns: { trackableId, publicLinkEnabled, allowAnonymousResponses, publicUrl }. publicUrl is null when sharing is disabled. " +
+          "Omit any field you do not want to change — only provided fields are updated. " +
+          "Do not use this to create or edit the form itself — use create_form for that. " +
+          "Do not use this on api_ingestion trackables — it only works on survey-kind trackables. " +
+          "Do not call this just to read the current sharing state — use get_form for that.",
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: true,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -72,8 +80,7 @@ export class FormSharingTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "update_form_sharing",
             targetResourceId: args.trackable_id,
             success: true,
@@ -91,8 +98,7 @@ export class FormSharingTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "update_form_sharing",
             targetResourceId: args.trackable_id,
             success: false,

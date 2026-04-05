@@ -562,7 +562,8 @@
     "Not enabled": "غير ممكّن",
     "Loading privacy settings": "جارٍ تحميل إعدادات الخصوصية",
     "Downgrade": "الرجوع إلى إصدار سابق",
-    "Configure config.json": "قم بتكوين الملف config.json"
+    "Configure config.json": "قم بتكوين الملف config.json",
+    "API keys": "مفاتيح واجهة برمجة التطبيقات"
   },
   "de": {
     "Tracking for your team.": "Tracking für Ihr Team.",
@@ -1127,7 +1128,8 @@
     "Not enabled": "Nicht aktiviert",
     "Loading privacy settings": "Datenschutzeinstellungen werden geladen",
     "Downgrade": "Downgrade",
-    "Configure config.json": "Konfigurieren Sie config.json"
+    "Configure config.json": "Konfigurieren Sie config.json",
+    "API keys": "API-Schlüssel"
   },
   "es": {
     "Tracking for your team.": "Seguimiento para tu equipo.",
@@ -1692,7 +1694,8 @@
     "Not enabled": "No habilitado",
     "Loading privacy settings": "Cargando configuración de privacidad",
     "Downgrade": "Degradar",
-    "Configure config.json": "Configurar config.json"
+    "Configure config.json": "Configurar config.json",
+    "API keys": "Claves API"
   },
   "fr": {
     "Tracking for your team.": "Suivi de votre équipe.",
@@ -2257,7 +2260,8 @@
     "Not enabled": "Non activé",
     "Loading privacy settings": "Chargement des paramètres de confidentialité",
     "Downgrade": "Rétrograder",
-    "Configure config.json": "Configurer config.json"
+    "Configure config.json": "Configurer config.json",
+    "API keys": "Clés API"
   },
   "hi": {
     "Tracking for your team.": "अपनी टीम के लिए ट्रैकिंग।",
@@ -2822,7 +2826,8 @@
     "Not enabled": "सक्षम नहीं",
     "Loading privacy settings": "गोपनीयता सेटिंग लोड हो रही है",
     "Downgrade": "ढाल",
-    "Configure config.json": "config.json कॉन्फ़िगर करें"
+    "Configure config.json": "config.json कॉन्फ़िगर करें",
+    "API keys": "एपीआई कुंजियाँ"
   },
   "id": {
     "Tracking for your team.": "Pelacakan untuk tim Anda.",
@@ -3387,7 +3392,8 @@
     "Not enabled": "Tidak diaktifkan",
     "Loading privacy settings": "Memuat pengaturan privasi",
     "Downgrade": "Turunkan versi",
-    "Configure config.json": "Konfigurasikan config.json"
+    "Configure config.json": "Konfigurasikan config.json",
+    "API keys": "Kunci API"
   },
   "it": {
     "Tracking for your team.": "Monitoraggio per la tua squadra.",
@@ -3952,7 +3958,8 @@
     "Not enabled": "Non abilitato",
     "Loading privacy settings": "Caricamento delle impostazioni sulla privacy",
     "Downgrade": "Downgrade",
-    "Configure config.json": "Configura config.json"
+    "Configure config.json": "Configura config.json",
+    "API keys": "Chiavi API"
   },
   "ja": {
     "Tracking for your team.": "チームの追跡。",
@@ -4517,7 +4524,8 @@
     "Not enabled": "有効になっていません",
     "Loading privacy settings": "プライバシー設定を読み込んでいます",
     "Downgrade": "ダウングレード",
-    "Configure config.json": "config.jsonを構成する"
+    "Configure config.json": "config.jsonを構成する",
+    "API keys": "APIキー"
   },
   "ko": {
     "Tracking for your team.": "팀을 추적합니다.",
@@ -5082,7 +5090,8 @@
     "Not enabled": "활성화되지 않음",
     "Loading privacy settings": "개인정보 보호 설정 로드 중",
     "Downgrade": "다운그레이드",
-    "Configure config.json": "config.json 구성"
+    "Configure config.json": "config.json 구성",
+    "API keys": "API 키"
   },
   "nl": {
     "Tracking for your team.": "Volgen voor uw team.",
@@ -5647,7 +5656,8 @@
     "Not enabled": "Niet ingeschakeld",
     "Loading privacy settings": "Privacy-instellingen laden",
     "Downgrade": "Downgraden",
-    "Configure config.json": "Configureer config.json"
+    "Configure config.json": "Configureer config.json",
+    "API keys": "API-sleutels"
   },
   "pl": {
     "Tracking for your team.": "Śledzenie dla Twojego zespołu.",
@@ -6212,7 +6222,8 @@
     "Not enabled": "Nie włączone",
     "Loading privacy settings": "Ładowanie ustawień prywatności",
     "Downgrade": "Nachylenie",
-    "Configure config.json": "Skonfiguruj plik config.json"
+    "Configure config.json": "Skonfiguruj plik config.json",
+    "API keys": "Klucze API"
   },
   "pt": {
     "Tracking for your team.": "Rastreamento para sua equipe.",
@@ -6777,7 +6788,8 @@
     "Not enabled": "Não ativado",
     "Loading privacy settings": "Carregando configurações de privacidade",
     "Downgrade": "Downgrade",
-    "Configure config.json": "Configurar config.json"
+    "Configure config.json": "Configurar config.json",
+    "API keys": "Chaves de API"
   },
   "ru": {
     "Tracking for your team.": "Отслеживание вашей команды.",
@@ -7342,7 +7354,8 @@
     "Not enabled": "Не включено",
     "Loading privacy settings": "Загрузка настроек конфиденциальности",
     "Downgrade": "Понизить версию",
-    "Configure config.json": "Настроить config.json"
+    "Configure config.json": "Настроить config.json",
+    "API keys": "Ключи API"
   },
   "tr": {
     "Tracking for your team.": "Ekibiniz için takip.",
@@ -7907,7 +7920,8 @@
     "Not enabled": "Etkin değil",
     "Loading privacy settings": "Gizlilik ayarları yükleniyor",
     "Downgrade": "Sürüm düşürme",
-    "Configure config.json": "Config.json'u yapılandırma"
+    "Configure config.json": "Config.json'u yapılandırma",
+    "API keys": "API anahtarları"
   },
   "vi": {
     "Tracking for your team.": "Theo dõi cho nhóm của bạn.",
@@ -8472,7 +8486,8 @@
     "Not enabled": "Chưa bật",
     "Loading privacy settings": "Đang tải cài đặt quyền riêng tư",
     "Downgrade": "Hạ cấp",
-    "Configure config.json": "Định cấu hình config.json"
+    "Configure config.json": "Định cấu hình config.json",
+    "API keys": "Khóa API"
   },
   "zh-CN": {
     "Tracking for your team.": "跟踪您的团队。",
@@ -9037,6 +9052,7 @@
     "Not enabled": "未启用",
     "Loading privacy settings": "正在加载隐私设置",
     "Downgrade": "降级",
-    "Configure config.json": "配置config.json"
+    "Configure config.json": "配置config.json",
+    "API keys": "API 密钥"
   }
 }

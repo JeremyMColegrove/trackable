@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { useTRPC } from "@/trpc/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { T } from "gt-next"
@@ -26,20 +25,12 @@ import {
 } from "@/app/[locale]/dashboard/billing-success-modal"
 
 function getPlanCtaLabel(
-  tier: SubscriptionTier,
-  currentTier: SubscriptionTier,
-  getWorkspaceTierPlan: ReturnType<
-    typeof useAppSettings
-  >["getWorkspaceTierPlan"]
+  planRank: number,
+  currentRank: number,
+  isCurrent: boolean
 ) {
-  if (tier === currentTier) {
-    return <T>Manage</T>
-  }
-
-  const targetRank = getWorkspaceTierPlan(tier).rank
-  const currentRank = getWorkspaceTierPlan(currentTier).rank
-
-  return targetRank > currentRank ? <T>Upgrade</T> : <T>Downgrade</T>
+  if (isCurrent) return <T>Manage</T>
+  return planRank > currentRank ? <T>Upgrade</T> : <T>Downgrade</T>
 }
 
 export function WorkspaceTierDialog({
@@ -49,27 +40,29 @@ export function WorkspaceTierDialog({
   open,
   onOpenChange,
 }: {
-  currentTier: SubscriptionTier
+  currentTier: string
   workspaceId: string
-  initialTier?: SubscriptionTier
+  initialTier?: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
   const {
-    getWorkspaceTierPlan,
+    getWorkspacePlan,
     resolveWorkspaceTierFromVariantId,
     workspaceBillingEnabled,
-    workspaceTierPlans,
+    workspacePlans,
+    defaultTierId,
   } = useAppSettings()
-  const plans = workspaceTierPlans
-  const currentPlan = getWorkspaceTierPlan(currentTier)
-  const freePlan = getWorkspaceTierPlan("free")
+  const plans = workspacePlans
+  const currentPlan = getWorkspacePlan(currentTier)
+  const defaultPlan = getWorkspacePlan(defaultTierId)
   const mostPopularPlan = plans.find((plan) => plan.mostPopular) ?? null
+  const currentRank = currentPlan?.rank ?? 0
   const isCurrentTierAboveMostPopular =
-    mostPopularPlan !== null && currentPlan.rank > mostPopularPlan.rank
-  const highlightedTier = isCurrentTierAboveMostPopular
+    mostPopularPlan !== null && currentRank > (mostPopularPlan.rank ?? 0)
+  const highlightedTierId = isCurrentTierAboveMostPopular
     ? currentTier
-    : (mostPopularPlan?.tier ?? currentTier)
+    : (mostPopularPlan?.tierId ?? currentTier)
   const [loadingVariantId, setLoadingVariantId] = useState<string | null>(null)
   const [successScenario, setSuccessScenario] =
     useState<BillingSuccessScenario | null>(null)
@@ -96,10 +89,9 @@ export function WorkspaceTierDialog({
         )
         onOpenChange(false)
         if (toTier) {
-          const fromRank = getWorkspaceTierPlan(currentTier).rank
-          const toRank = getWorkspaceTierPlan(toTier).rank
+          const toRank = getWorkspacePlan(toTier)?.rank ?? 0
           setSuccessScenario(
-            toRank > fromRank
+            toRank > currentRank
               ? { type: "upgrade", fromTier: currentTier, toTier }
               : { type: "downgrade", fromTier: currentTier, toTier }
           )
@@ -146,22 +138,22 @@ export function WorkspaceTierDialog({
 
               <div className="mb-3">
                 <h3 className="text-base font-bold text-foreground sm:text-lg">
-                  {freePlan.name}
+                  {defaultPlan?.name ?? "Free"}
                 </h3>
                 <p className="mt-1.5 text-sm leading-snug text-muted-foreground sm:min-h-[34px]">
-                  {freePlan.summary}
+                  {defaultPlan?.description ?? ""}
                 </p>
               </div>
 
               <div className="mb-4 flex items-end gap-1.5 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                {freePlan.priceLabel}
+                {defaultPlan?.priceLabel ?? "$0"}
                 <span className="pb-1 text-xs leading-tight font-medium text-muted-foreground sm:text-sm">
                   <T>per workspace</T>
                 </span>
               </div>
 
               <ul className="mb-5 flex-1 space-y-2.5">
-                {freePlan.highlights.map((highlight, index) => (
+                {(defaultPlan?.highlights ?? []).map((highlight, index) => (
                   <li
                     key={index}
                     className="flex items-start gap-2.5 text-xs leading-snug text-foreground/85 sm:text-sm"
@@ -257,29 +249,25 @@ export function WorkspaceTierDialog({
 
           <div className="grid gap-4 px-4 py-5 sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-6">
             {plans.map((plan) => {
-              const tier = plan.tier
-              const isCurrent = tier === currentTier
+              const tierId = plan.tierId
+              const isCurrent = tierId === currentTier
               const isMostPopular = plan.mostPopular
-              const isHighlighted = tier === highlightedTier
+              const isHighlighted = tierId === highlightedTierId
               const showMostPopularBadge =
                 isMostPopular && !isCurrent && !isCurrentTierAboveMostPopular
-              const isFree = tier === "free"
+              const isFree = !plan.lemonSqueezyVariantId
               const isPreSelected =
-                initialTier !== undefined && tier === initialTier && !isCurrent
+                initialTier !== undefined && tierId === initialTier && !isCurrent
               const isLoadingThisPlan =
                 !isFree &&
                 plan.lemonSqueezyVariantId !== null &&
                 loadingVariantId === plan.lemonSqueezyVariantId
               const isAnyLoading = loadingVariantId !== null
-              const ctaLabel = getPlanCtaLabel(
-                tier,
-                currentTier,
-                getWorkspaceTierPlan
-              )
+              const ctaLabel = getPlanCtaLabel(plan.rank, currentRank, isCurrent)
 
               return (
                 <div
-                  key={tier}
+                  key={tierId}
                   className={cn(
                     "relative flex flex-col rounded-2xl border bg-background p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-5",
                     isHighlighted
@@ -311,7 +299,7 @@ export function WorkspaceTierDialog({
                       {plan.name}
                     </h3>
                     <p className="mt-1.5 text-sm leading-snug text-muted-foreground sm:min-h-[34px]">
-                      {plan.summary}
+                      {plan.description}
                     </p>
                   </div>
 
@@ -352,7 +340,7 @@ export function WorkspaceTierDialog({
                     >
                       <Link
                         href={
-                          currentPlan.manageUrl ??
+                          currentPlan?.manageUrl ??
                           "https://store.trackables.org/billing"
                         }
                         target="_blank"

@@ -12,6 +12,7 @@ import {
   getRequiredUserId,
   protectedProcedure,
 } from "@/server/api/trpc"
+import { hasAdminControlsEnabled } from "@/server/admin-controls"
 import { userActiveWorkspaceCache } from "@/server/redis/access-control-cache.repository"
 import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
 import {
@@ -25,16 +26,18 @@ export const accountRouter = createTRPCRouter({
   getProfilePrivacy: protectedProcedure.query(async ({ ctx }) => {
     const userId = getRequiredUserId(ctx)
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: {
-        hasAdminControls: true,
-        isProfilePrivate: true,
-      },
-    })
+    const [user, adminEnabled] = await Promise.all([
+      db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          isProfilePrivate: true,
+        },
+      }),
+      hasAdminControlsEnabled(userId),
+    ])
 
     return {
-      hasAdminControls: user?.hasAdminControls ?? false,
+      hasAdminControls: adminEnabled,
       isProfilePrivate: user?.isProfilePrivate ?? false,
     }
   }),
@@ -42,14 +45,9 @@ export const accountRouter = createTRPCRouter({
   getWorkspaceContext: protectedProcedure.query(async ({ ctx }) => {
     const userId = getRequiredUserId(ctx)
 
-    const [user, activeMembership, memberships, createdWorkspaceCount] =
+    const [adminEnabled, activeMembership, memberships, createdWorkspaceCount] =
       await Promise.all([
-        db.query.users.findFirst({
-          where: eq(users.id, userId),
-          columns: {
-            hasAdminControls: true,
-          },
-        }),
+        hasAdminControlsEnabled(userId),
         accessControlService.resolveActiveWorkspace(userId),
         getWorkspaceMemberships(userId),
         getCreatedWorkspaceCount(userId),
@@ -62,7 +60,7 @@ export const accountRouter = createTRPCRouter({
       : null
 
     return {
-      hasAdminControls: user?.hasAdminControls ?? false,
+      hasAdminControls: adminEnabled,
       activeWorkspace: {
         id: activeMembership.workspace.id,
         name: activeMembership.workspace.name,
@@ -170,15 +168,7 @@ export const accountRouter = createTRPCRouter({
         .where(eq(users.id, userId))
 
       return {
-        hasAdminControls:
-          (
-            await db.query.users.findFirst({
-              where: eq(users.id, userId),
-              columns: {
-                hasAdminControls: true,
-              },
-            })
-          )?.hasAdminControls ?? false,
+        hasAdminControls: await hasAdminControlsEnabled(userId),
         isProfilePrivate: input.isProfilePrivate,
       }
     }),

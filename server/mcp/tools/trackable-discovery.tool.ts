@@ -31,11 +31,19 @@ export class TrackableDiscoveryTool implements McpTool {
       "list_trackables",
       {
         description:
-          "List all trackables accessible to this MCP token within one workspace. " +
-          "If workspace_id is omitted, the current active user workspace is used by default. " +
-          "Returns summary info including kind (survey or api_ingestion), " +
-          "activity counts, and admin UI links. " +
-          "Prefer find_trackables first for cross-workspace discovery, then use this tool to browse one known workspace.",
+          "Use this when you already know a workspace_id and want to browse all trackables in it, or when you want to see every trackable in the active workspace. " +
+          "If workspace_id is omitted, defaults to the current active workspace. " +
+          "Returns: { trackables: [ { id, workspaceId, name, slug, kind, submissionCount, apiUsageCount, lastActivityAt, adminUrl } ] }. " +
+          "kind is either 'survey' or 'api_ingestion'. lastActivityAt is an ISO 8601 timestamp or null. adminUrl is a direct deep link into the admin UI. " +
+          "Returns an empty array when no trackables exist in the workspace — this is not an error. " +
+          "Do not use this for cross-workspace search — use find_trackables instead when searching by name or across workspaces. " +
+          "Do not call this to get form field definitions, response data, or log events — use get_form, list_responses, or search_logs for those. " +
+          "Do not call this to answer general questions about how Trackables works, feature explanations, or account setup guidance — those require no tool calls.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           workspace_id: z
             .string()
@@ -78,8 +86,7 @@ export class TrackableDiscoveryTool implements McpTool {
           })
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "list_trackables",
             success: true,
@@ -97,8 +104,7 @@ export class TrackableDiscoveryTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "list_trackables",
             success: false,

@@ -1,4 +1,7 @@
-import { getLimitsForTier } from "@/lib/subscription-plans"
+import {
+  getDefaultTierId,
+  getLimitsForTier,
+} from "@/lib/subscription-plans"
 import type { WorkspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
 import type {
   ResolvedSubscriptionState,
@@ -48,7 +51,7 @@ export class SubscriptionService {
 
   async getWorkspaceTier(workspaceId: string): Promise<SubscriptionTier> {
     if (!this.subscriptionEnforcementEnabled()) {
-      return "pro"
+      return getDefaultTierId()
     }
 
     const state = await this.getState(workspaceId)
@@ -57,7 +60,7 @@ export class SubscriptionService {
 
   async getWorkspaceLimits(workspaceId: string): Promise<TierLimits> {
     if (!this.subscriptionEnforcementEnabled()) {
-      return getLimitsForTier("pro")
+      return getLimitsForTier(getDefaultTierId())
     }
 
     const state = await this.getState(workspaceId)
@@ -72,7 +75,7 @@ export class SubscriptionService {
       lemonSqueezySubscriptionId: null,
       lemonSqueezyCustomerId: null,
       variantId: null,
-      tier: "pro",
+      tier: getDefaultTierId(),
       status: "active",
       currentPeriodEnd: null,
     }
@@ -86,7 +89,7 @@ export class SubscriptionService {
       lemonSqueezySubscriptionId: null,
       lemonSqueezyCustomerId: null,
       variantId: null,
-      tier: "free",
+      tier: getDefaultTierId(),
       status: "active",
       currentPeriodEnd: null,
     }
@@ -96,14 +99,14 @@ export class SubscriptionService {
     subscription: WorkspaceSubscriptionState
   ): ResolvedSubscriptionState {
     const effectiveTier =
-      subscription.status === "active" ? subscription.tier : "free"
+      subscription.status === "active" ? subscription.tier : getDefaultTierId()
 
     return {
       ...subscription,
       planTier: subscription.tier,
       effectiveTier,
       limits: getLimitsForTier(effectiveTier),
-      isFree: effectiveTier === "free",
+      isFree: effectiveTier === getDefaultTierId(),
     }
   }
 }

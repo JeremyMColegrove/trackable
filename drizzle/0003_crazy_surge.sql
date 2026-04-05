@@ -1,3 +1,0 @@
-CREATE INDEX "trackable_api_usage_events_trackable_occurred_id_idx" ON "trackable_api_usage_events" USING btree ("trackable_id","occurred_at","id");--> statement-breakpoint
-CREATE INDEX "trackable_api_usage_events_payload_gin_idx" ON "trackable_api_usage_events" USING gin ("payload");--> statement-breakpoint
-CREATE INDEX "trackable_api_usage_events_metadata_gin_idx" ON "trackable_api_usage_events" USING gin ("metadata") WHERE "trackable_api_usage_events"."metadata" is not null;

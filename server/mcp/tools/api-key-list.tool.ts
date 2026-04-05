@@ -27,9 +27,17 @@ export class ApiKeyListTool implements McpTool {
       "list_api_keys",
       {
         description:
-          "List all API keys for an api_ingestion trackable. " +
-          "Returns metadata only — plaintext secrets are never shown after creation. " +
-          "Only works on trackables of kind api_ingestion.",
+          "Use this when you need to see existing API keys for an api_ingestion-kind trackable, for example to find a key_id before revoking it. " +
+          "Returns: { keys: [ { id, name, lastFour, status, expiresAt, lastUsedAt, usageCount, createdAt } ] }. " +
+          "status is either 'active' or 'revoked'. expiresAt and lastUsedAt are ISO 8601 timestamps or null. " +
+          "Plaintext secrets are never returned — only metadata. " +
+          "Do not use this on survey trackables — it only works on api_ingestion-kind trackables. " +
+          "Do not call this expecting to retrieve plaintext secrets — they are returned only once at key creation and cannot be retrieved again.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -53,8 +61,7 @@ export class ApiKeyListTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_api_keys",
             targetResourceId: args.trackable_id,
             success: true,
@@ -72,8 +79,7 @@ export class ApiKeyListTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_api_keys",
             targetResourceId: args.trackable_id,
             success: false,

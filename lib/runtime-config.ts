@@ -3,51 +3,45 @@ import path from "node:path"
 
 import { z } from "zod"
 
-const subscriptionTierSchema = z.enum(["free", "plus", "pro"])
-
 const nullablePositiveIntegerSchema = z.number().int().positive().nullable()
 
-const tierLimitsSchema = z.object({
+const limitEntrySchema = z.object({
+  id: z.string().trim().min(1),
   maxTrackableItems: nullablePositiveIntegerSchema,
   maxResponsesPerSurvey: nullablePositiveIntegerSchema,
   maxWorkspaceMembers: nullablePositiveIntegerSchema,
   maxApiLogsPerMinute: nullablePositiveIntegerSchema,
   maxApiPayloadBytes: nullablePositiveIntegerSchema,
   logRetentionDays: nullablePositiveIntegerSchema,
+  maxCreatedWorkspaces: nullablePositiveIntegerSchema,
+  billingTier: z.string().trim().min(1).nullable(),
 })
 
-const workspaceTierPlanDisplaySchema = z.object({
+const billingTierSchema = z.object({
+  id: z.string().trim().min(1),
   name: z.string().trim().min(1),
-  mostPopular: z.boolean(),
   priceLabel: z.string().trim().min(1),
   priceInterval: z.string().trim().min(1),
-  summary: z.string().trim().min(1),
+  description: z.string().trim().min(1),
   tone: z.enum(["neutral", "accent", "strong"]),
-})
-
-const subscriptionTierConfigSchema = z.object({
-  tier: subscriptionTierSchema,
-  rank: z.number().int().min(0),
+  mostPopular: z.boolean(),
   lemonSqueezyVariantId: z.string().trim().min(1).nullable(),
-  limits: tierLimitsSchema,
-  display: workspaceTierPlanDisplaySchema,
+  enabled: z.boolean(),
 })
 
 const runtimeConfigObjectShape = z.object({
+  admins: z.array(z.string().email()).optional().default([]),
   features: z.object({
     subscriptionEnforcementEnabled: z.boolean(),
     workspaceBillingEnabled: z.boolean(),
     batchSchedulerEnabled: z.boolean(),
+    customMCPServerTokens: z.boolean(),
   }),
+  limits: z.array(limitEntrySchema).optional(),
   billing: z.object({
     lemonSqueezyStoreId: z.string().trim().min(1).nullable(),
     manageUrl: z.string().trim().url().nullable(),
-  }),
-  subscriptionTiers: z.object({
-    freeTierUserLimits: z.object({
-      maxCreatedWorkspaces: nullablePositiveIntegerSchema,
-    }),
-    plans: z.array(subscriptionTierConfigSchema),
+    tiers: z.array(billingTierSchema),
   }),
   usage: z.object({
     invalidApiKeyRateLimitPerMinute: z.number().int().positive(),
@@ -68,49 +62,74 @@ const runtimeConfigObjectShape = z.object({
 
 export const RuntimeConfigShape = runtimeConfigObjectShape.superRefine(
   (value, ctx) => {
-    const seenTiers = new Set<string>()
-    const seenRanks = new Set<number>()
-
-    for (const [index, plan] of value.subscriptionTiers.plans.entries()) {
-      if (seenTiers.has(plan.tier)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Duplicate subscription tier "${plan.tier}".`,
-          path: ["subscriptionTiers", "plans", index, "tier"],
-        })
+    if (value.limits) {
+      const seenLimitIds = new Set<string>()
+      for (const [index, entry] of value.limits.entries()) {
+        if (seenLimitIds.has(entry.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate limits entry id "${entry.id}".`,
+            path: ["limits", index, "id"],
+          })
+        }
+        seenLimitIds.add(entry.id)
       }
 
-      if (seenRanks.has(plan.rank)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Duplicate subscription plan rank "${plan.rank}".`,
-          path: ["subscriptionTiers", "plans", index, "rank"],
-        })
+      const billingTierIds = new Set(value.billing.tiers.map((t) => t.id))
+      for (const [index, entry] of value.limits.entries()) {
+        if (entry.billingTier !== null && !billingTierIds.has(entry.billingTier)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Limits entry "${entry.id}" references unknown billing tier "${entry.billingTier}".`,
+            path: ["limits", index, "billingTier"],
+          })
+        }
       }
 
-      seenTiers.add(plan.tier)
-      seenRanks.add(plan.rank)
+      let seenNullBillingTier = false
+      const seenBillingTierRefs = new Set<string>()
+      for (const [index, entry] of value.limits.entries()) {
+        if (entry.billingTier === null) {
+          if (seenNullBillingTier) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Multiple limits entries have billingTier: null.",
+              path: ["limits", index, "billingTier"],
+            })
+          }
+          seenNullBillingTier = true
+        } else if (seenBillingTierRefs.has(entry.billingTier)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate billingTier "${entry.billingTier}" in limits.`,
+            path: ["limits", index, "billingTier"],
+          })
+        } else {
+          seenBillingTierRefs.add(entry.billingTier)
+        }
+      }
     }
 
-    for (const tier of subscriptionTierSchema.options) {
-      if (!seenTiers.has(tier)) {
+    const seenBillingIds = new Set<string>()
+    for (const [index, tier] of value.billing.tiers.entries()) {
+      if (seenBillingIds.has(tier.id)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Missing subscription tier "${tier}".`,
-          path: ["subscriptionTiers", "plans"],
+          message: `Duplicate billing tier id "${tier.id}".`,
+          path: ["billing", "tiers", index, "id"],
         })
       }
+      seenBillingIds.add(tier.id)
     }
 
-    const mostPopularCount = value.subscriptionTiers.plans.filter(
-      (plan) => plan.display.mostPopular
+    const mostPopularCount = value.billing.tiers.filter(
+      (tier) => tier.mostPopular
     ).length
-
     if (mostPopularCount > 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Only one subscription tier can be marked most popular.",
-        path: ["subscriptionTiers", "plans"],
+        message: "Only one billing tier can be marked most popular.",
+        path: ["billing", "tiers"],
       })
     }
 
@@ -124,18 +143,18 @@ export const RuntimeConfigShape = runtimeConfigObjectShape.superRefine(
         })
       }
 
-      for (const [index, plan] of value.subscriptionTiers.plans.entries()) {
-        if (plan.tier !== "free" && !plan.lemonSqueezyVariantId) {
+      // lemonSqueezyVariantId: null means an intentionally free (no-payment) tier — skip it.
+      for (const [index, tier] of value.billing.tiers.entries()) {
+        if (
+          tier.enabled &&
+          tier.lemonSqueezyVariantId !== null &&
+          !tier.lemonSqueezyVariantId
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message:
-              "Paid tiers require lemonSqueezyVariantId when workspace billing is enabled.",
-            path: [
-              "subscriptionTiers",
-              "plans",
-              index,
-              "lemonSqueezyVariantId",
-            ],
+              "Enabled paid billing tiers require a non-empty lemonSqueezyVariantId when workspace billing is enabled.",
+            path: ["billing", "tiers", index, "lemonSqueezyVariantId"],
           })
         }
       }
@@ -144,35 +163,26 @@ export const RuntimeConfigShape = runtimeConfigObjectShape.superRefine(
 )
 
 export type RuntimeConfig = z.infer<typeof runtimeConfigObjectShape>
-export type SubscriptionTierConfig =
-  RuntimeConfig["subscriptionTiers"]["plans"][number]
+export type LimitsEntry = NonNullable<RuntimeConfig["limits"]>[number]
+export type BillingTierConfig = RuntimeConfig["billing"]["tiers"][number]
 
-const subscriptionTierConfigOverrideSchema =
-  subscriptionTierConfigSchema.extend({
-    rank: subscriptionTierConfigSchema.shape.rank.optional(),
-    lemonSqueezyVariantId:
-      subscriptionTierConfigSchema.shape.lemonSqueezyVariantId.optional(),
-    limits: subscriptionTierConfigSchema.shape.limits.partial().optional(),
-    display: subscriptionTierConfigSchema.shape.display.partial().optional(),
-  })
-
-const runtimeConfigOverrideSchema = z
+const configFileSchema = z
   .object({
+    admins: z.array(z.string().email()).optional(),
     features: runtimeConfigObjectShape.shape.features.partial().optional(),
-    billing: runtimeConfigObjectShape.shape.billing.partial().optional(),
-    subscriptionTiers: runtimeConfigObjectShape.shape.subscriptionTiers
-      .extend({
-        freeTierUserLimits:
-          runtimeConfigObjectShape.shape.subscriptionTiers.shape.freeTierUserLimits
-            .partial()
-            .optional(),
-        plans: z.array(subscriptionTierConfigOverrideSchema).optional(),
+    limits: z.array(limitEntrySchema).optional(),
+    billing: z
+      .object({
+        lemonSqueezyStoreId:
+          runtimeConfigObjectShape.shape.billing.shape.lemonSqueezyStoreId.optional(),
+        manageUrl:
+          runtimeConfigObjectShape.shape.billing.shape.manageUrl.optional(),
+        tiers: z.array(billingTierSchema).optional(),
       })
-      .partial()
       .optional(),
     usage: runtimeConfigObjectShape.shape.usage.partial().optional(),
-    webhooks: runtimeConfigObjectShape.shape.webhooks
-      .extend({
+    webhooks: z
+      .object({
         queue: runtimeConfigObjectShape.shape.webhooks.shape.queue
           .partial()
           .optional(),
@@ -183,85 +193,22 @@ const runtimeConfigOverrideSchema = z
   })
   .strict()
 
-const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
+const DEFAULT_RUNTIME_CONFIG: Omit<RuntimeConfig, "admins" | "limits"> & {
+  admins: string[]
+  limits: undefined
+} = {
+  admins: [],
   features: {
     subscriptionEnforcementEnabled: true,
     workspaceBillingEnabled: false,
     batchSchedulerEnabled: true,
+    customMCPServerTokens: false,
   },
+  limits: undefined,
   billing: {
     lemonSqueezyStoreId: null,
     manageUrl: null,
-  },
-  subscriptionTiers: {
-    freeTierUserLimits: {
-      maxCreatedWorkspaces: 3,
-    },
-    plans: [
-      {
-        tier: "free",
-        rank: 0,
-        lemonSqueezyVariantId: null,
-        limits: {
-          maxTrackableItems: 10,
-          maxResponsesPerSurvey: 100,
-          maxWorkspaceMembers: 10,
-          maxApiLogsPerMinute: 10,
-          maxApiPayloadBytes: 1024,
-          logRetentionDays: 3,
-        },
-        display: {
-          name: "Free",
-          mostPopular: false,
-          priceLabel: "$0",
-          priceInterval: "/workspace",
-          summary: "A clean starting point for new workspaces.",
-          tone: "neutral",
-        },
-      },
-      {
-        tier: "plus",
-        rank: 1,
-        lemonSqueezyVariantId: "1482028",
-        limits: {
-          maxTrackableItems: 100,
-          maxResponsesPerSurvey: null,
-          maxWorkspaceMembers: 100,
-          maxApiLogsPerMinute: 60,
-          maxApiPayloadBytes: 32 * 1024,
-          logRetentionDays: 90,
-        },
-        display: {
-          name: "Plus",
-          mostPopular: true,
-          priceLabel: "$24",
-          priceInterval: "/workspace",
-          summary: "More room for growing teams and heavier usage.",
-          tone: "accent",
-        },
-      },
-      {
-        tier: "pro",
-        rank: 2,
-        lemonSqueezyVariantId: "1482029",
-        limits: {
-          maxTrackableItems: 1000,
-          maxResponsesPerSurvey: null,
-          maxWorkspaceMembers: null,
-          maxApiLogsPerMinute: 600,
-          maxApiPayloadBytes: 32 * 1024 * 10,
-          logRetentionDays: 365,
-        },
-        display: {
-          name: "Pro",
-          mostPopular: false,
-          priceLabel: "$79",
-          priceInterval: "/workspace",
-          summary: "Expanded limits for high-volume workspaces.",
-          tone: "strong",
-        },
-      },
-    ],
+    tiers: [],
   },
   usage: {
     invalidApiKeyRateLimitPerMinute: 30,
@@ -344,17 +291,17 @@ export function loadRuntimeConfigFromPath(configPath: string): RuntimeConfig {
     )
   }
 
-  const parsedOverrides = runtimeConfigOverrideSchema.safeParse(parsedConfig)
+  const parsedFile = configFileSchema.safeParse(parsedConfig)
 
-  if (!parsedOverrides.success) {
+  if (!parsedFile.success) {
     throw new Error(
       `Runtime config file at "${resolvedPath}" is invalid:\n${formatZodError(
-        parsedOverrides.error
+        parsedFile.error
       )}`
     )
   }
 
-  const mergedConfig = mergeRuntimeConfig(parsedOverrides.data)
+  const mergedConfig = mergeRuntimeConfig(parsedFile.data)
   const result = RuntimeConfigShape.safeParse(mergedConfig)
 
   if (!result.success) {
@@ -394,53 +341,22 @@ export function resetRuntimeConfigForTests() {
 }
 
 function mergeRuntimeConfig(
-  overrides: z.infer<typeof runtimeConfigOverrideSchema>
+  overrides: z.infer<typeof configFileSchema>
 ): RuntimeConfig {
-  const plansByTier = new Map(
-    DEFAULT_RUNTIME_CONFIG.subscriptionTiers.plans.map((plan) => [
-      plan.tier,
-      plan,
-    ])
-  )
-
-  for (const override of overrides.subscriptionTiers?.plans ?? []) {
-    const defaultPlan = plansByTier.get(override.tier)
-
-    if (!defaultPlan) {
-      continue
-    }
-
-    plansByTier.set(override.tier, {
-      ...defaultPlan,
-      ...override,
-      limits: {
-        ...defaultPlan.limits,
-        ...override.limits,
-      },
-      display: {
-        ...defaultPlan.display,
-        ...override.display,
-      },
-    })
-  }
-
   return {
+    admins: overrides.admins ?? DEFAULT_RUNTIME_CONFIG.admins,
     features: {
       ...DEFAULT_RUNTIME_CONFIG.features,
       ...overrides.features,
     },
+    limits: overrides.limits,
     billing: {
-      ...DEFAULT_RUNTIME_CONFIG.billing,
-      ...overrides.billing,
-    },
-    subscriptionTiers: {
-      freeTierUserLimits: {
-        ...DEFAULT_RUNTIME_CONFIG.subscriptionTiers.freeTierUserLimits,
-        ...overrides.subscriptionTiers?.freeTierUserLimits,
-      },
-      plans: [...plansByTier.values()].sort(
-        (left, right) => left.rank - right.rank
-      ),
+      lemonSqueezyStoreId:
+        overrides.billing?.lemonSqueezyStoreId ??
+        DEFAULT_RUNTIME_CONFIG.billing.lemonSqueezyStoreId,
+      manageUrl:
+        overrides.billing?.manageUrl ?? DEFAULT_RUNTIME_CONFIG.billing.manageUrl,
+      tiers: overrides.billing?.tiers ?? DEFAULT_RUNTIME_CONFIG.billing.tiers,
     },
     usage: {
       ...DEFAULT_RUNTIME_CONFIG.usage,

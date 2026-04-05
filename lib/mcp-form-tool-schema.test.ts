@@ -22,7 +22,8 @@ describe("mcpCreateFormToolInputSchema", () => {
     )
     assert.equal(
       configSchema.safeParse({ kind: "rating", scale: "5" }).success,
-      false
+      true,
+      "string scale should be coerced to number"
     )
     assert.equal(configSchema.safeParse({ kind: "rating" }).success, false)
   })

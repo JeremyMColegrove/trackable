@@ -8,7 +8,6 @@ import {
 	type BillingSuccessScenario,
 } from "@/app/[locale]/dashboard/billing-success-modal";
 import { PageShell } from "@/components/page-shell";
-import type { SubscriptionTier } from "@/server/subscriptions/types";
 import { useGT } from "gt-next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,7 +21,7 @@ export function DashboardPageClient() {
 
 	useEffect(() => {
 		if (searchParams.get("billing") === "success") {
-			const planParam = searchParams.get("plan") as SubscriptionTier | null;
+			const planParam = searchParams.get("plan");
 
 			if (planParam && planParam !== "free") {
 				setSuccessScenario({ type: "new", toTier: planParam });

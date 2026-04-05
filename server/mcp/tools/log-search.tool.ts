@@ -30,10 +30,18 @@ export class LogSearchTool implements McpTool {
       "search_logs",
       {
         description:
-          "Search API log events for a trackable. " +
-          'Supports LiqE query syntax (e.g. `level:error`, `message:"timeout"`). ' +
-          "Results are paginated summaries — use get_log to retrieve a full event. " +
-          "Only works on trackables of kind api_ingestion.",
+          "Use this when you need to find or filter API ingestion log events for an api_ingestion-kind trackable. " +
+          'Supports LiqE query syntax (e.g. `level:error`, `message:"timeout"`, `status:500`). ' +
+          "Returns: { trackableId, events: [ { id, occurredAt, payloadPreview, apiKeyId, uiLink } ], hasMore, nextCursor, totalMatched }. " +
+          "When hasMore is true, pass nextCursor to the next call to retrieve the following page. " +
+          "Returns an empty events array when no events match — not an error. " +
+          "Returns paginated summaries with payload previews — use get_log to fetch a single event in full detail. " +
+          "Do not use this on survey trackables — it only works on api_ingestion-kind trackables.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -117,8 +125,7 @@ export class LogSearchTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "search_logs",
             targetResourceId: args.trackable_id,
             success: true,
@@ -136,8 +143,7 @@ export class LogSearchTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "search_logs",
             targetResourceId: args.trackable_id,
             success: false,

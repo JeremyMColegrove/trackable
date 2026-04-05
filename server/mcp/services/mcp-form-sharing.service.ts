@@ -49,13 +49,13 @@ export class McpFormSharingService {
       if (!shareLink) {
         shareLink = await shareLinkService.createShareLink({
           trackableId,
-          userId: authContext.ownerUserId,
+          userId: authContext.userId,
           role: "submit",
         })
       } else if (shareLink.revokedAt) {
         shareLink = await shareLinkService.updateShareLink({
           trackableId,
-          userId: authContext.ownerUserId,
+          userId: authContext.userId,
           linkId: shareLink.id,
           role: "submit",
           isActive: true,
@@ -64,7 +64,7 @@ export class McpFormSharingService {
     } else if (input.enablePublicLink === false && shareLink && !shareLink.revokedAt) {
       shareLink = await shareLinkService.updateShareLink({
         trackableId,
-        userId: authContext.ownerUserId,
+        userId: authContext.userId,
         linkId: shareLink.id,
         role: "submit",
         isActive: false,
@@ -78,7 +78,7 @@ export class McpFormSharingService {
       const updatedTrackable =
         await trackableMutationService.updateSurveyAnonymousResponses({
           trackableId,
-          userId: authContext.ownerUserId,
+          userId: authContext.userId,
           allowAnonymousSubmissions: input.allowAnonymousResponses,
         })
 

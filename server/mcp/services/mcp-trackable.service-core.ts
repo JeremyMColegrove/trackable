@@ -1,6 +1,10 @@
 import type { TrackableKind, TrackableSettings } from "@/db/schema/types"
+import { ConflictError } from "@/server/errors"
 import type { McpAuthContext } from "@/server/mcp/auth/mcp-auth-context"
-import { McpToolError } from "@/server/mcp/errors/mcp-errors"
+import {
+  McpToolError,
+  translateServiceError,
+} from "@/server/mcp/errors/mcp-errors"
 import type { McpWorkspaceSummary } from "@/server/mcp/services/mcp-workspace.service"
 
 export interface McpTrackableRecord {
@@ -119,6 +123,10 @@ export interface McpTrackableServiceDependencies {
     options: TrackableRowQueryOptions
   ): Promise<TrackableDiscoveryRow[]>
   findTrackableById(trackableId: string): Promise<McpTrackableRecord | undefined>
+  findTrackableByName(
+    workspaceId: string,
+    name: string
+  ): Promise<{ id: string; name: string } | undefined>
   createTrackable(
     authContext: McpAuthContext,
     input: McpTrackableCreationInput
@@ -204,7 +212,6 @@ export class McpTrackableService {
       workspaceIds,
       kind: options.kind,
       includeArchived: options.includeArchived ?? false,
-      trackableIds: authContext.capabilities.trackableIds,
     })
 
     return rows
@@ -230,7 +237,6 @@ export class McpTrackableService {
       workspaceIds,
       kind: options.kind,
       includeArchived: false,
-      trackableIds: authContext.capabilities.trackableIds,
       query: normalizedQuery || undefined,
       queryTokens,
     })
@@ -291,10 +297,25 @@ export class McpTrackableService {
       )
     }
 
-    const createdTrackable = await this.deps.createTrackable(authContext, {
-      ...input,
-      workspaceId,
-    })
+    const existing = await this.deps.findTrackableByName(workspaceId, input.name)
+    if (existing) {
+      throw new ConflictError(
+        `A trackable named "${input.name}" already exists in this workspace (id: ${existing.id}). Use find_trackables to locate it, or choose a different name.`
+      )
+    }
+
+    let createdTrackable: McpTrackableMutationResult
+    try {
+      createdTrackable = await this.deps.createTrackable(authContext, {
+        ...input,
+        workspaceId,
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        throw translateServiceError(error)
+      }
+      throw error
+    }
 
     return {
       id: createdTrackable.id,

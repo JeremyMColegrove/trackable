@@ -5,16 +5,20 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users } from "@/db/schema"
+import { getRuntimeConfig } from "@/lib/runtime-config"
 
 export async function hasAdminControlsEnabled(userId: string) {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
     columns: {
-      hasAdminControls: true,
+      primaryEmail: true,
     },
   })
 
-  return user?.hasAdminControls === true
+  if (!user) return false
+
+  const configAdmins = getRuntimeConfig().admins
+  return !!(user.primaryEmail && configAdmins.includes(user.primaryEmail))
 }
 
 export async function assertAdminControlsEnabled(userId: string) {

@@ -30,10 +30,19 @@ export class FindTrackablesTool implements McpTool {
       "find_trackables",
       {
         description:
-          "Find trackables in the current active user workspace by default. " +
-          "Supports optional name text, kind, workspace, and limit filters. " +
-          "When workspace_id is omitted, results are scoped to the active workspace. " +
-          "Prefer this before read, update, or other actions on an existing trackable.",
+          "Use this when you need to locate an existing trackable by name or kind before acting on it. " +
+          "Searches across all accessible workspaces or within a specific one when workspace_id is provided. " +
+          "Returns: { results: [ { trackable: { id, workspaceId, name, slug, kind, submissionCount, apiUsageCount, lastActivityAt, adminUrl }, workspace: { id, name, slug, role, canCreateTrackables, isActive }, match: { kind, score } } ] }. " +
+          "Returns an empty results array when nothing matches — not an error. " +
+          "This is the preferred first step before calling create_form, update_form_sharing, search_logs, or any tool that requires a trackable_id. " +
+          "Do not use this to create trackables — use create_trackable for that. " +
+          "Do not call this when you already have a trackable_id — proceed directly with the tool that needs it. " +
+          "Do not call this to answer general questions about how Trackables works, feature explanations, or account setup guidance — those require no tool calls.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           query: z
             .string()
@@ -83,8 +92,7 @@ export class FindTrackablesTool implements McpTool {
           })
 
           this.auditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "find_trackables",
             success: true,
@@ -102,8 +110,7 @@ export class FindTrackablesTool implements McpTool {
           }
         } catch (error) {
           this.auditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "find_trackables",
             success: false,

@@ -4,7 +4,6 @@ import { createContext, useContext } from "react"
 
 import { useQuery } from "@tanstack/react-query"
 
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { useTRPC } from "@/trpc/client"
 
 type WorkspaceRole = "owner" | "admin" | "member" | "viewer"
@@ -17,7 +16,7 @@ type WorkspaceSummary = {
 }
 
 type ActiveWorkspace = WorkspaceSummary & {
-  tier: SubscriptionTier
+  tier: string
 }
 
 type CreatedWorkspaceUsage = {
@@ -30,7 +29,7 @@ type WorkspaceContextValue = {
   activeWorkspace: ActiveWorkspace | null
   workspaces: WorkspaceSummary[]
   createdWorkspaceUsage: CreatedWorkspaceUsage
-  currentTier: SubscriptionTier
+  currentTier: string
   canManageActiveWorkspace: boolean
   isLoading: boolean
   isFetching: boolean

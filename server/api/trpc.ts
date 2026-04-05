@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server"
 import { TRPCError, initTRPC } from "@trpc/server"
 
 import { logger } from "@/lib/logger"
+import { LimitReachedError } from "@/server/errors"
 import { ensureUserProvisioned } from "@/server/user-provisioning"
 
 export async function createTRPCContext() {
@@ -37,6 +38,17 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
   return result
 })
 
+const handleDomainErrors = t.middleware(async ({ next }) => {
+  try {
+    return await next()
+  } catch (error) {
+    if (error instanceof LimitReachedError) {
+      throw new TRPCError({ code: "FORBIDDEN", message: error.message })
+    }
+    throw error
+  }
+})
+
 const isAuthed = t.middleware(async ({ ctx, next }) => {
   if (!ctx.auth.userId) {
     throw new TRPCError({
@@ -53,7 +65,10 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
 
 export const createTRPCRouter = t.router
 export const publicProcedure = t.procedure.use(loggerMiddleware)
-export const protectedProcedure = t.procedure.use(loggerMiddleware).use(isAuthed)
+export const protectedProcedure = t.procedure
+  .use(loggerMiddleware)
+  .use(handleDomainErrors)
+  .use(isAuthed)
 
 export function getRequiredUserId(ctx: TRPCContext) {
   if (!ctx.auth.userId) {

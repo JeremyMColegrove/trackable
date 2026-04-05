@@ -34,7 +34,6 @@ export const users = pgTable(
         onDelete: "set null",
       }
     ),
-    hasAdminControls: boolean("has_admin_controls").default(false).notNull(),
     isProfilePrivate: boolean("is_profile_private").default(false).notNull(),
     lastSeenAt: lastSeenAt(),
     ...timestamps,

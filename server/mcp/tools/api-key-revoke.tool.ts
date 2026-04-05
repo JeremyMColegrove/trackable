@@ -28,10 +28,18 @@ export class ApiKeyRevokeTool implements McpTool {
       "revoke_api_key",
       {
         description:
-          "Revoke an API key for an api_ingestion trackable. " +
-          "Revocation is immediate and irreversible — the key can no longer be used to ingest logs. " +
+          "Use this when you need to permanently disable an API key so it can no longer ingest log events. " +
+          "Returns: { id, status: 'revoked', revokedAt }. " +
+          "Revocation is immediate and irreversible — the key cannot be restored. " +
           "If the key is already revoked, the call succeeds idempotently. " +
-          "Only works on trackables of kind api_ingestion.",
+          "Use list_api_keys first to find the api_key_id — do not guess IDs. " +
+          "Do not use this to delete a trackable or workspace — this only revokes a single API key. " +
+          "Do not use this as a temporary or reversible action — revocation is permanent and cannot be undone. If the goal is key rotation, call create_api_key first, then revoke the old key.",
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -60,8 +68,7 @@ export class ApiKeyRevokeTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "revoke_api_key",
             targetResourceId: args.trackable_id,
             success: true,
@@ -79,8 +86,7 @@ export class ApiKeyRevokeTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "revoke_api_key",
             targetResourceId: args.trackable_id,
             success: false,

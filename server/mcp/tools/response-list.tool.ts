@@ -30,10 +30,18 @@ export class ResponseListTool implements McpTool {
       "list_responses",
       {
         description:
-          "List form submission responses for a survey trackable. " +
-          "Returns paginated summaries with compact field values. " +
-          "Use get_response to retrieve full answer detail for a specific response. " +
-          "Only works on survey trackables.",
+          "Use this when you need to browse or count form submission responses for a survey-kind trackable. " +
+          "Returns: { trackableId, responses: [ { id, submittedAt, source, fieldSummaries, uiLink } ], hasMore, nextCursor }. " +
+          "fieldSummaries is a compact key→value map for quick scanning. When hasMore is true, pass nextCursor to retrieve the next page. " +
+          "Returns an empty array when no responses exist — not an error. " +
+          "Use get_response to retrieve the full structured answer for a specific submission. " +
+          "Do not use this on api_ingestion trackables — it only works on survey-kind trackables. " +
+          "Do not call this when the goal is aggregate statistics such as averages or counts — use get_response_stats instead.",
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           trackable_id: z
             .string()
@@ -92,8 +100,7 @@ export class ResponseListTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_responses",
             targetResourceId: args.trackable_id,
             success: true,
@@ -111,8 +118,7 @@ export class ResponseListTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             tool: "list_responses",
             targetResourceId: args.trackable_id,
             success: false,

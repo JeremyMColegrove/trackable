@@ -1,69 +1,27 @@
 {
-	"version": "7",
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "7",
-			"when": 1774675859218,
-			"tag": "0000_bumpy_ronan",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1774989279766,
-			"tag": "0001_woozy_romulus",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1774993239225,
-			"tag": "0002_green_mongu",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1775100271406,
-			"tag": "0003_crazy_surge",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1775102240795,
-			"tag": "0004_sloppy_firedrake",
-			"breakpoints": true
-		},
-		{
-			"idx": 5,
-			"version": "7",
-			"when": 1775102948196,
-			"tag": "0005_aspiring_valeria_richards",
-			"breakpoints": true
-		},
-		{
-			"idx": 6,
-			"version": "7",
-			"when": 1775138058305,
-			"tag": "0006_keen_shape",
-			"breakpoints": true
-		},
-		{
-			"idx": 7,
-			"version": "7",
-			"when": 1775141091747,
-			"tag": "0007_majestic_scream",
-			"breakpoints": true
-		},
-		{
-			"idx": 9,
-			"version": "7",
-			"when": 1775143369971,
-			"tag": "0009_nice_hannibal_king",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1775240550257,
+      "tag": "0000_colorful_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775246473849,
+      "tag": "0001_magenta_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775249947527,
+      "tag": "0002_brief_genesis",
+      "breakpoints": true
+    }
+  ]
 }

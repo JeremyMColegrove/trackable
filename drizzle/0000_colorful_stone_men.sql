@@ -5,10 +5,14 @@ CREATE TYPE "public"."subscription_status" AS ENUM('active', 'cancelled', 'expir
 CREATE TYPE "public"."subscription_tier" AS ENUM('free', 'plus', 'pro');--> statement-breakpoint
 CREATE TYPE "public"."trackable_access_role" AS ENUM('submit', 'view', 'manage');--> statement-breakpoint
 CREATE TYPE "public"."trackable_access_subject_type" AS ENUM('user', 'email');--> statement-breakpoint
-CREATE TYPE "public"."trackable_form_field_kind" AS ENUM('rating', 'checkboxes', 'notes', 'short_text');--> statement-breakpoint
+CREATE TYPE "public"."trackable_asset_kind" AS ENUM('image', 'file');--> statement-breakpoint
+CREATE TYPE "public"."trackable_form_field_kind" AS ENUM('rating', 'checkboxes', 'notes', 'short_text', 'file_upload', 'youtube_video');--> statement-breakpoint
 CREATE TYPE "public"."trackable_form_status" AS ENUM('draft', 'published', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."trackable_kind" AS ENUM('survey', 'api_ingestion');--> statement-breakpoint
 CREATE TYPE "public"."trackable_submission_source" AS ENUM('public_link', 'user_grant', 'email_grant');--> statement-breakpoint
+CREATE TYPE "public"."webhook_delivery_status" AS ENUM('success', 'failed');--> statement-breakpoint
+CREATE TYPE "public"."webhook_provider" AS ENUM('generic', 'discord');--> statement-breakpoint
+CREATE TYPE "public"."webhook_trigger_type" AS ENUM('log_match', 'log_count_match', 'survey_response_received');--> statement-breakpoint
 CREATE TYPE "public"."workspace_invitation_status" AS ENUM('pending', 'accepted', 'rejected', 'revoked');--> statement-breakpoint
 CREATE TYPE "public"."workspace_role" AS ENUM('owner', 'admin', 'member', 'viewer');--> statement-breakpoint
 CREATE TABLE "api_keys" (
@@ -34,7 +38,7 @@ CREATE TABLE "trackable_api_usage_events" (
 	"request_id" text,
 	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"payload" jsonb NOT NULL,
-	"metadata" text
+	"metadata" jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "batch_job_leases" (
@@ -71,6 +75,22 @@ CREATE TABLE "batch_jobs" (
 	"last_completed_at" timestamp with time zone,
 	"last_status" "batch_job_run_status",
 	"last_summary" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "mcp_access_tokens" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"created_by_user_id" text NOT NULL,
+	"name" text NOT NULL,
+	"key_prefix" text NOT NULL,
+	"secret_hash" text NOT NULL,
+	"last_four" text NOT NULL,
+	"capabilities" jsonb NOT NULL,
+	"status" text DEFAULT 'active' NOT NULL,
+	"expires_at" timestamp with time zone,
+	"last_used_at" timestamp with time zone,
+	"usage_count" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -142,6 +162,25 @@ CREATE TABLE "trackable_access_grants" (
         and "trackable_access_grants"."subject_user_id" is null
         and "trackable_access_grants"."subject_email" is not null
       ))
+);
+--> statement-breakpoint
+CREATE TABLE "trackable_assets" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"trackable_id" uuid NOT NULL,
+	"uploaded_by_user_id" text NOT NULL,
+	"public_token" text NOT NULL,
+	"kind" "trackable_asset_kind" NOT NULL,
+	"original_file_name" text NOT NULL,
+	"mime_type" text NOT NULL,
+	"extension" text NOT NULL,
+	"original_bytes" integer NOT NULL,
+	"stored_bytes" integer NOT NULL,
+	"storage_key" text NOT NULL,
+	"image_width" integer,
+	"image_height" integer,
+	"image_format" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "trackable_form_answers" (
@@ -238,6 +277,53 @@ CREATE TABLE "users" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "trackable_webhook_connections" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"trackable_id" uuid NOT NULL,
+	"webhook_id" uuid NOT NULL,
+	"created_by_user_id" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "webhook_delivery_attempts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"webhook_id" uuid NOT NULL,
+	"trigger_rule_id" uuid NOT NULL,
+	"trackable_id" uuid NOT NULL,
+	"usage_event_id" uuid,
+	"submission_id" uuid,
+	"provider" "webhook_provider" NOT NULL,
+	"status" "webhook_delivery_status" NOT NULL,
+	"request_payload" jsonb NOT NULL,
+	"response_payload" jsonb,
+	"error_message" text,
+	"attempted_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_webhook_trigger_rules" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"webhook_id" uuid NOT NULL,
+	"type" "webhook_trigger_type" NOT NULL,
+	"config" jsonb NOT NULL,
+	"enabled" boolean DEFAULT true NOT NULL,
+	"position" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_webhooks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"workspace_id" uuid NOT NULL,
+	"name" text NOT NULL,
+	"provider" "webhook_provider" NOT NULL,
+	"config" jsonb NOT NULL,
+	"enabled" boolean DEFAULT true NOT NULL,
+	"created_by_user_id" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_project_id_trackable_items_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_api_usage_events" ADD CONSTRAINT "trackable_api_usage_events_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -255,6 +341,8 @@ ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_created_by_user_id_users_id_
 ALTER TABLE "trackable_access_grants" ADD CONSTRAINT "trackable_access_grants_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_access_grants" ADD CONSTRAINT "trackable_access_grants_subject_user_id_users_id_fk" FOREIGN KEY ("subject_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_access_grants" ADD CONSTRAINT "trackable_access_grants_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trackable_assets" ADD CONSTRAINT "trackable_assets_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trackable_assets" ADD CONSTRAINT "trackable_assets_uploaded_by_user_id_users_id_fk" FOREIGN KEY ("uploaded_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_form_answers" ADD CONSTRAINT "trackable_form_answers_submission_id_trackable_form_submissions_id_fk" FOREIGN KEY ("submission_id") REFERENCES "public"."trackable_form_submissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_form_answers" ADD CONSTRAINT "trackable_form_answers_field_id_trackable_form_fields_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."trackable_form_fields"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_form_fields" ADD CONSTRAINT "trackable_form_fields_form_id_trackable_forms_id_fk" FOREIGN KEY ("form_id") REFERENCES "public"."trackable_forms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -268,19 +356,36 @@ ALTER TABLE "trackable_items" ADD CONSTRAINT "trackable_items_active_form_id_tra
 ALTER TABLE "trackable_share_links" ADD CONSTRAINT "trackable_share_links_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trackable_share_links" ADD CONSTRAINT "trackable_share_links_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_active_workspace_id_workspaces_id_fk" FOREIGN KEY ("active_workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trackable_webhook_connections" ADD CONSTRAINT "trackable_webhook_connections_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trackable_webhook_connections" ADD CONSTRAINT "trackable_webhook_connections_webhook_id_workspace_webhooks_id_fk" FOREIGN KEY ("webhook_id") REFERENCES "public"."workspace_webhooks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "trackable_webhook_connections" ADD CONSTRAINT "trackable_webhook_connections_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "webhook_delivery_attempts" ADD CONSTRAINT "webhook_delivery_attempts_webhook_id_workspace_webhooks_id_fk" FOREIGN KEY ("webhook_id") REFERENCES "public"."workspace_webhooks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "webhook_delivery_attempts" ADD CONSTRAINT "webhook_delivery_attempts_trigger_rule_id_workspace_webhook_trigger_rules_id_fk" FOREIGN KEY ("trigger_rule_id") REFERENCES "public"."workspace_webhook_trigger_rules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "webhook_delivery_attempts" ADD CONSTRAINT "webhook_delivery_attempts_trackable_id_trackable_items_id_fk" FOREIGN KEY ("trackable_id") REFERENCES "public"."trackable_items"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "webhook_delivery_attempts" ADD CONSTRAINT "webhook_delivery_attempts_usage_event_id_trackable_api_usage_events_id_fk" FOREIGN KEY ("usage_event_id") REFERENCES "public"."trackable_api_usage_events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "webhook_delivery_attempts" ADD CONSTRAINT "webhook_delivery_attempts_submission_id_trackable_form_submissions_id_fk" FOREIGN KEY ("submission_id") REFERENCES "public"."trackable_form_submissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_webhook_trigger_rules" ADD CONSTRAINT "workspace_webhook_trigger_rules_webhook_id_workspace_webhooks_id_fk" FOREIGN KEY ("webhook_id") REFERENCES "public"."workspace_webhooks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_webhooks" ADD CONSTRAINT "workspace_webhooks_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_webhooks" ADD CONSTRAINT "workspace_webhooks_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "api_keys_key_prefix_idx" ON "api_keys" USING btree ("key_prefix");--> statement-breakpoint
 CREATE INDEX "api_keys_workspace_idx" ON "api_keys" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "api_keys_project_idx" ON "api_keys" USING btree ("project_id");--> statement-breakpoint
 CREATE INDEX "api_keys_status_idx" ON "api_keys" USING btree ("status");--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_api_usage_events_request_id_idx" ON "trackable_api_usage_events" USING btree ("request_id");--> statement-breakpoint
 CREATE INDEX "trackable_api_usage_events_trackable_occurred_idx" ON "trackable_api_usage_events" USING btree ("trackable_id","occurred_at");--> statement-breakpoint
+CREATE INDEX "trackable_api_usage_events_trackable_occurred_id_idx" ON "trackable_api_usage_events" USING btree ("trackable_id","occurred_at","id");--> statement-breakpoint
 CREATE INDEX "trackable_api_usage_events_api_key_occurred_idx" ON "trackable_api_usage_events" USING btree ("api_key_id","occurred_at");--> statement-breakpoint
+CREATE INDEX "trackable_api_usage_events_payload_gin_idx" ON "trackable_api_usage_events" USING gin ("payload");--> statement-breakpoint
+CREATE INDEX "trackable_api_usage_events_metadata_gin_idx" ON "trackable_api_usage_events" USING gin ("metadata") WHERE "trackable_api_usage_events"."metadata" is not null;--> statement-breakpoint
 CREATE UNIQUE INDEX "batch_job_leases_job_key_idx" ON "batch_job_leases" USING btree ("job_key");--> statement-breakpoint
 CREATE INDEX "batch_job_leases_locked_until_idx" ON "batch_job_leases" USING btree ("locked_until");--> statement-breakpoint
 CREATE INDEX "batch_job_runs_job_key_idx" ON "batch_job_runs" USING btree ("job_key");--> statement-breakpoint
 CREATE INDEX "batch_job_runs_batch_job_idx" ON "batch_job_runs" USING btree ("batch_job_id");--> statement-breakpoint
 CREATE INDEX "batch_job_runs_started_at_idx" ON "batch_job_runs" USING btree ("started_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "batch_jobs_key_idx" ON "batch_jobs" USING btree ("key");--> statement-breakpoint
+CREATE UNIQUE INDEX "mcp_access_tokens_key_prefix_idx" ON "mcp_access_tokens" USING btree ("key_prefix");--> statement-breakpoint
+CREATE INDEX "mcp_access_tokens_status_idx" ON "mcp_access_tokens" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "mcp_access_tokens_created_by_idx" ON "mcp_access_tokens" USING btree ("created_by_user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workspace_subscriptions_workspace_idx" ON "workspace_subscriptions" USING btree ("workspace_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "workspace_subscriptions_ls_sub_idx" ON "workspace_subscriptions" USING btree ("lemon_squeezy_subscription_id") WHERE "workspace_subscriptions"."lemon_squeezy_subscription_id" is not null;--> statement-breakpoint
 CREATE INDEX "workspace_invitations_workspace_idx" ON "workspace_invitations" USING btree ("workspace_id");--> statement-breakpoint
@@ -295,6 +400,11 @@ CREATE UNIQUE INDEX "workspaces_slug_idx" ON "workspaces" USING btree ("slug");-
 CREATE INDEX "trackable_access_grants_trackable_idx" ON "trackable_access_grants" USING btree ("trackable_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_access_grants_trackable_user_idx" ON "trackable_access_grants" USING btree ("trackable_id","subject_user_id") WHERE "trackable_access_grants"."subject_user_id" is not null;--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_access_grants_trackable_email_idx" ON "trackable_access_grants" USING btree ("trackable_id","subject_email") WHERE "trackable_access_grants"."subject_email" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "trackable_assets_public_token_idx" ON "trackable_assets" USING btree ("public_token");--> statement-breakpoint
+CREATE UNIQUE INDEX "trackable_assets_storage_key_idx" ON "trackable_assets" USING btree ("storage_key");--> statement-breakpoint
+CREATE INDEX "trackable_assets_trackable_idx" ON "trackable_assets" USING btree ("trackable_id");--> statement-breakpoint
+CREATE INDEX "trackable_assets_uploaded_by_idx" ON "trackable_assets" USING btree ("uploaded_by_user_id");--> statement-breakpoint
+CREATE INDEX "trackable_assets_created_at_idx" ON "trackable_assets" USING btree ("created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_form_answers_submission_field_idx" ON "trackable_form_answers" USING btree ("submission_id","field_id");--> statement-breakpoint
 CREATE INDEX "trackable_form_answers_submission_idx" ON "trackable_form_answers" USING btree ("submission_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_form_fields_form_key_idx" ON "trackable_form_fields" USING btree ("form_id","key");--> statement-breakpoint
@@ -309,4 +419,15 @@ CREATE UNIQUE INDEX "trackable_items_workspace_slug_idx" ON "trackable_items" US
 CREATE INDEX "trackable_items_workspace_idx" ON "trackable_items" USING btree ("workspace_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "trackable_share_links_token_idx" ON "trackable_share_links" USING btree ("token");--> statement-breakpoint
 CREATE INDEX "trackable_share_links_trackable_idx" ON "trackable_share_links" USING btree ("trackable_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "users_primary_email_idx" ON "users" USING btree ("primary_email");
+CREATE UNIQUE INDEX "users_primary_email_idx" ON "users" USING btree ("primary_email");--> statement-breakpoint
+CREATE INDEX "trackable_webhook_connections_trackable_idx" ON "trackable_webhook_connections" USING btree ("trackable_id");--> statement-breakpoint
+CREATE INDEX "trackable_webhook_connections_webhook_idx" ON "trackable_webhook_connections" USING btree ("webhook_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "trackable_webhook_connections_trackable_webhook_idx" ON "trackable_webhook_connections" USING btree ("trackable_id","webhook_id");--> statement-breakpoint
+CREATE INDEX "webhook_delivery_attempts_webhook_attempted_idx" ON "webhook_delivery_attempts" USING btree ("webhook_id","attempted_at");--> statement-breakpoint
+CREATE INDEX "webhook_delivery_attempts_trackable_attempted_idx" ON "webhook_delivery_attempts" USING btree ("trackable_id","attempted_at");--> statement-breakpoint
+CREATE INDEX "webhook_delivery_attempts_usage_event_idx" ON "webhook_delivery_attempts" USING btree ("usage_event_id");--> statement-breakpoint
+CREATE INDEX "webhook_delivery_attempts_submission_idx" ON "webhook_delivery_attempts" USING btree ("submission_id");--> statement-breakpoint
+CREATE INDEX "workspace_webhook_trigger_rules_webhook_idx" ON "workspace_webhook_trigger_rules" USING btree ("webhook_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "workspace_webhook_trigger_rules_webhook_position_idx" ON "workspace_webhook_trigger_rules" USING btree ("webhook_id","position");--> statement-breakpoint
+CREATE INDEX "workspace_webhooks_workspace_idx" ON "workspace_webhooks" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_webhooks_provider_idx" ON "workspace_webhooks" USING btree ("provider");

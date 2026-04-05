@@ -1,13 +1,13 @@
 import {
+  getBillingTierById,
+  getLimitsEntries,
   getLimitsForTier,
-  getSubscriptionPlan,
+  getDefaultTierId,
   resolveTierFromVariantId,
 } from "@/lib/subscription-plans"
-import type { PublicWorkspaceTierPlan } from "@/lib/public-app-config-types"
+import type { PublicWorkspacePlan } from "@/lib/public-app-config-types"
 import { getRuntimeConfig } from "@/lib/runtime-config"
-import type { SubscriptionTier, TierLimits } from "@/server/subscriptions/types"
-
-export type WorkspaceTierPlan = PublicWorkspaceTierPlan
+import type { TierLimits } from "@/server/subscriptions/types"
 
 function formatUsageLimit(
   value: number | null,
@@ -60,58 +60,61 @@ function buildTierHighlights(limits: TierLimits): string[] {
   ]
 }
 
-export function getWorkspaceTierPlans(): readonly WorkspaceTierPlan[] {
-  return [...buildWorkspaceTierPlanList()].sort(
-    (left, right) => left.rank - right.rank
-  )
+/**
+ * Returns all workspace plans (limits entries that have a linked billing tier),
+ * sorted by rank. Each plan combines billing tier display info with computed
+ * limits highlights.
+ */
+export function getWorkspaceTierPlans(): readonly PublicWorkspacePlan[] {
+  const runtimeConfig = getRuntimeConfig()
+  const entries = getLimitsEntries()
+
+  const plans: PublicWorkspacePlan[] = []
+
+  for (const [index, entry] of entries.entries()) {
+    if (entry.billingTier === null) continue
+
+    const billingTier = getBillingTierById(entry.billingTier)
+    if (!billingTier) continue
+
+    const limits = getLimitsForTier(entry.id)
+
+    plans.push({
+      tierId: entry.id,
+      billingTierId: billingTier.id,
+      rank: index,
+      name: billingTier.name,
+      description: billingTier.description,
+      priceLabel: billingTier.priceLabel,
+      priceInterval: billingTier.priceInterval,
+      mostPopular: billingTier.mostPopular,
+      tone: billingTier.tone,
+      lemonSqueezyVariantId: billingTier.lemonSqueezyVariantId,
+      highlights: buildTierHighlights(limits),
+      limits,
+      manageUrl: runtimeConfig.billing.manageUrl,
+    })
+  }
+
+  return plans
 }
 
 export function getWorkspaceTierPlan(
-  tier: SubscriptionTier
-): WorkspaceTierPlan {
-  return buildWorkspaceTierPlansByTier()[tier]
+  tierId: string
+): PublicWorkspacePlan | undefined {
+  return getWorkspaceTierPlans().find((plan) => plan.tierId === tierId)
 }
 
-export function getTierLimits(tier: SubscriptionTier): TierLimits {
-  return getLimitsForTier(tier)
+export function getTierLimits(tierId: string): TierLimits {
+  return getLimitsForTier(tierId)
 }
 
 export function resolveWorkspaceTierFromLemonSqueezyVariantId(
   variantId: string
-): SubscriptionTier | null {
+): string | null {
   return resolveTierFromVariantId(variantId)
 }
 
 export function getWorkspaceBillingEnabled() {
   return getRuntimeConfig().features.workspaceBillingEnabled
-}
-
-function buildWorkspaceTierPlanList(): WorkspaceTierPlan[] {
-  const runtimeConfig = getRuntimeConfig()
-
-  return runtimeConfig.subscriptionTiers.plans.map((plan) => {
-    const subscriptionPlan = getSubscriptionPlan(plan.tier)
-
-    return {
-      ...subscriptionPlan,
-      name: plan.display.name,
-      mostPopular: plan.display.mostPopular,
-      priceLabel: plan.display.priceLabel,
-      priceInterval: plan.display.priceInterval,
-      summary: plan.display.summary,
-      highlights: buildTierHighlights(getLimitsForTier(plan.tier)),
-      manageUrl: runtimeConfig.billing.manageUrl,
-      tone: plan.display.tone,
-    }
-  })
-}
-
-function buildWorkspaceTierPlansByTier() {
-  return buildWorkspaceTierPlanList().reduce(
-    (plans, plan) => {
-      plans[plan.tier] = plan
-      return plans
-    },
-    {} as Record<SubscriptionTier, WorkspaceTierPlan>
-  )
 }

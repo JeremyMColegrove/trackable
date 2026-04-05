@@ -1,6 +1,6 @@
 import "server-only"
 
-import { and, desc, eq, gte, lte } from "drizzle-orm"
+import { and, count, desc, eq, gte, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { trackableFormSubmissions } from "@/db/schema"
@@ -40,6 +40,36 @@ export interface McpResponseListResult {
   hasMore: boolean
   /** Pass this as `cursor` in the next request to continue paging */
   nextCursor: string | null
+}
+
+/** Aggregated statistics for a single form field. */
+export interface McpFieldStat {
+  key: string
+  kind: string
+  label: string
+  /** Number of responses that included an answer for this field. */
+  responseCount: number
+  /** Rating fields: mean value rounded to 2 decimal places. */
+  average?: number
+  /** Rating fields: count of responses per rating value (e.g. { "1": 3, "5": 10 }). */
+  distribution?: Record<string, number>
+  /** Checkbox fields: count of responses that selected each option value. */
+  optionCounts?: Record<string, number>
+  /** Text fields (notes, short_text): up to 5 most recent non-empty answers. */
+  sampleAnswers?: string[]
+}
+
+/** Aggregate statistics across responses for a survey trackable. */
+export interface McpResponseStats {
+  trackableId: string
+  /** Total number of submissions ever recorded (from the counter column). */
+  totalResponses: number
+  /**
+   * Number of submissions actually read to compute field stats.
+   * Capped at 500 — may be less than totalResponses for high-volume forms.
+   */
+  sampledResponses: number
+  fields: McpFieldStat[]
 }
 
 /** Full structured detail for a single response. */
@@ -192,6 +222,147 @@ export class McpResponseService {
       uiLink: buildAbsoluteUrl(
         `/dashboard/trackables/${trackableId}?submissionId=${submission.id}`
       ).toString(),
+    }
+  }
+
+  /**
+   * Computes aggregate statistics across up to 500 recent responses.
+   *
+   * Per-field output:
+   * - rating: mean value and full distribution histogram
+   * - checkboxes: per-option selection counts
+   * - notes / short_text: up to 5 recent non-empty sample answers
+   *
+   * totalResponses reflects the stored counter; sampledResponses is the
+   * actual number of rows read (capped at 500).
+   */
+  async getResponseStats(
+    trackableId: string,
+    authContext: McpAuthContext
+  ): Promise<McpResponseStats> {
+    const trackable = await mcpTrackableService.assertAccess(
+      trackableId,
+      authContext
+    )
+
+    if (trackable.kind !== "survey") {
+      throw new McpToolError(
+        "FORBIDDEN",
+        "This trackable does not collect form responses. Only survey trackables have response stats."
+      )
+    }
+
+    const SAMPLE_LIMIT = 500
+
+    const [[countResult], rows] = await Promise.all([
+      db
+        .select({ total: count() })
+        .from(trackableFormSubmissions)
+        .where(eq(trackableFormSubmissions.trackableId, trackableId)),
+      db.query.trackableFormSubmissions.findMany({
+        where: eq(trackableFormSubmissions.trackableId, trackableId),
+        orderBy: [desc(trackableFormSubmissions.createdAt)],
+        limit: SAMPLE_LIMIT,
+        columns: { submissionSnapshot: true },
+      }),
+    ])
+
+    // Accumulators keyed by fieldKey
+    const ratingAccum = new Map<
+      string,
+      { label: string; sum: number; dist: Record<string, number> }
+    >()
+    const checkboxAccum = new Map<
+      string,
+      { label: string; optionCounts: Record<string, number> }
+    >()
+    const textAccum = new Map<
+      string,
+      { label: string; kind: string; samples: string[] }
+    >()
+
+    for (const row of rows) {
+      const snapshot = row.submissionSnapshot as TrackableSubmissionSnapshot | null
+      if (!snapshot?.answers) continue
+
+      for (const answer of snapshot.answers) {
+        const { fieldKey, fieldKind, fieldLabel, value } = answer
+
+        if (fieldKind === "rating") {
+          if (!ratingAccum.has(fieldKey)) {
+            ratingAccum.set(fieldKey, { label: fieldLabel, sum: 0, dist: {} })
+          }
+          const acc = ratingAccum.get(fieldKey)!
+          const v = value.value as number
+          acc.sum += v
+          acc.dist[String(v)] = (acc.dist[String(v)] ?? 0) + 1
+        } else if (fieldKind === "checkboxes") {
+          if (!checkboxAccum.has(fieldKey)) {
+            checkboxAccum.set(fieldKey, { label: fieldLabel, optionCounts: {} })
+          }
+          const acc = checkboxAccum.get(fieldKey)!
+          const selected = value.value as string[]
+          for (const opt of selected) {
+            acc.optionCounts[opt] = (acc.optionCounts[opt] ?? 0) + 1
+          }
+        } else if (fieldKind === "notes" || fieldKind === "short_text") {
+          if (!textAccum.has(fieldKey)) {
+            textAccum.set(fieldKey, { label: fieldLabel, kind: fieldKind, samples: [] })
+          }
+          const acc = textAccum.get(fieldKey)!
+          const text = (value.value as string)?.trim()
+          if (text && acc.samples.length < 5) {
+            acc.samples.push(text)
+          }
+        }
+      }
+    }
+
+    const fields: McpFieldStat[] = []
+
+    for (const [key, acc] of ratingAccum) {
+      const responseCount = Object.values(acc.dist).reduce((s, n) => s + n, 0)
+      fields.push({
+        key,
+        kind: "rating",
+        label: acc.label,
+        responseCount,
+        average: responseCount > 0
+          ? Math.round((acc.sum / responseCount) * 100) / 100
+          : 0,
+        distribution: acc.dist,
+      })
+    }
+
+    for (const [key, acc] of checkboxAccum) {
+      const responseCount = Object.values(acc.optionCounts).reduce(
+        (s, n) => s + n,
+        0
+      )
+      fields.push({
+        key,
+        kind: "checkboxes",
+        label: acc.label,
+        responseCount,
+        optionCounts: acc.optionCounts,
+      })
+    }
+
+    for (const [key, acc] of textAccum) {
+      fields.push({
+        key,
+        kind: acc.kind,
+        label: acc.label,
+        responseCount: acc.samples.length,
+        sampleAnswers: acc.samples,
+      })
+    }
+
+    return {
+      trackableId,
+      totalResponses: countResult?.total ?? 0,
+      sampledResponses: rows.length,
+      fields,
     }
   }
 }

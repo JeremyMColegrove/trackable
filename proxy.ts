@@ -13,8 +13,13 @@ export default clerkMiddleware(async (auth, request) => {
 
   const { pathname } = request.nextUrl
 
-  // Keep locale middleware off API handlers so /api/trpc stays stable.
-  if (pathname.startsWith("/api/") || pathname === "/api") {
+  // Keep locale middleware off API handlers, well-known endpoints, and docs.
+  if (
+    pathname.startsWith("/api/") ||
+    pathname === "/api" ||
+    pathname.startsWith("/.well-known/") ||
+    pathname.startsWith("/docs/")
+  ) {
     return
   }
 

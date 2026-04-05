@@ -21,9 +21,20 @@ export class TrackableCreationTool implements McpTool {
       "create_trackable",
       {
         description:
-          "Create a new trackable. " +
-          "If workspace_id is omitted, the current active user workspace is used by default. " +
-          "Use list_workspaces when you need to inspect or override that workspace.",
+          "Use this when you need to create a brand-new trackable (either a survey form container or an API ingestion log container). " +
+          "If workspace_id is omitted, defaults to the current active workspace. " +
+          "Returns on success: { id, workspaceId, kind, name, slug, description, adminUrl }. " +
+          "After creating a survey trackable, call create_form to add a form to it. " +
+          "After creating an api_ingestion trackable, call create_api_key to generate an ingestion key. " +
+          "Do not use this to add a form to an existing trackable — use create_form for that. " +
+          "Do not call this without first using find_trackables to confirm a trackable with the same name does not already exist — creation will be rejected with CONFLICT if a duplicate name is found. " +
+          "Error CONFLICT: a trackable with this exact name already exists in the workspace — use find_trackables to locate the existing one, or choose a different name. " +
+          "Error LIMIT_REACHED: the workspace has reached its trackable quota — do not retry; inform the user to upgrade their plan or archive existing trackables first.",
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          openWorldHint: false,
+        },
         inputSchema: {
           workspace_id: z
             .string()
@@ -70,8 +81,7 @@ export class TrackableCreationTool implements McpTool {
           )
 
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "create_trackable",
             targetResourceId: trackable.id,
@@ -90,8 +100,7 @@ export class TrackableCreationTool implements McpTool {
           }
         } catch (error) {
           mcpAuditService.record({
-            tokenId: authContext.tokenId,
-            ownerUserId: authContext.ownerUserId,
+            userId: authContext.userId,
             workspaceId: args.workspace_id,
             tool: "create_trackable",
             success: false,

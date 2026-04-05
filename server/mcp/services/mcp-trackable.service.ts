@@ -11,6 +11,7 @@ import {
 
 import { db } from "@/db"
 import { trackableItems } from "@/db/schema"
+
 import { buildAbsoluteUrl } from "@/lib/site-config"
 import {
   McpTrackableService,
@@ -98,13 +99,23 @@ const mcpTrackableServiceDependencies: McpTrackableServiceDependencies = {
       where: eq(trackableItems.id, trackableId),
     }) as Promise<McpTrackableRecord | undefined>
   },
+  async findTrackableByName(workspaceId, name) {
+    return db.query.trackableItems.findFirst({
+      where: and(
+        eq(trackableItems.workspaceId, workspaceId),
+        ilike(trackableItems.name, name),
+        isNull(trackableItems.archivedAt)
+      ),
+      columns: { id: true, name: true },
+    })
+  },
   createTrackable(authContext, input: McpTrackableCreationInput) {
     return trackableMutationService.create({
       workspaceId: input.workspaceId,
       kind: input.kind,
       name: input.name,
       description: input.description,
-      userId: authContext.ownerUserId,
+      userId: authContext.userId,
     })
   },
   buildAdminUrl(trackableId) {

@@ -4,23 +4,23 @@ import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-
 import { useAppSettings } from "@/components/app-settings-provider"
 import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
-import type { SubscriptionTier } from "@/server/subscriptions/types"
 import { T } from "gt-next"
 
 export function WorkspaceTierSection({
   onOpenDialog,
 }: {
-  onOpenDialog: (currentTier: SubscriptionTier) => void
+  onOpenDialog: (currentTier: string) => void
 }) {
   const { currentTier, isLoading } = useWorkspaceContext()
-  const { getWorkspaceTierPlan } = useAppSettings()
+  const { getWorkspacePlan, workspacePlans } = useAppSettings()
   const { setOpenMobile } = useSidebar()
 
   // Wait until loading finishes to avoid flicker
   if (isLoading) return null
 
-  const plan = getWorkspaceTierPlan(currentTier)
-  const isProTier = currentTier === "pro"
+  const plan = getWorkspacePlan(currentTier)
+  const highestPlan = workspacePlans[workspacePlans.length - 1]
+  const isHighestTier = highestPlan ? currentTier === highestPlan.tierId : false
 
   const handleOpenDialog = () => {
     onOpenDialog(currentTier)
@@ -41,13 +41,13 @@ export function WorkspaceTierSection({
         </span>
         <div className="mt-0.5 flex items-center gap-1.5">
           <span className="font-semibold text-primary transition-colors">
-            {plan.name}
+            {plan?.name ?? currentTier}
           </span>
         </div>
       </div>
 
       <span className="pr-1 text-xs font-semibold opacity-60 transition-colors hover:opacity-100">
-        {isProTier ? <T>View</T> : <T>Upgrade</T>}
+        {isHighestTier ? <T>View</T> : <T>Upgrade</T>}
       </span>
     </button>
   )
