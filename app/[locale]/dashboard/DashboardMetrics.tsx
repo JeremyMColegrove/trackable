@@ -94,8 +94,8 @@ export function DashboardMetrics() {
 	);
 
 	return (
-		<div className="space-y-3">
-			<div className="grid grid-cols-3 gap-2 sm:gap-3">
+		<div className="xl:grid xl:grid-cols-[192px_1fr] xl:gap-4">
+			<div className="grid grid-cols-3 gap-2 sm:gap-3 xl:grid-cols-1 xl:gap-3 mb-3 xl:mb-0">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1">
 						<CardTitle className="text-xs sm:text-sm font-medium">
@@ -124,7 +124,7 @@ export function DashboardMetrics() {
 						{isLoading ? (
 							<Skeleton className="h-6 w-12" />
 						) : (
-							<div className={`text-lg sm:text-xl font-bold }`}>
+							<div className="text-lg sm:text-xl font-bold">
 								{metrics?.activeSurveysCount?.toLocaleString() ?? 0}
 							</div>
 						)}
@@ -145,7 +145,7 @@ export function DashboardMetrics() {
 						{isLoading ? (
 							<Skeleton className="h-6 w-12" />
 						) : (
-							<div className={`text-lg sm:text-xl font-bold }`}>
+							<div className="text-lg sm:text-xl font-bold">
 								{metrics?.recentLogsCount?.toLocaleString() ?? 0}
 							</div>
 						)}
@@ -170,7 +170,7 @@ export function DashboardMetrics() {
 					) : (
 						<ChartContainer
 							config={activityChartConfig}
-							className="h-[100px] min-h-[100px] w-full aspect-auto [&_.recharts-responsive-container]:h-full!"
+							className="h-[100px] min-h-[100px] xl:h-[140px] xl:min-h-[140px] w-full aspect-auto [&_.recharts-responsive-container]:h-full!"
 						>
 							<LineChart
 								accessibilityLayer
