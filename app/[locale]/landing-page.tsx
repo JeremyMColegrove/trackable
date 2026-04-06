@@ -20,7 +20,6 @@ import {
 	LandingAuthActions,
 	LandingAuthActionsSkeleton,
 } from "@/components/auth/landing-auth-actions";
-import { LandingDashboardPreview } from "@/components/landing-dashboard-preview";
 import { LandingLogPreview } from "@/components/landing-log-preview";
 import { siteConfig } from "@/lib/site-config";
 
@@ -76,9 +75,9 @@ export async function LandingPage() {
 					</div>
 
 					{/* Product Preview */}
-					<div className="mt-16 w-full max-w-4xl">
+					{/* <div className="mt-16 w-full max-w-4xl">
 						<LandingDashboardPreview />
-					</div>
+					</div> */}
 				</div>
 			</section>
 
