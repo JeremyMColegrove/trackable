@@ -14,10 +14,10 @@ services:
     volumes:
       - ./data/uploads:/data/uploads
       - ./config.json:/config.json:ro
+      - next_cache:/app/.next/cache
     read_only: true
     tmpfs:
       - /tmp
-      - /app/.next/cache
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -55,3 +55,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  next_cache:
