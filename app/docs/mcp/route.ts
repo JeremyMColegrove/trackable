@@ -6,7 +6,7 @@ Trackables is a multi-tenant platform for creating trackable items — either **
 
 ## Authentication
 
-All requests require a valid OAuth access token issued by Clerk. The token operates on behalf of the authenticated user — all data access is scoped to workspaces and trackables that user can access.
+All requests require a valid access token. By default this is an OAuth access token issued by Trackables' built-in auth server and it operates on behalf of the authenticated user, so all data access is scoped to workspaces and trackables that user can access. Self-hosted deployments can also enable custom MCP access tokens through runtime config.
 
 ## Concepts
 

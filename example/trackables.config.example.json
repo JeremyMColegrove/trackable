@@ -1,5 +1,8 @@
 {
   "admins": ["your-email@example.com"],
+  "auth": {
+    "emailServiceEnabled": false
+  },
   "features": {
     "subscriptionEnforcementEnabled": false,
     "workspaceBillingEnabled": false,

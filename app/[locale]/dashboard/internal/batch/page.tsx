@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import { getAuth } from "@/server/get-auth"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 
@@ -10,7 +10,7 @@ import { hasAdminControlsEnabled } from "@/server/admin-controls"
 import { ensureUserProvisioned } from "@/server/user-provisioning"
 
 async function BatchJobsPageContent() {
-  const { userId } = await auth()
+  const { userId } = await getAuth()
 
   if (userId) {
     await ensureUserProvisioned(userId)

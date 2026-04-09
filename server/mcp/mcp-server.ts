@@ -1,5 +1,6 @@
 import "server-only"
 
+import { MCP_OAUTH_SECURITY_SCHEMES } from "@/lib/mcp-oauth"
 import { mcpAuditService } from "@/server/mcp/audit/mcp-audit.service"
 import type { McpAuthContext } from "@/server/mcp/auth/mcp-auth-context"
 import { mcpTrackableService } from "@/server/mcp/services/mcp-trackable.service"
@@ -63,6 +64,23 @@ export function buildMcpServer(authContext: McpAuthContext): McpServer {
         "When in doubt, answer from knowledge first and only invoke a tool if live account data is genuinely required to respond.",
     }
   )
+
+  // Every tool uses the same OAuth settings, so we add them once here.
+  const originalRegisterTool = server.registerTool.bind(server)
+  server.registerTool = ((name: string, config: Record<string, unknown>, cb) =>
+    originalRegisterTool(
+      name,
+      {
+        ...config,
+        _meta: {
+          ...(typeof config._meta === "object" && config._meta !== null
+            ? config._meta
+            : {}),
+          securitySchemes: MCP_OAUTH_SECURITY_SCHEMES,
+        },
+      },
+      cb
+    )) as typeof server.registerTool
 
   for (const tool of allTools) {
     // Only register tools the token is permitted to use

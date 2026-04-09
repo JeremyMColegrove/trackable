@@ -96,6 +96,29 @@ export function getWorkspaceTierPlans(): readonly PublicWorkspacePlan[] {
     })
   }
 
+  if (plans.length === 0) {
+    const defaultEntry = entries[0]
+    const limits = getLimitsForTier(defaultEntry.id)
+
+    return [
+      {
+        tierId: "free",
+        billingTierId: null,
+        rank: 0,
+        name: "Free",
+        description: "A clean starting point for new workspaces.",
+        priceLabel: "$0",
+        priceInterval: "/workspace",
+        mostPopular: false,
+        tone: "neutral",
+        lemonSqueezyVariantId: null,
+        highlights: buildTierHighlights(limits),
+        limits,
+        manageUrl: runtimeConfig.billing.manageUrl,
+      },
+    ]
+  }
+
   return plans
 }
 

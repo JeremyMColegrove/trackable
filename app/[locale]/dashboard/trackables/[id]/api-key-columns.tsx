@@ -19,12 +19,14 @@ export function getApiKeyColumns({
   onRevoke,
   revokingKeyId,
 }: ApiKeyColumnsOptions): ColumnDef<ApiKeyRow>[] {
+  const gt = useGT()
+
   return [
     {
       accessorKey: "name",
       header: ({ column }) => (
         <div className="pl-4">
-          <DataTableColumnHeader column={column} title="Connection" />
+          <DataTableColumnHeader column={column} title={gt("Connection")} />
         </div>
       ),
       cell: ({ row }) => {
@@ -61,7 +63,7 @@ export function getApiKeyColumns({
     {
       accessorKey: "maskedKey",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Key" />
+        <DataTableColumnHeader column={column} title={gt("Key")} />
       ),
       cell: ({ row }) => (
         <span className="font-mono text-sm text-muted-foreground">
@@ -72,20 +74,20 @@ export function getApiKeyColumns({
     {
       accessorKey: "expiresAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expires" />
+        <DataTableColumnHeader column={column} title={gt("Expires")} />
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
           {row.original.expiresAt
             ? formatDateTime(row.original.expiresAt)
-            : "Never"}
+            : gt("Never")}
         </span>
       ),
     },
     {
       accessorKey: "lastUsedAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last Used" />
+        <DataTableColumnHeader column={column} title={gt("Last Used")} />
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
@@ -101,7 +103,6 @@ export function getApiKeyColumns({
         </div>
       ),
       cell: ({ row }) => {
-        const gt = useGT()
         const apiKey = row.original
         const isRevoking = revokingKeyId === apiKey.id
 

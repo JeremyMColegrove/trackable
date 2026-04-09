@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getTrackableKindVisuals } from "@/lib/trackable-kind"
 import { useTRPC } from "@/trpc/client"
 import { useQuery } from "@tanstack/react-query"
-import { T } from "gt-next"
+import { T, useGT } from "gt-next"
 import { ChartLine, ClipboardList, Database, LayoutGrid } from "lucide-react"
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
@@ -37,17 +37,6 @@ type MetricsResponse = {
   submissionActivity: ActivityPoint[]
   usageActivity: ActivityPoint[]
 }
-
-const activityChartConfig = {
-  submissions: {
-    label: "Submissions",
-    color: getTrackableKindVisuals("survey").chartColor,
-  },
-  usage: {
-    label: "Logs",
-    color: getTrackableKindVisuals("api_ingestion").chartColor,
-  },
-} satisfies ChartConfig
 
 const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
@@ -84,10 +73,21 @@ function buildChartData(
 }
 
 export function DashboardMetrics() {
+  const gt = useGT()
   const trpc = useTRPC()
   const { data: metrics, isLoading } = useQuery(
     trpc.dashboard.getMetrics.queryOptions()
   )
+  const activityChartConfig = {
+    submissions: {
+      label: gt("Submissions"),
+      color: getTrackableKindVisuals("survey").chartColor,
+    },
+    usage: {
+      label: gt("Logs"),
+      color: getTrackableKindVisuals("api_ingestion").chartColor,
+    },
+  } satisfies ChartConfig
 
   const chartData = buildChartData(
     metrics?.activityWindowStart,

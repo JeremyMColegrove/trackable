@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import { getAuth } from "@/server/get-auth"
 import { TRPCError } from "@trpc/server"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
@@ -24,7 +24,7 @@ async function PreviewPageContent({
   const previewId = Array.isArray(resolvedSearchParams.previewId)
     ? resolvedSearchParams.previewId[0]
     : resolvedSearchParams.previewId
-  const { userId } = await auth()
+  const { userId } = await getAuth()
 
   if (!userId) {
     redirect(

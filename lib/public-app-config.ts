@@ -9,6 +9,7 @@ import {
 
 export function getPublicAppConfig(): PublicAppConfig {
   return {
+    authEmailServiceEnabled: getRuntimeConfig().auth.emailServiceEnabled,
     subscriptionEnforcementEnabled: isSubscriptionEnforcementEnabled(),
     workspaceBillingEnabled: getWorkspaceBillingEnabled(),
     workspacePlans: getWorkspaceTierPlans(),

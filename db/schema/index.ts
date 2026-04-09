@@ -1,4 +1,5 @@
 export * from "@/db/schema/_shared"
+export * from "@/db/schema/auth"
 export * from "@/db/schema/api-usage"
 export * from "@/db/schema/batch"
 export * from "@/db/schema/enums"

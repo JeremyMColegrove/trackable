@@ -34,14 +34,14 @@ export const workspaceWebhooks = pgTable(
   "workspace_webhooks",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    provider: webhookProviderEnum("provider").notNull(),
-    config: jsonb("config").$type<WebhookProviderConfig>().notNull(),
-    enabled: boolean("enabled").default(true).notNull(),
-    createdByUserId: text("created_by_user_id").references(() => users.id, {
+    name: text().notNull(),
+    provider: webhookProviderEnum().notNull(),
+    config: jsonb().$type<WebhookProviderConfig>().notNull(),
+    enabled: boolean().default(true).notNull(),
+    createdByUserId: text().references(() => users.id, {
       onDelete: "set null",
     }),
     ...timestamps,
@@ -56,13 +56,13 @@ export const workspaceWebhookTriggerRules = pgTable(
   "workspace_webhook_trigger_rules",
   {
     id: uuidPrimaryKey(),
-    webhookId: uuid("webhook_id")
+    webhookId: uuid()
       .notNull()
       .references(() => workspaceWebhooks.id, { onDelete: "cascade" }),
-    type: webhookTriggerTypeEnum("type").notNull(),
-    config: jsonb("config").$type<WebhookTriggerConfig>().notNull(),
-    enabled: boolean("enabled").default(true).notNull(),
-    position: integer("position").default(0).notNull(),
+    type: webhookTriggerTypeEnum().notNull(),
+    config: jsonb().$type<WebhookTriggerConfig>().notNull(),
+    enabled: boolean().default(true).notNull(),
+    position: integer().default(0).notNull(),
     ...timestamps,
   },
   (table) => [
@@ -78,13 +78,13 @@ export const trackableWebhookConnections = pgTable(
   "trackable_webhook_connections",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    webhookId: uuid("webhook_id")
+    webhookId: uuid()
       .notNull()
       .references(() => workspaceWebhooks.id, { onDelete: "cascade" }),
-    createdByUserId: text("created_by_user_id").references(() => users.id, {
+    createdByUserId: text().references(() => users.id, {
       onDelete: "set null",
     }),
     ...timestamps,
@@ -103,35 +103,33 @@ export const webhookDeliveryAttempts = pgTable(
   "webhook_delivery_attempts",
   {
     id: uuidPrimaryKey(),
-    webhookId: uuid("webhook_id")
+    webhookId: uuid()
       .notNull()
       .references(() => workspaceWebhooks.id, { onDelete: "cascade" }),
-    triggerRuleId: uuid("trigger_rule_id")
+    triggerRuleId: uuid()
       .notNull()
       .references(() => workspaceWebhookTriggerRules.id, {
         onDelete: "cascade",
       }),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    usageEventId: uuid("usage_event_id").references(
+    usageEventId: uuid().references(
       () => trackableApiUsageEvents.id,
       { onDelete: "cascade" }
     ),
-    submissionId: uuid("submission_id").references(
+    submissionId: uuid().references(
       () => trackableFormSubmissions.id,
       { onDelete: "cascade" }
     ),
-    provider: webhookProviderEnum("provider").notNull(),
-    status: webhookDeliveryStatusEnum("status").notNull(),
-    requestPayload: jsonb("request_payload")
+    provider: webhookProviderEnum().notNull(),
+    status: webhookDeliveryStatusEnum().notNull(),
+    requestPayload: jsonb()
       .$type<WebhookDeliveryRequestPayload>()
       .notNull(),
-    responsePayload: jsonb(
-      "response_payload"
-    ).$type<WebhookDeliveryResponsePayload | null>(),
-    errorMessage: text("error_message"),
-    attemptedAt: occurredAt("attempted_at"),
+    responsePayload: jsonb().$type<WebhookDeliveryResponsePayload | null>(),
+    errorMessage: text(),
+    attemptedAt: occurredAt(),
   },
   (table) => [
     index("webhook_delivery_attempts_webhook_attempted_idx").on(

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuth } from "@clerk/nextjs"
+import { useSession } from "@/lib/auth-client"
 
 export function RequireAuth({
   children,
@@ -11,7 +11,9 @@ export function RequireAuth({
   children: React.ReactNode
   fallback?: React.ReactNode
 }) {
-  const { isLoaded, userId } = useAuth()
+  const { data: session, isPending } = useSession()
+  const isLoaded = !isPending
+  const userId = session?.user?.id ?? null
   const pathname = usePathname()
   const router = useRouter()
 

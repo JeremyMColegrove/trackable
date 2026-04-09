@@ -21,11 +21,12 @@ const exampleConfigPath = path.resolve(
 test("loadRuntimeConfigFromPath parses a valid runtime config file", () => {
   const config = loadRuntimeConfigFromPath(exampleConfigPath)
 
-  assert.equal(config.features.subscriptionEnforcementEnabled, true)
+  assert.equal(config.auth.emailServiceEnabled, false)
+  assert.equal(config.features.subscriptionEnforcementEnabled, false)
   assert.equal(config.features.customMCPServerTokens, false)
-  assert.equal(config.limits?.length, 3)
-  assert.equal(config.billing.tiers.length, 3)
-  assert.equal(config.usage.pageSize, 101)
+  assert.equal(config.limits?.length, 1)
+  assert.equal(config.billing.tiers.length, 0)
+  assert.equal(config.usage.pageSize, 50)
 })
 
 test("loadRuntimeConfigFromPath defaults customMCPServerTokens to false when omitted", () => {
@@ -42,6 +43,7 @@ test("loadRuntimeConfigFromPath defaults customMCPServerTokens to false when omi
 
   try {
     const config = loadRuntimeConfigFromPath(sparseConfigPath)
+    assert.equal(config.auth.emailServiceEnabled, false)
     assert.equal(config.features.customMCPServerTokens, false)
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })
@@ -62,6 +64,7 @@ test("loadRuntimeConfigFromPath enables customMCPServerTokens when set to true",
 
   try {
     const config = loadRuntimeConfigFromPath(configPath)
+    assert.equal(config.auth.emailServiceEnabled, false)
     assert.equal(config.features.customMCPServerTokens, true)
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })
@@ -103,6 +106,7 @@ test("loadRuntimeConfigFromPath merges sparse config files with app defaults", (
   try {
     const config = loadRuntimeConfigFromPath(sparseConfigPath)
 
+    assert.equal(config.auth.emailServiceEnabled, false)
     assert.equal(config.features.subscriptionEnforcementEnabled, true)
     assert.equal(config.features.workspaceBillingEnabled, true)
     assert.equal(config.billing.lemonSqueezyStoreId, "12345")
@@ -114,6 +118,26 @@ test("loadRuntimeConfigFromPath merges sparse config files with app defaults", (
     assert.equal(config.usage.pageSize, 101)
     // limits not specified — should be undefined (unlimited)
     assert.equal(config.limits, undefined)
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true })
+  }
+})
+
+test("loadRuntimeConfigFromPath enables auth email delivery when set to true", () => {
+  const tempDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "trackables-runtime-config-")
+  )
+  const configPath = path.join(tempDirectory, "config.json")
+
+  fs.writeFileSync(
+    configPath,
+    JSON.stringify({ auth: { emailServiceEnabled: true } }),
+    "utf8"
+  )
+
+  try {
+    const config = loadRuntimeConfigFromPath(configPath)
+    assert.equal(config.auth.emailServiceEnabled, true)
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })
   }
@@ -131,8 +155,8 @@ test("getRuntimeConfig loads the fixed config.json file from the project root", 
 
     const config = getRuntimeConfig()
 
-    assert.equal(config.limits?.length, 3)
-    assert.equal(config.usage.pageSize, 101)
+    assert.equal(config.limits?.length, 1)
+    assert.equal(config.usage.pageSize, 50)
   } finally {
     if (previousConfig === null) {
       fs.rmSync(rootConfigPath, { force: true })

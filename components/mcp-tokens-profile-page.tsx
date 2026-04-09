@@ -2,9 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Check, Copy, MoreHorizontal, Search } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,15 +21,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { MCP_TOOL_DEFINITIONS, type McpToolName } from "@/lib/mcp-tools"
 import { useTRPC } from "@/trpc/client"
+import { T, useGT } from "gt-next"
 
-type CreatedToken = { token: string; name: string }
+type TokenCapabilities = {
+  tools: "all" | McpToolName[]
+  workspaceIds?: string[]
+  trackableIds?: string[]
+}
+
+type CreatedToken = {
+  token: string
+  name: string
+  capabilities: TokenCapabilities
+}
+
+function toggleStringValue<T extends string>(values: T[], value: T) {
+  return values.includes(value)
+    ? values.filter((entry) => entry !== value)
+    : [...values, value]
+}
 
 export function McpTokensProfilePage() {
+  const gt = useGT()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const queryKey = trpc.mcpTokens.listTokens.queryKey()
+  const creationOptionsQuery = useQuery(
+    trpc.mcpTokens.getCreationOptions.queryOptions()
+  )
 
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState("")
@@ -36,8 +60,38 @@ export function McpTokensProfilePage() {
   const [search, setSearch] = useState("")
   const [createdToken, setCreatedToken] = useState<CreatedToken | null>(null)
   const [copied, setCopied] = useState(false)
+  const [selectedTools, setSelectedTools] = useState<McpToolName[]>([])
+  const [limitWorkspaces, setLimitWorkspaces] = useState(false)
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([])
+  const [limitTrackables, setLimitTrackables] = useState(false)
+  const [selectedTrackableIds, setSelectedTrackableIds] = useState<string[]>([])
 
   const tokensQuery = useQuery(trpc.mcpTokens.listTokens.queryOptions())
+  const workspaceOptions = creationOptionsQuery.data?.workspaces ?? []
+  const allTrackableOptions = creationOptionsQuery.data?.trackables ?? []
+  const filteredTrackableOptions =
+    limitWorkspaces && selectedWorkspaceIds.length > 0
+      ? allTrackableOptions.filter((trackable) =>
+          selectedWorkspaceIds.includes(trackable.workspaceId)
+        )
+      : allTrackableOptions
+
+  useEffect(() => {
+    if (!limitWorkspaces) {
+      return
+    }
+
+    setSelectedTrackableIds((current) =>
+      current.filter((trackableId) => {
+        const trackable = allTrackableOptions.find(
+          (entry) => entry.id === trackableId
+        )
+        return trackable
+          ? selectedWorkspaceIds.includes(trackable.workspaceId)
+          : false
+      })
+    )
+  }, [allTrackableOptions, limitWorkspaces, selectedWorkspaceIds])
 
   const createToken = useMutation(
     trpc.mcpTokens.createToken.mutationOptions({
@@ -46,6 +100,11 @@ export function McpTokensProfilePage() {
         setCreatedToken(data)
         setName("")
         setExpiration("never")
+        setSelectedTools([])
+        setLimitWorkspaces(false)
+        setSelectedWorkspaceIds([])
+        setLimitTrackables(false)
+        setSelectedTrackableIds([])
       },
     })
   )
@@ -59,7 +118,7 @@ export function McpTokensProfilePage() {
   )
 
   function handleCreate() {
-    if (!name.trim()) return
+    if (!name.trim() || selectedTools.length === 0) return
     let expiresAt: string | null = null
     if (expiration !== "never") {
       const days = parseInt(expiration, 10)
@@ -67,7 +126,21 @@ export function McpTokensProfilePage() {
       d.setDate(d.getDate() + days)
       expiresAt = d.toISOString()
     }
-    createToken.mutate({ name: name.trim(), expiresAt })
+    createToken.mutate({
+      name: name.trim(),
+      expiresAt,
+      capabilities: {
+        tools: selectedTools,
+        workspaceIds:
+          limitWorkspaces && selectedWorkspaceIds.length > 0
+            ? selectedWorkspaceIds
+            : undefined,
+        trackableIds:
+          limitTrackables && selectedTrackableIds.length > 0
+            ? selectedTrackableIds
+            : undefined,
+      },
+    })
   }
 
   async function handleCopy(text: string) {
@@ -98,23 +171,42 @@ export function McpTokensProfilePage() {
     })
   }
 
+  function describeTools(capabilities: TokenCapabilities) {
+    if (capabilities.tools === "all") {
+      return gt("All tools")
+    }
+
+    return capabilities.tools
+      .map(
+        (toolName) =>
+          MCP_TOOL_DEFINITIONS.find(
+            (definition) => definition.name === toolName
+          )?.label ?? toolName
+      )
+      .join(", ")
+  }
+
+  function describeResourceScope(
+    label: string,
+    ids: string[] | undefined,
+    totalCount: number
+  ) {
+    if (!ids?.length) {
+      return `${label}: ${gt("All accessible")}`
+    }
+
+    return `${label}: ${ids.length}/${totalCount}`
+  }
+
   return (
     <div className="space-y-4">
-      {/* Page heading */}
-      <div className="space-y-1">
-        <h2 className="text-xl font-semibold">API keys</h2>
-        <p className="text-sm text-muted-foreground">
-          Manage your MCP server access tokens.
-        </p>
-      </div>
-
       {/* Header row */}
       <div className="flex items-center justify-between gap-2">
         <div className="relative w-52">
           <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Search keys"
+            placeholder={gt("Search keys")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -126,7 +218,7 @@ export function McpTokensProfilePage() {
             setCreatedToken(null)
           }}
         >
-          Add new key
+          <T>Add new token</T>
         </Button>
       </div>
 
@@ -137,16 +229,19 @@ export function McpTokensProfilePage() {
             <>
               <div className="space-y-1">
                 <p className="text-sm font-semibold">
-                  Copy your &ldquo;{createdToken.name}&rdquo; API Key now
+                  <T>Copy your</T> &ldquo;{createdToken.name}&rdquo;{" "}
+                  <T>MCP token now</T>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  For security reasons, we won&apos;t allow you to view it again
-                  later.
+                  <T>
+                    For security reasons, we won&apos;t allow you to view it
+                    again later.
+                  </T>
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  API key
+                  <T>MCP token</T>
                 </p>
                 <div className="flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
                   <code className="flex-1 truncate font-mono text-xs">
@@ -171,24 +266,30 @@ export function McpTokensProfilePage() {
                   variant="outline"
                   onClick={handleCopyAndClose}
                 >
-                  Copy &amp; Close
+                  <T>Copy &amp; Close</T>
                 </Button>
               </div>
             </>
           ) : (
             <>
               <div className="space-y-1">
-                <p className="text-sm font-semibold">Add new API key</p>
+                <p className="text-sm font-semibold">
+                  <T>Add new MCP token</T>
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Provide a name to generate a new key. You&apos;ll be able to
-                  revoke it anytime.
+                  <T>
+                    Choose exactly which MCP tools and resources this token can
+                    access. You&apos;ll be able to revoke it anytime.
+                  </T>
                 </p>
               </div>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-1.5">
-                  <Label className="text-xs">Secret key name</Label>
+                  <Label className="text-xs">
+                    <T>Token name</T>
+                  </Label>
                   <Input
-                    placeholder="Enter your secret key name"
+                    placeholder={gt("Enter your token name")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -196,32 +297,186 @@ export function McpTokensProfilePage() {
                 </div>
                 <div className="w-48 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs">Expiration</Label>
+                    <Label className="text-xs">
+                      <T>Expiration</T>
+                    </Label>
                     <span className="text-xs text-muted-foreground">
-                      Optional
+                      <T>Optional</T>
                     </span>
                   </div>
                   <Select value={expiration} onValueChange={setExpiration}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select date" />
+                      <SelectValue placeholder={gt("Select date")} />
                     </SelectTrigger>
                     <SelectContent modal={false}>
-                      <SelectItem value="never">Never expires</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="60">60 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="never">
+                        <T>Never expires</T>
+                      </SelectItem>
+                      <SelectItem value="30">
+                        <T>30 days</T>
+                      </SelectItem>
+                      <SelectItem value="60">
+                        <T>60 days</T>
+                      </SelectItem>
+                      <SelectItem value="90">
+                        <T>90 days</T>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
                     {expiration === "never"
-                      ? "This key will never expire"
-                      : `Expires in ${expiration} days`}
+                      ? gt("This token will never expire")
+                      : `${gt("Expires in")} ${expiration} ${gt("days")}`}
                   </p>
                 </div>
               </div>
+              <Separator />
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    <T>Allowed tools</T>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <T>
+                      Select at least one tool. Tokens no longer default to full
+                      access.
+                    </T>
+                  </p>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {MCP_TOOL_DEFINITIONS.map((tool) => (
+                    <label
+                      key={tool.name}
+                      className="flex items-start gap-3 rounded-md border p-3"
+                    >
+                      <Checkbox
+                        checked={selectedTools.includes(tool.name)}
+                        onCheckedChange={() =>
+                          setSelectedTools((current) =>
+                            toggleStringValue(current, tool.name)
+                          )
+                        }
+                      />
+                      <span className="space-y-1">
+                        <span className="block text-sm font-medium">
+                          {tool.label}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {tool.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 rounded-md border p-3">
+                  <Checkbox
+                    checked={limitWorkspaces}
+                    onCheckedChange={(checked) => {
+                      const enabled = checked === true
+                      setLimitWorkspaces(enabled)
+                      if (!enabled) {
+                        setSelectedWorkspaceIds([])
+                      }
+                    }}
+                  />
+                  <span className="space-y-1">
+                    <span className="block text-sm font-medium">
+                      <T>Restrict workspaces</T>
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      <T>
+                        Leave this off to allow all workspaces you can already
+                        access.
+                      </T>
+                    </span>
+                  </span>
+                </label>
+                {limitWorkspaces ? (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {workspaceOptions.map((workspace) => (
+                      <label
+                        key={workspace.id}
+                        className="flex items-center gap-3 rounded-md border p-3"
+                      >
+                        <Checkbox
+                          checked={selectedWorkspaceIds.includes(workspace.id)}
+                          onCheckedChange={() =>
+                            setSelectedWorkspaceIds((current) =>
+                              toggleStringValue(current, workspace.id)
+                            )
+                          }
+                        />
+                        <span>
+                          <span className="block text-sm font-medium">
+                            {workspace.name}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {workspace.slug}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 rounded-md border p-3">
+                  <Checkbox
+                    checked={limitTrackables}
+                    onCheckedChange={(checked) => {
+                      const enabled = checked === true
+                      setLimitTrackables(enabled)
+                      if (!enabled) {
+                        setSelectedTrackableIds([])
+                      }
+                    }}
+                  />
+                  <span className="space-y-1">
+                    <span className="block text-sm font-medium">
+                      <T>Restrict trackables</T>
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      <T>
+                        Optional fine-grained scope for specific trackables.
+                      </T>
+                    </span>
+                  </span>
+                </label>
+                {limitTrackables ? (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {filteredTrackableOptions.map((trackable) => (
+                      <label
+                        key={trackable.id}
+                        className="flex items-center gap-3 rounded-md border p-3"
+                      >
+                        <Checkbox
+                          checked={selectedTrackableIds.includes(trackable.id)}
+                          onCheckedChange={() =>
+                            setSelectedTrackableIds((current) =>
+                              toggleStringValue(current, trackable.id)
+                            )
+                          }
+                        />
+                        <span>
+                          <span className="block text-sm font-medium">
+                            {trackable.name}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {trackable.kind}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               {createToken.error ? (
                 <p className="text-xs text-destructive">
-                  Failed to create key. Please try again.
+                  {createToken.error.message}
                 </p>
               ) : null}
               <div className="flex justify-end gap-2">
@@ -232,16 +487,26 @@ export function McpTokensProfilePage() {
                     setShowForm(false)
                     setName("")
                     setExpiration("never")
+                    setSelectedTools([])
+                    setLimitWorkspaces(false)
+                    setSelectedWorkspaceIds([])
+                    setLimitTrackables(false)
+                    setSelectedTrackableIds([])
                   }}
                 >
-                  Cancel
+                  <T>Cancel</T>
                 </Button>
                 <Button
                   size="sm"
-                  disabled={!name.trim() || createToken.isPending}
+                  disabled={
+                    !name.trim() ||
+                    selectedTools.length === 0 ||
+                    createToken.isPending ||
+                    creationOptionsQuery.isLoading
+                  }
                   onClick={handleCreate}
                 >
-                  Create key
+                  <T>Create token</T>
                 </Button>
               </div>
             </>
@@ -255,20 +520,23 @@ export function McpTokensProfilePage() {
           <thead>
             <tr className="border-b">
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                Name
+                <T>Name</T>
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                Last used
+                <T>Scope</T>
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                <T>Last used</T>
               </th>
               <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">
-                Actions
+                <T>Actions</T>
               </th>
             </tr>
           </thead>
           <tbody>
             {tokensQuery.isLoading ? (
               <tr>
-                <td colSpan={3} className="px-4 py-3">
+                <td colSpan={4} className="px-4 py-3">
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-48" />
                     <Skeleton className="h-3 w-32" />
@@ -278,10 +546,14 @@ export function McpTokensProfilePage() {
             ) : filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={4}
                   className="px-4 py-6 text-center text-xs text-muted-foreground"
                 >
-                  {search ? "No keys match your search." : "No API keys yet."}
+                  {search ? (
+                    <T>No keys match your search.</T>
+                  ) : (
+                    <T>No MCP tokens yet.</T>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -290,10 +562,27 @@ export function McpTokensProfilePage() {
                   <td className="px-4 py-3">
                     <p className="font-medium">{token.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      Created {formatDate(token.createdAt)}
+                      <T>Created</T> {formatDate(token.createdAt)}
                       {token.expiresAt
-                        ? ` • Expires ${formatDate(token.expiresAt)}`
-                        : " • Never expires"}
+                        ? ` • ${gt("Expires")} ${formatDate(token.expiresAt)}`
+                        : ` • ${gt("Never expires")}`}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <p>{describeTools(token.capabilities)}</p>
+                    <p>
+                      {describeResourceScope(
+                        gt("Workspaces"),
+                        token.capabilities.workspaceIds,
+                        workspaceOptions.length
+                      )}
+                    </p>
+                    <p>
+                      {describeResourceScope(
+                        gt("Trackables"),
+                        token.capabilities.trackableIds,
+                        allTrackableOptions.length
+                      )}
                     </p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -304,7 +593,9 @@ export function McpTokensProfilePage() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="size-7">
                           <MoreHorizontal className="size-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">
+                            <T>Actions</T>
+                          </span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent modal={false} align="end">
@@ -315,7 +606,7 @@ export function McpTokensProfilePage() {
                             revokeToken.mutate({ tokenId: token.id })
                           }
                         >
-                          Revoke
+                          <T>Revoke</T>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

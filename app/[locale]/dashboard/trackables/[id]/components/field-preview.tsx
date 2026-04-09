@@ -126,7 +126,7 @@ export function FieldPreview({
               {field.label || "Untitled field"}
             </button>
             <Badge variant="outline" className="rounded-full">
-              {field.required ? "Required" : formatFieldKind(field.kind)}
+              {field.required ? gt("Required") : formatFieldKind(field.kind, gt)}
             </Badge>
           </div>
           {field.description ? (

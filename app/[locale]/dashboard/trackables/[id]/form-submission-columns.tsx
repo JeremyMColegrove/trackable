@@ -8,55 +8,66 @@ import { getTrackableKindVisuals } from "@/lib/trackable-kind"
 
 import { formatDateTime, formatSubmissionSource } from "./display-utils"
 import type { SubmissionRow } from "./table-types"
-import { useGT } from "gt-next"
+import type { InlineTranslationOptions } from "gt-next"
 
-export const formSubmissionColumns: ColumnDef<SubmissionRow>[] = [
-  {
-    accessorKey: "submitterLabel",
-    header: ({ column }) => (
-      <div className="pl-4">
-        <DataTableColumnHeader column={column} title="Submitter" />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3 pl-4">
-        <div
-          className={`flex size-8 shrink-0 items-center justify-center rounded-full ${getTrackableKindVisuals("survey").iconContainerClassName}`}
-        >
-          <LayoutTemplate className="size-4" />
+type TranslateFn = (
+  message: string,
+  options?: InlineTranslationOptions
+) => string
+
+export function getFormSubmissionColumns(
+  gt: TranslateFn
+): ColumnDef<SubmissionRow>[] {
+  return [
+    {
+      accessorKey: "submitterLabel",
+      header: ({ column }) => (
+        <div className="pl-4">
+          <DataTableColumnHeader column={column} title={gt("Submitter")} />
         </div>
-        <div className="space-y-0.5">
-          <div className="font-medium">{row.original.submitterLabel}</div>
-          <div className="text-xs text-muted-foreground">
-            {formatSubmissionSource(row.original.source)}
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3 pl-4">
+          <div
+            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${getTrackableKindVisuals("survey").iconContainerClassName}`}
+          >
+            <LayoutTemplate className="size-4" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="font-medium">{row.original.submitterLabel}</div>
+            <div className="text-xs text-muted-foreground">
+              {formatSubmissionSource(row.original.source, gt)}
+            </div>
           </div>
         </div>
-      </div>
-    ),
-    meta: {
-      export: {
-        label: "Submitter",
-        getValue: ({ row }) =>
-          `${row.submitterLabel}\n${formatSubmissionSource(row.source)}`,
+      ),
+      meta: {
+        export: {
+          label: gt("Submitter"),
+          getValue: ({ row }) =>
+            `${row.submitterLabel}\n${formatSubmissionSource(row.source, gt)}`,
+        },
+      },
+      enableHiding: false,
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={gt("Submitted")} />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatDateTime(row.original.createdAt)}
+        </span>
+      ),
+      meta: {
+        export: {
+          label: gt("Submitted"),
+          getValue: ({ row }) => formatDateTime(row.createdAt),
+        },
       },
     },
-    enableHiding: false,
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Submitted" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {formatDateTime(row.original.createdAt)}
-      </span>
-    ),
-    meta: {
-      export: {
-        label: "Submitted",
-        getValue: ({ row }) => formatDateTime(row.createdAt),
-      },
-    },
-  },
-]
+  ]
+}
+
+export const formSubmissionColumns = getFormSubmissionColumns((message) => message)

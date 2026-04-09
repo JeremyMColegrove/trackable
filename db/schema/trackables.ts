@@ -53,14 +53,14 @@ export const trackableItems = pgTable(
   "trackable_items",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    slug: text("slug").notNull(),
-    description: text("description"),
-    kind: trackableKindEnum("kind").$type<TrackableKind>().notNull(),
-    activeFormId: uuid("active_form_id").references(
+    name: text().notNull(),
+    slug: text().notNull(),
+    description: text(),
+    kind: trackableKindEnum().$type<TrackableKind>().notNull(),
+    activeFormId: uuid().references(
       (): AnyPgColumn => trackableForms.id,
       {
         onDelete: "set null",
@@ -68,9 +68,9 @@ export const trackableItems = pgTable(
     ),
     settings: settingsJson<TrackableSettings>(),
     submissionCount: submissionCount(),
-    apiUsageCount: usageCount("api_usage_count"),
-    lastSubmissionAt: nullableTimestamp("last_submission_at"),
-    lastApiUsageAt: nullableTimestamp("last_api_usage_at"),
+    apiUsageCount: usageCount(),
+    lastSubmissionAt: nullableTimestamp(),
+    lastApiUsageAt: nullableTimestamp(),
     archivedAt: archivedAt(),
     ...timestamps,
   },
@@ -87,21 +87,21 @@ export const trackableAccessGrants = pgTable(
   "trackable_access_grants",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references((): AnyPgColumn => trackableItems.id, {
         onDelete: "cascade",
       }),
-    subjectType: trackableAccessSubjectTypeEnum("subject_type").notNull(),
-    subjectUserId: text("subject_user_id").references(() => users.id, {
+    subjectType: trackableAccessSubjectTypeEnum().notNull(),
+    subjectUserId: text().references(() => users.id, {
       onDelete: "cascade",
     }),
-    subjectEmail: text("subject_email"),
-    role: trackableAccessRoleEnum("role").default("submit").notNull(),
+    subjectEmail: text(),
+    role: trackableAccessRoleEnum().default("submit").notNull(),
     createdByUserId: createdByUserId().references(() => users.id, {
       onDelete: "cascade",
     }),
-    acceptedAt: nullableTimestamp("accepted_at"),
+    acceptedAt: nullableTimestamp(),
     revokedAt: revokedAt(),
     ...timestamps,
   },
@@ -132,17 +132,17 @@ export const trackableShareLinks = pgTable(
   "trackable_share_links",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    token: text("token").notNull(),
-    role: trackableAccessRoleEnum("role").default("submit").notNull(),
+    token: text().notNull(),
+    role: trackableAccessRoleEnum().default("submit").notNull(),
     expiresAt: expiresAt(),
     revokedAt: revokedAt(),
     createdByUserId: createdByUserId().references(() => users.id, {
       onDelete: "cascade",
     }),
-    lastUsedAt: nullableTimestamp("last_used_at"),
+    lastUsedAt: nullableTimestamp(),
     usageCount: usageCount(),
     ...timestamps,
   },
@@ -156,15 +156,15 @@ export const trackableForms = pgTable(
   "trackable_forms",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    version: integer("version").notNull(),
-    title: text("title").notNull(),
-    description: text("description"),
-    status: trackableFormStatusEnum("status").default("draft").notNull(),
-    submitLabel: text("submit_label"),
-    successMessage: text("success_message"),
+    version: integer().notNull(),
+    title: text().notNull(),
+    description: text(),
+    status: trackableFormStatusEnum().default("draft").notNull(),
+    submitLabel: text(),
+    successMessage: text(),
     ...timestamps,
   },
   (table) => [
@@ -180,23 +180,23 @@ export const trackableAssets = pgTable(
   "trackable_assets",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    uploadedByUserId: text("uploaded_by_user_id")
+    uploadedByUserId: text()
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    publicToken: text("public_token").notNull(),
-    kind: trackableAssetKindEnum("kind").$type<TrackableAssetKind>().notNull(),
-    originalFileName: text("original_file_name").notNull(),
-    mimeType: text("mime_type").notNull(),
-    extension: text("extension").notNull(),
-    originalBytes: integer("original_bytes").notNull(),
-    storedBytes: integer("stored_bytes").notNull(),
-    storageKey: text("storage_key").notNull(),
-    imageWidth: integer("image_width"),
-    imageHeight: integer("image_height"),
-    imageFormat: text("image_format"),
+    publicToken: text().notNull(),
+    kind: trackableAssetKindEnum().$type<TrackableAssetKind>().notNull(),
+    originalFileName: text().notNull(),
+    mimeType: text().notNull(),
+    extension: text().notNull(),
+    originalBytes: integer().notNull(),
+    storedBytes: integer().notNull(),
+    storageKey: text().notNull(),
+    imageWidth: integer(),
+    imageHeight: integer(),
+    imageFormat: text(),
     ...timestamps,
   },
   (table) => [
@@ -212,17 +212,17 @@ export const trackableFormFields = pgTable(
   "trackable_form_fields",
   {
     id: uuidPrimaryKey(),
-    formId: uuid("form_id")
+    formId: uuid()
       .notNull()
       .references(() => trackableForms.id, { onDelete: "cascade" }),
-    key: text("key").notNull(),
-    kind: trackableFormFieldKindEnum("kind").notNull(),
-    label: text("label").notNull(),
-    description: text("description"),
-    required: boolean("required").default(false).notNull(),
+    key: text().notNull(),
+    kind: trackableFormFieldKindEnum().notNull(),
+    label: text().notNull(),
+    description: text(),
+    required: boolean().default(false).notNull(),
     position: sortOrder(),
-    config: jsonb("config").$type<FormFieldConfig>().notNull(),
-    isArchived: boolean("is_archived").default(false).notNull(),
+    config: jsonb().$type<FormFieldConfig>().notNull(),
+    isArchived: boolean().default(false).notNull(),
     ...timestamps,
   },
   (table) => [
@@ -242,22 +242,22 @@ export const trackableFormSubmissions = pgTable(
   "trackable_form_submissions",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    formId: uuid("form_id")
+    formId: uuid()
       .notNull()
       .references(() => trackableForms.id, { onDelete: "cascade" }),
-    shareLinkId: uuid("share_link_id").references(
+    shareLinkId: uuid().references(
       () => trackableShareLinks.id,
       { onDelete: "set null" }
     ),
-    submittedByUserId: text("submitted_by_user_id").references(() => users.id, {
+    submittedByUserId: text().references(() => users.id, {
       onDelete: "set null",
     }),
-    submittedEmail: text("submitted_email"),
-    source: trackableSubmissionSourceEnum("source").notNull(),
-    submissionSnapshot: jsonb("submission_snapshot")
+    submittedEmail: text(),
+    source: trackableSubmissionSourceEnum().notNull(),
+    submissionSnapshot: jsonb()
       .$type<TrackableSubmissionSnapshot>()
       .notNull(),
     metadata: metadataJson<SubmissionMetadata>(),
@@ -295,13 +295,13 @@ export const trackableFormAnswers = pgTable(
   "trackable_form_answers",
   {
     id: uuidPrimaryKey(),
-    submissionId: uuid("submission_id")
+    submissionId: uuid()
       .notNull()
       .references(() => trackableFormSubmissions.id, { onDelete: "cascade" }),
-    fieldId: uuid("field_id")
+    fieldId: uuid()
       .notNull()
       .references(() => trackableFormFields.id, { onDelete: "cascade" }),
-    value: jsonb("value").$type<FormAnswerValue>().notNull(),
+    value: jsonb().$type<FormAnswerValue>().notNull(),
     createdAt: createdAt(),
   },
   (table) => [

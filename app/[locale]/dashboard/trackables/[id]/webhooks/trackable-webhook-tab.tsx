@@ -42,14 +42,19 @@ function WebhookFormSkeleton() {
 export function TrackableWebhookTab({
   trackableId,
   provider,
+  canManageWebhooks = true,
 }: {
   trackableId: string
   provider: "generic" | "discord"
+  canManageWebhooks?: boolean
 }) {
   const trpc = useTRPC()
 
   const { data: webhooks, isLoading } = useQuery(
-    trpc.trackables.listWebhooks.queryOptions({ trackableId })
+    trpc.trackables.listWebhooks.queryOptions(
+      { trackableId },
+      { enabled: canManageWebhooks }
+    )
   )
 
   if (isLoading || !webhooks) {

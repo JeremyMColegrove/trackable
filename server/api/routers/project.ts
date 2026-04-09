@@ -56,7 +56,7 @@ export const trackablesRouter = createTRPCRouter({
       await accessControlService.assertTrackableAccess(
         input.trackableId,
         getRequiredUserId(ctx),
-        "view"
+        "manage"
       )
 
       const webhooks = await webhookService.listTrackableWebhooks(

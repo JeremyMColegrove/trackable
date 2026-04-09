@@ -228,11 +228,11 @@ export function DateRangeInput({
         >
           <div className="flex flex-col gap-2">
             <div className="px-1 text-[11px] leading-4 text-muted-foreground">
-              Type a range like{" "}
+              <T>Type a range like</T>{" "}
               <span className="font-medium text-foreground">
-                past 15 minutes
+                <T>past 15 minutes</T>
               </span>{" "}
-              or{" "}
+              <T>or</T>{" "}
               <span className="font-medium text-foreground">
                 <T>past hour</T>
               </span>

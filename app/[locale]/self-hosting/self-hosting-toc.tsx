@@ -7,8 +7,8 @@ import { useEffect, useState } from "react"
 
 const sections = [
   { id: "step-1", label: <T key="1">What you need</T> },
-  { id: "step-2", label: <T key="2">Clerk Setup</T> },
-  { id: "step-3", label: <T key="3">Clerk Webhook</T> },
+  { id: "step-2", label: <T key="2">Auth configuration</T> },
+  { id: "step-3", label: <T key="3">Email (optional)</T> },
   { id: "step-4", label: <T key="4">Database & Redis</T> },
   { id: "step-5", label: <T key="5">Configure .env</T> },
   { id: "step-6", label: <T key="6">Configure config.json</T> },

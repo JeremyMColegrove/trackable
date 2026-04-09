@@ -8,6 +8,7 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
+import type { McpToolName } from "@/lib/mcp-tools"
 import { McpAuthContextImpl } from "@/server/mcp/auth/mcp-auth-context"
 import { McpToolError } from "@/server/mcp/errors/mcp-errors"
 import { McpTrackableService } from "@/server/mcp/services/mcp-trackable.service-core"
@@ -92,12 +93,15 @@ function makeTrackableRecord(
 function createAuthContext(overrides?: {
   allowedWorkspaceIds?: string[]
   trackableIds?: string[]
-  tools?: "all" | string[]
+  tools?: "all" | McpToolName[]
   [key: string]: any
 }) {
   return new McpAuthContextImpl({
     userId: "user-1",
     scopes: overrides?.tools === "all" ? ["*"] : (overrides?.tools ?? []),
+    tools: overrides?.tools === "all" ? "all" : (overrides?.tools ?? "all"),
+    workspaceIds: overrides?.allowedWorkspaceIds,
+    trackableIds: overrides?.trackableIds,
   })
 }
 
@@ -223,7 +227,7 @@ describe("McpTrackableService.listAccessible", () => {
     assert.equal(result[0]!.id, "active-1")
   })
 
-  it.skip("enforces trackable ID whitelist", async () => {
+  it("enforces trackable ID whitelist", async () => {
     const allowedId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
     const service = createService([
       makeRow({ id: allowedId, name: "Allowed" }),
@@ -255,7 +259,7 @@ describe("McpTrackableService.listAccessible", () => {
     )
   })
 
-  it.skip("throws SCOPE_ERROR for an unauthorized workspace_id", async () => {
+  it("throws SCOPE_ERROR for an unauthorized workspace_id", async () => {
     const service = createService([])
 
     await assert.rejects(
@@ -271,7 +275,7 @@ describe("McpTrackableService.listAccessible", () => {
     )
   })
 
-  it.skip("throws SCOPE_ERROR when the token has no active workspace and no workspace_id is given", async () => {
+  it("throws SCOPE_ERROR when the token has no active workspace and no workspace_id is given", async () => {
     const service = new McpTrackableService({
       listAccessibleWorkspaces: async () => [
         { ...workspaceAlpha, isActive: false },
@@ -340,7 +344,7 @@ describe("McpTrackableService.assertAccess", () => {
     assert.equal(result.name, record.name)
   })
 
-  it.skip("throws SCOPE_ERROR when token trackable whitelist excludes the ID", async () => {
+  it("throws SCOPE_ERROR when token trackable whitelist excludes the ID", async () => {
     const record = makeTrackableRecord({ id: trackableId })
     const service = createService([], record)
 
@@ -388,7 +392,7 @@ describe("McpTrackableService.assertAccess", () => {
     )
   })
 
-  it.skip("throws SCOPE_ERROR when the trackable's workspace is outside the token's allowed set", async () => {
+  it("throws SCOPE_ERROR when the trackable's workspace is outside the token's allowed set", async () => {
     const record = makeTrackableRecord({
       id: trackableId,
       workspaceId: workspaceGamma.id,
@@ -396,7 +400,11 @@ describe("McpTrackableService.assertAccess", () => {
     const service = createService([], record)
 
     await assert.rejects(
-      () => service.assertAccess(trackableId, createAuthContext()),
+      () =>
+        service.assertAccess(
+          trackableId,
+          createAuthContext({ allowedWorkspaceIds: [workspaceAlpha.id] })
+        ),
       (err: unknown) => {
         assert.ok(err instanceof McpToolError)
         assert.equal(err.code, "SCOPE_ERROR")

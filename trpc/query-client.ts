@@ -36,7 +36,7 @@ function redirectToSignIn() {
   isRedirectingForAuth = true
 
   const redirectUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
-  const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"
+  const signInUrl = "/sign-in"
 
   window.location.assign(
     `${signInUrl}?redirect_url=${encodeURIComponent(redirectUrl)}`

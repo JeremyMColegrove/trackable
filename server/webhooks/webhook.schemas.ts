@@ -1,15 +1,41 @@
 import { z } from "zod"
 
+import { validateWebhookTargetUrl } from "@/server/webhooks/webhook-url-security"
+
 export const genericWebhookConfigSchema = z.object({
   provider: z.literal("generic"),
-  url: z.url(),
+  url: z.string().trim().url().superRefine((value, ctx) => {
+    try {
+      validateWebhookTargetUrl(value)
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Webhook target is invalid.",
+      })
+    }
+  }),
   secret: z.string().trim().min(1).max(500).nullable().optional(),
   headers: z.record(z.string(), z.string()).default({}),
 })
 
 export const discordWebhookConfigSchema = z.object({
   provider: z.literal("discord"),
-  url: z.url(),
+  url: z.string().trim().url().superRefine((value, ctx) => {
+    try {
+      validateWebhookTargetUrl(value)
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Webhook target is invalid.",
+      })
+    }
+  }),
   username: z.string().trim().min(1).max(80).nullable().optional(),
   avatarUrl: z.url().nullable().optional(),
 })

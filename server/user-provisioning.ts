@@ -1,97 +1,83 @@
 import "server-only"
 
-import { clerkClient } from "@clerk/nextjs/server"
-import { eq, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users } from "@/db/schema"
+import { user as authUsers } from "@/db/schema/auth"
 import { createDefaultWorkspaceForUser } from "@/server/workspaces"
 
-function getPrimaryEmail(
-  user: Awaited<
-    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
-  >
-) {
-  if (user.primaryEmailAddressId) {
-    const primaryEmail = user.emailAddresses.find(
-      (emailAddress) => emailAddress.id === user.primaryEmailAddressId
+export interface ProvisioningAuthUser {
+  id: string
+  email: string | null | undefined
+  name?: string | null
+  image?: string | null
+}
+
+function assertProvisionableAuthUser(
+  authUser: ProvisioningAuthUser | undefined | null,
+  userId?: string
+): asserts authUser is ProvisioningAuthUser & { email: string } {
+  if (!authUser?.email) {
+    throw new Error(
+      `better-auth user ${userId ?? authUser?.id ?? "unknown"} not found or missing email`
     )
-
-    if (primaryEmail) {
-      return primaryEmail.emailAddress
-    }
   }
-
-  return user.emailAddresses[0]?.emailAddress ?? null
 }
 
-function getDisplayName(
-  user: Awaited<
-    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
-  >
+export async function upsertAppUserFromAuthUser(
+  authUser: ProvisioningAuthUser & { email: string }
 ) {
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ")
-
-  return fullName || user.username || null
+  await db
+    .insert(users)
+    .values({
+      id: authUser.id,
+      primaryEmail: authUser.email,
+      displayName: authUser.name ?? null,
+      imageUrl: authUser.image ?? null,
+    })
+    .onConflictDoUpdate({
+      target: users.id,
+      set: {
+        primaryEmail: authUser.email,
+        displayName: authUser.name ?? null,
+        imageUrl: authUser.image ?? null,
+        updatedAt: new Date(),
+      },
+    })
 }
 
-function getIsProfilePrivate(
-  user: Awaited<
-    ReturnType<Awaited<ReturnType<typeof clerkClient>>["users"]["getUser"]>
-  >
+export async function syncAuthUserProfile(
+  authUser: ProvisioningAuthUser | undefined | null
 ) {
-  return user.publicMetadata?.isProfilePrivate === true
+  assertProvisionableAuthUser(authUser)
+  await upsertAppUserFromAuthUser(authUser)
+}
+
+export async function provisionNewAuthUser(
+  authUser: ProvisioningAuthUser | undefined | null
+) {
+  assertProvisionableAuthUser(authUser)
+
+  await upsertAppUserFromAuthUser(authUser)
+
+  await createDefaultWorkspaceForUser({
+    userId: authUser.id,
+    primaryEmail: authUser.email,
+    displayName: authUser.name ?? null,
+  })
+}
+
+async function getAuthUser(userId: string) {
+  return db.query.user.findFirst({
+    where: eq(authUsers.id, userId),
+  })
 }
 
 export async function ensureUserProvisioned(userId: string) {
-  const clerk = await clerkClient()
-  const clerkUser = await clerk.users.getUser(userId)
-  const primaryEmail = getPrimaryEmail(clerkUser)
+  const authUser = await getAuthUser(userId)
 
-  if (!primaryEmail) {
-    throw new Error(`Clerk user ${userId} is missing a primary email address`)
-  }
+  assertProvisionableAuthUser(authUser, userId)
 
-  const displayName = getDisplayName(clerkUser)
-  const isProfilePrivate = getIsProfilePrivate(clerkUser)
-
-  await db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(41827391)`)
-
-    const existingUser = await tx.query.users.findFirst({
-      where: eq(users.id, clerkUser.id),
-      columns: {
-        id: true,
-      },
-    })
-
-    if (existingUser) {
-      await tx
-        .update(users)
-        .set({
-          primaryEmail,
-          displayName,
-          imageUrl: clerkUser.imageUrl,
-          isProfilePrivate,
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, clerkUser.id))
-
-      return
-    }
-
-    await tx.insert(users).values({
-      id: clerkUser.id,
-      primaryEmail,
-      displayName,
-      imageUrl: clerkUser.imageUrl,
-      isProfilePrivate,
-    })
-  })
-
-  await createDefaultWorkspaceForUser({
-    userId: clerkUser.id,
-    primaryEmail,
-    displayName,
-  })
+  await syncAuthUserProfile(authUser)
 }

@@ -17,11 +17,16 @@ type ToolList = "all" | AllowedTool[]
 
 function createAuthContext(overrides?: {
   tools?: ToolList
+  allowedWorkspaceIds?: string[]
+  trackableIds?: string[]
   [key: string]: any
 }) {
   return new McpAuthContextImpl({
     userId: "user-1",
     scopes: overrides?.tools === "all" ? ["*"] : (overrides?.tools ?? []),
+    tools: overrides?.tools === "all" ? "all" : (overrides?.tools ?? "all"),
+    workspaceIds: overrides?.allowedWorkspaceIds,
+    trackableIds: overrides?.trackableIds,
   })
 }
 
@@ -153,7 +158,7 @@ describe("McpTrackableService.findAccessible", () => {
     assert.equal(result.results[0]?.workspace.id, workspaceAlpha.id)
   })
 
-  it.skip("enforces trackable ID whitelists", async () => {
+  it("enforces trackable ID whitelists", async () => {
     const allowedTrackableId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     const service = createService([
       {
@@ -193,14 +198,17 @@ describe("McpTrackableService.findAccessible", () => {
     )
   })
 
-  it.skip("rejects an unauthorized workspace filter", async () => {
+  it("rejects an unauthorized workspace filter", async () => {
     const service = createService([])
 
     await assert.rejects(
       () =>
-        service.findAccessible(createAuthContext(), {
-          workspaceId: workspaceGamma.id,
-        }),
+        service.findAccessible(
+          createAuthContext({ allowedWorkspaceIds: [workspaceAlpha.id] }),
+          {
+            workspaceId: workspaceGamma.id,
+          }
+        ),
       (error: unknown) => {
         assert.ok(error instanceof McpToolError)
         assert.equal(error.code, "SCOPE_ERROR")
@@ -479,7 +487,7 @@ describe("FindTrackablesTool", () => {
     assert.deepEqual(parsed, { results: [expected] })
   })
 
-  it.skip("returns a structured scope error when permission is missing", async () => {
+  it("returns a structured scope error when permission is missing", async () => {
     let called = false
     const { server, getRegistration } = createFakeServer()
     const tool = new FindTrackablesTool(

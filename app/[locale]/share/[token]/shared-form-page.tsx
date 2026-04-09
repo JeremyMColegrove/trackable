@@ -4,7 +4,7 @@
 
 import { isSurveyResponseLimitMessage } from "@/lib/subscription-limit-messages"
 import { useTRPC } from "@/trpc/client"
-import { useAuth } from "@clerk/nextjs"
+import { useSession } from "@/lib/auth-client"
 import { useQuery } from "@tanstack/react-query"
 import { useGT } from "gt-next"
 import { useEffect, useRef } from "react"
@@ -19,7 +19,9 @@ import {
 export function SharedFormPage({ token }: { token: string }) {
   const gt = useGT()
   const trpc = useTRPC()
-  const { isLoaded, userId } = useAuth()
+  const { data: session, isPending } = useSession()
+  const isLoaded = !isPending
+  const userId = session?.user?.id ?? null
   const lastViewerIdRef = useRef<string | null | undefined>(undefined)
   const sharedFormQuery = useQuery(
     trpc.trackables.getSharedForm.queryOptions(

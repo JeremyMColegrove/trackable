@@ -13,15 +13,15 @@ export const workspaceSubscriptions = pgTable(
   "workspace_subscriptions",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    lemonSqueezySubscriptionId: text("lemon_squeezy_subscription_id"),
-    lemonSqueezyCustomerId: text("lemon_squeezy_customer_id"),
-    variantId: text("variant_id"),
-    tier: text("tier").default("free").notNull(),
-    status: subscriptionStatusEnum("status").default("active").notNull(),
-    currentPeriodEnd: nullableTimestamp("current_period_end"),
+    lemonSqueezySubscriptionId: text(),
+    lemonSqueezyCustomerId: text(),
+    variantId: text(),
+    tier: text().default("free").notNull(),
+    status: subscriptionStatusEnum().default("active").notNull(),
+    currentPeriodEnd: nullableTimestamp(),
     ...timestamps,
   },
   (table) => [

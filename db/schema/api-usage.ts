@@ -25,19 +25,19 @@ export const apiKeys = pgTable(
   "api_keys",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    projectId: uuid("project_id").references(() => trackableItems.id, {
+    projectId: uuid().references(() => trackableItems.id, {
       onDelete: "cascade",
     }),
-    name: text("name").notNull(),
-    keyPrefix: text("key_prefix").notNull(),
-    secretHash: text("secret_hash").notNull(),
-    lastFour: text("last_four").notNull(),
-    status: apiKeyStatusEnum("status").default("active").notNull(),
+    name: text().notNull(),
+    keyPrefix: text().notNull(),
+    secretHash: text().notNull(),
+    lastFour: text().notNull(),
+    status: apiKeyStatusEnum().default("active").notNull(),
     expiresAt: expiresAt(),
-    lastUsedAt: nullableTimestamp("last_used_at"),
+    lastUsedAt: nullableTimestamp(),
     usageCount: usageCount(),
     ...timestamps,
   },
@@ -53,16 +53,16 @@ export const trackableApiUsageEvents = pgTable(
   "trackable_api_usage_events",
   {
     id: uuidPrimaryKey(),
-    trackableId: uuid("trackable_id")
+    trackableId: uuid()
       .notNull()
       .references(() => trackableItems.id, { onDelete: "cascade" }),
-    apiKeyId: uuid("api_key_id")
+    apiKeyId: uuid()
       .notNull()
       .references(() => apiKeys.id, { onDelete: "cascade" }),
-    requestId: text("request_id"),
+    requestId: text(),
     occurredAt: occurredAt(),
-    payload: jsonb("payload").$type<UsageEventPayload>().notNull(),
-    metadata: jsonb("metadata").$type<UsageEventMetadata>(),
+    payload: jsonb().$type<UsageEventPayload>().notNull(),
+    metadata: jsonb().$type<UsageEventMetadata>(),
   },
   (table) => [
     uniqueIndex("trackable_api_usage_events_request_id_idx").on(

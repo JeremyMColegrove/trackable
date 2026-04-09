@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import { getAuth } from "@/server/get-auth"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
@@ -18,7 +18,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { userId } = await auth()
+  const { userId } = await getAuth()
 
   if (!userId) {
     redirect(`/sign-in?redirect_url=${encodeURIComponent("/dashboard")}`)

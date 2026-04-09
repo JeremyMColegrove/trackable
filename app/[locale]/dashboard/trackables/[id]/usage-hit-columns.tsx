@@ -10,38 +10,45 @@ import {
   formatUsageUserAgent,
 } from "./display-utils"
 import type { UsageHitRow } from "./table-types"
-import { useGT } from "gt-next"
+import type { InlineTranslationOptions } from "gt-next"
 
-export const usageHitColumns: ColumnDef<UsageHitRow>[] = [
-  {
-    accessorKey: "occurredAt",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Occurred At" />
-    ),
-    cell: ({ row }) => formatCompactDateTime(row.original.occurredAt),
-  },
-  {
-    id: "metadata",
-    accessorFn: (row) => formatUsagePayload(row.payload),
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Metadata" />
-    ),
-    cell: ({ row }) => (
-      <div className="break-words whitespace-normal text-muted-foreground">
-        {formatUsagePayload(row.original.payload) || "No metadata"}
-      </div>
-    ),
-  },
-  {
-    id: "userAgent",
-    accessorFn: (row) => formatUsageUserAgent(row.metadata),
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="User Agent" />
-    ),
-    cell: ({ row }) => (
-      <div className="break-words whitespace-normal text-muted-foreground">
-        {formatUsageUserAgent(row.original.metadata)}
-      </div>
-    ),
-  },
-]
+type TranslateFn = (
+  message: string,
+  options?: InlineTranslationOptions
+) => string
+
+export function getUsageHitColumns(gt: TranslateFn): ColumnDef<UsageHitRow>[] {
+  return [
+    {
+      accessorKey: "occurredAt",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={gt("Occurred At")} />
+      ),
+      cell: ({ row }) => formatCompactDateTime(row.original.occurredAt),
+    },
+    {
+      id: "metadata",
+      accessorFn: (row) => formatUsagePayload(row.payload),
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={gt("Metadata")} />
+      ),
+      cell: ({ row }) => (
+        <div className="break-words whitespace-normal text-muted-foreground">
+          {formatUsagePayload(row.original.payload) || gt("No metadata")}
+        </div>
+      ),
+    },
+    {
+      id: "userAgent",
+      accessorFn: (row) => formatUsageUserAgent(row.metadata, gt),
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={gt("User Agent")} />
+      ),
+      cell: ({ row }) => (
+        <div className="break-words whitespace-normal text-muted-foreground">
+          {formatUsageUserAgent(row.original.metadata, gt)}
+        </div>
+      ),
+    },
+  ]
+}

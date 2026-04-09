@@ -5,7 +5,16 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
-const sections = ["admins", "features", "limits", "billing", "usage", "webhooks", "batch"]
+const sections = [
+  "admins",
+  "auth",
+  "features",
+  "limits",
+  "billing",
+  "usage",
+  "webhooks",
+  "batch",
+]
 
 export function ConfigTOC() {
   const [activeId, setActiveId] = useState<string>("")
@@ -19,7 +28,7 @@ export function ConfigTOC() {
           }
         }
       },
-      { rootMargin: "-20% 0px -70% 0px", threshold: 0 },
+      { rootMargin: "-20% 0px -70% 0px", threshold: 0 }
     )
 
     for (const id of sections) {
@@ -40,7 +49,7 @@ export function ConfigTOC() {
         <T>Guide</T>
       </Link>
       <hr className="mb-4 border-muted" />
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
         <T>Sections</T>
       </p>
       <ul className="space-y-2">

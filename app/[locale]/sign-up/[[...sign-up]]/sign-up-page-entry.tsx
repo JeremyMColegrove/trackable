@@ -1,14 +1,15 @@
-"use client"
-
-import dynamic from "next/dynamic"
-
-const SignUpPageClient = dynamic(
-  () => import("./sign-up-page-client").then((mod) => mod.SignUpPageClient),
-  {
-    ssr: false,
-  }
-)
+import { getPublicAppConfig } from "@/lib/public-app-config"
+import { SignUpPageClient } from "./sign-up-page-client"
 
 export function SignUpPageEntry({ redirectUrl }: { redirectUrl: string }) {
-  return <SignUpPageClient redirectUrl={redirectUrl} />
+  const showMicrosoftSignIn = Boolean(process.env.MICROSOFT_CLIENT_ID?.trim())
+  const { authEmailServiceEnabled } = getPublicAppConfig()
+
+  return (
+    <SignUpPageClient
+      authEmailServiceEnabled={authEmailServiceEnabled}
+      redirectUrl={redirectUrl}
+      showMicrosoftSignIn={showMicrosoftSignIn}
+    />
+  )
 }

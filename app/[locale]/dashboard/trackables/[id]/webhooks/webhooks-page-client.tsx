@@ -26,6 +26,7 @@ export function WebhooksPageClient() {
   const gt = useGT()
   const trackable = useTrackableDetails()
   const trpc = useTRPC()
+  const canManageWebhooks = trackable.permissions.canManageSettings
   const description =
     trackable.kind === "survey"
       ? gt(
@@ -36,13 +37,16 @@ export function WebhooksPageClient() {
         )
 
   const { data: webhooks } = useQuery(
-    trpc.trackables.listWebhooks.queryOptions({ trackableId: trackable.id })
+    trpc.trackables.listWebhooks.queryOptions(
+      { trackableId: trackable.id },
+      { enabled: canManageWebhooks }
+    )
   )
 
   const discordWebhook = webhooks?.find((w) => w.provider === "discord")
   const genericWebhook = webhooks?.find((w) => w.provider === "generic")
 
-  if (!trackable.permissions.canManageSettings) {
+  if (!canManageWebhooks) {
     return (
       <TrackablePageFrame title={gt("Webhooks")} description={description}>
         <div className="rounded-2xl border border-dashed px-6 py-10 text-sm text-muted-foreground">
@@ -69,10 +73,18 @@ export function WebhooksPageClient() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="generic">
-          <TrackableWebhookTab trackableId={trackable.id} provider="generic" />
+          <TrackableWebhookTab
+            trackableId={trackable.id}
+            provider="generic"
+            canManageWebhooks={canManageWebhooks}
+          />
         </TabsContent>
         <TabsContent value="discord">
-          <TrackableWebhookTab trackableId={trackable.id} provider="discord" />
+          <TrackableWebhookTab
+            trackableId={trackable.id}
+            provider="discord"
+            canManageWebhooks={canManageWebhooks}
+          />
         </TabsContent>
       </Tabs>
     </TrackablePageFrame>

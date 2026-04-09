@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
 import { connection } from "next/server"
+import Link from "next/link"
 import { Suspense } from "react"
+import { ChevronLeft } from "lucide-react"
 
-import { AuthModal } from "@/components/auth/auth-modal"
+import { resolveSafeAuthRedirectPath } from "@/lib/auth-redirect"
 import { createNoIndexMetadata } from "@/lib/seo"
 
-import { LandingPage } from "../../landing-page"
 import { SignInPageEntry } from "./sign-in-page-entry"
 
 export const metadata: Metadata = createNoIndexMetadata({
@@ -14,12 +15,6 @@ export const metadata: Metadata = createNoIndexMetadata({
     "Sign in to manage forms, responses, and API usage in Trackables.",
 })
 
-function resolveRedirectUrl(redirectUrl: string | string[] | undefined) {
-  return typeof redirectUrl === "string" && redirectUrl.length > 0
-    ? redirectUrl
-    : "/dashboard"
-}
-
 async function SignInPageContent({
   searchParams,
 }: {
@@ -27,15 +22,21 @@ async function SignInPageContent({
 }) {
   await connection()
   const { redirect_url } = await searchParams
-  const redirectUrl = resolveRedirectUrl(redirect_url)
+  const redirectUrl = resolveSafeAuthRedirectPath(redirect_url)
 
   return (
-    <>
-      <LandingPage />
-      <AuthModal>
-        <SignInPageEntry redirectUrl={redirectUrl} />
-      </AuthModal>
-    </>
+    <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-muted/50 via-background to-background px-4 py-10">
+      <div className="mb-4 w-full max-w-sm">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronLeft className="size-4" />
+          Home
+        </Link>
+      </div>
+      <SignInPageEntry redirectUrl={redirectUrl} />
+    </div>
   )
 }
 

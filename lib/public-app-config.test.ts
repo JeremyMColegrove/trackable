@@ -6,6 +6,7 @@ import { getPublicAppConfig } from "@/lib/public-app-config"
 test("getPublicAppConfig returns only client-safe app settings", () => {
   const publicConfig = getPublicAppConfig()
 
+  assert.equal(typeof publicConfig.authEmailServiceEnabled, "boolean")
   assert.equal(typeof publicConfig.subscriptionEnforcementEnabled, "boolean")
   assert.equal(typeof publicConfig.workspaceBillingEnabled, "boolean")
   assert.ok(Array.isArray(publicConfig.workspacePlans))

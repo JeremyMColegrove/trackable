@@ -36,27 +36,37 @@ export interface McpAuthContext {
 export class McpAuthContextImpl implements McpAuthContext {
   readonly userId: string
   readonly scopes: readonly string[]
+  private readonly tools: "all" | readonly McpToolName[]
+  private readonly workspaceIds?: ReadonlySet<string>
+  private readonly trackableIds?: ReadonlySet<string>
 
-  constructor(params: { userId: string; scopes: readonly string[] }) {
+  constructor(params: {
+    userId: string
+    scopes?: readonly string[]
+    tools: "all" | readonly McpToolName[]
+    workspaceIds?: readonly string[]
+    trackableIds?: readonly string[]
+  }) {
     this.userId = params.userId
-    this.scopes = params.scopes
+    this.scopes = params.scopes ?? []
+    this.tools = params.tools
+    this.workspaceIds = params.workspaceIds?.length
+      ? new Set(params.workspaceIds)
+      : undefined
+    this.trackableIds = params.trackableIds?.length
+      ? new Set(params.trackableIds)
+      : undefined
   }
 
   canUseTool(tool: McpToolName): boolean {
-    // Current behavior: Clerk doesn't support custom scopes yet, so we allow
-    // all tools natively inside the MCP server. Permissions are enforced by the API
-    // data layers dynamically based on userId.
-    return true
+    return this.tools === "all" || this.tools.includes(tool)
   }
 
   canAccessWorkspace(workspaceId: string): boolean {
-    // Current behavior: Workspace access relies on data-layer access validations.
-    // The oauth context operates on behalf of the user entirely.
-    return true
+    return !this.workspaceIds || this.workspaceIds.has(workspaceId)
   }
 
   canAccessTrackable(trackableId: string): boolean {
-    // Current behavior: Trackable access relies on data-layer access validations.
-    return true
+    return !this.trackableIds || this.trackableIds.has(trackableId)
   }
 }
