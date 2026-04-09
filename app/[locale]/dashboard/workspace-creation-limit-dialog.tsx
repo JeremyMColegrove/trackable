@@ -41,11 +41,19 @@ export function WorkspaceCreationLimitDialog({
 
         <div className="space-y-4 px-6 py-5 sm:px-8 sm:py-6">
           <div className="space-y-3 text-sm leading-6 text-foreground">
-            <p>If you need more workspaces, you can:</p>
+            <p>
+              <T>If you need more workspaces, you can:</T>
+            </p>
             <ul className="list-disc space-y-1 pl-5 text-foreground marker:text-muted-foreground">
-              <li>Join another workspace</li>
-              <li>Archive an unused workspace before creating a new one</li>
-              <li>Contact support if you need a higher workspace limit</li>
+              <li>
+                <T>Join another workspace</T>
+              </li>
+              <li>
+                <T>Archive an unused workspace before creating a new one</T>
+              </li>
+              <li>
+                <T>Contact support if you need a higher workspace limit</T>
+              </li>
             </ul>
           </div>
 

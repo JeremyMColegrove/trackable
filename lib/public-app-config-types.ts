@@ -21,6 +21,7 @@ export interface PublicWorkspacePlan {
 }
 
 export interface PublicAppConfig {
+  authEmailServiceEnabled: boolean
   subscriptionEnforcementEnabled: boolean
   workspaceBillingEnabled: boolean
   /** All workspace plans, sorted by rank. Includes only limits entries that have a linked billing tier. */

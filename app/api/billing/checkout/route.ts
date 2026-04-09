@@ -1,6 +1,6 @@
 import "server-only"
 
-import { auth } from "@clerk/nextjs/server"
+import { getAuth } from "@/server/get-auth"
 import { TRPCError } from "@trpc/server"
 import { NextResponse } from "next/server"
 import { z } from "zod"
@@ -80,7 +80,7 @@ async function switchSubscriptionPlan(
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth()
+  const { userId } = await getAuth()
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 })
   }

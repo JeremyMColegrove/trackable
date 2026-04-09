@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { formatUserTimestamp } from "@/lib/date-time"
 import { useTRPC } from "@/trpc/client"
-import { T } from "gt-next"
+import { T, useGT } from "gt-next"
 
 const EMPTY_JOBS: Array<{
   key: string
@@ -69,6 +69,7 @@ export function BatchJobsPageClient() {
 }
 
 function BatchJobsPageContent() {
+  const gt = useGT()
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const jobsQuery = useQuery(trpc.batch.listJobs.queryOptions())
@@ -97,7 +98,7 @@ function BatchJobsPageContent() {
   const setEnabledMutation = useMutation(
     trpc.batch.setEnabled.mutationOptions({
       onSuccess: async (result) => {
-        toast.success(result.enabled ? "Job enabled." : "Job disabled.")
+        toast.success(result.enabled ? gt("Job enabled.") : gt("Job disabled."))
         await invalidateBatchQueries()
       },
       onError: (error) => {
@@ -200,7 +201,7 @@ function BatchJobsPageContent() {
                       variant={getStatusVariant(job.lastStatus)}
                       className="capitalize"
                     >
-                      {job.lastStatus ?? "unknown"}
+                      {job.lastStatus ?? gt("unknown")}
                     </Badge>
                   </TableCell>
                   <TableCell className="pt-4 pr-6 align-top">
@@ -217,7 +218,7 @@ function BatchJobsPageContent() {
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Run Now"
+                        title={gt("Run now")}
                         onClick={() => triggerMutation.mutate({ key: job.key })}
                         disabled={triggerMutation.isPending}
                       >

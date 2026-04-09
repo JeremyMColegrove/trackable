@@ -1,5 +1,5 @@
 {
-  "id": "85b73734-4783-42bb-b31c-be0e7da1ffc8",
+  "id": "7fd9222f-188f-4d9e-9b7c-cf800ba035c5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -15,14 +15,14 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "project_id": {
-          "name": "project_id",
+        "projectId": {
+          "name": "projectId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -33,20 +33,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "key_prefix": {
-          "name": "key_prefix",
+        "keyPrefix": {
+          "name": "keyPrefix",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "secret_hash": {
-          "name": "secret_hash",
+        "secretHash": {
+          "name": "secretHash",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "last_four": {
-          "name": "last_four",
+        "lastFour": {
+          "name": "lastFour",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -59,34 +59,34 @@
           "notNull": true,
           "default": "'active'"
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "last_used_at": {
-          "name": "last_used_at",
+        "lastUsedAt": {
+          "name": "lastUsedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "usage_count": {
-          "name": "usage_count",
+        "usageCount": {
+          "name": "usageCount",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -98,7 +98,7 @@
           "name": "api_keys_key_prefix_idx",
           "columns": [
             {
-              "expression": "key_prefix",
+              "expression": "keyPrefix",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -113,7 +113,7 @@
           "name": "api_keys_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -128,7 +128,7 @@
           "name": "api_keys_project_idx",
           "columns": [
             {
-              "expression": "project_id",
+              "expression": "projectId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -156,12 +156,12 @@
         }
       },
       "foreignKeys": {
-        "api_keys_workspace_id_workspaces_id_fk": {
-          "name": "api_keys_workspace_id_workspaces_id_fk",
+        "api_keys_workspaceId_workspaces_id_fk": {
+          "name": "api_keys_workspaceId_workspaces_id_fk",
           "tableFrom": "api_keys",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -169,12 +169,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "api_keys_project_id_trackable_items_id_fk": {
-          "name": "api_keys_project_id_trackable_items_id_fk",
+        "api_keys_projectId_trackable_items_id_fk": {
+          "name": "api_keys_projectId_trackable_items_id_fk",
           "tableFrom": "api_keys",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "project_id"
+            "projectId"
           ],
           "columnsTo": [
             "id"
@@ -200,26 +200,26 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "api_key_id": {
-          "name": "api_key_id",
+        "apiKeyId": {
+          "name": "apiKeyId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "request_id": {
-          "name": "request_id",
+        "requestId": {
+          "name": "requestId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "occurred_at": {
-          "name": "occurred_at",
+        "occurredAt": {
+          "name": "occurredAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -243,7 +243,7 @@
           "name": "trackable_api_usage_events_request_id_idx",
           "columns": [
             {
-              "expression": "request_id",
+              "expression": "requestId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -258,13 +258,13 @@
           "name": "trackable_api_usage_events_trackable_occurred_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "occurred_at",
+              "expression": "occurredAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -279,13 +279,13 @@
           "name": "trackable_api_usage_events_trackable_occurred_id_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "occurred_at",
+              "expression": "occurredAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -306,13 +306,13 @@
           "name": "trackable_api_usage_events_api_key_occurred_idx",
           "columns": [
             {
-              "expression": "api_key_id",
+              "expression": "apiKeyId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "occurred_at",
+              "expression": "occurredAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -356,12 +356,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_api_usage_events_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_api_usage_events_trackable_id_trackable_items_id_fk",
+        "trackable_api_usage_events_trackableId_trackable_items_id_fk": {
+          "name": "trackable_api_usage_events_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_api_usage_events",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -369,12 +369,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_api_usage_events_api_key_id_api_keys_id_fk": {
-          "name": "trackable_api_usage_events_api_key_id_api_keys_id_fk",
+        "trackable_api_usage_events_apiKeyId_api_keys_id_fk": {
+          "name": "trackable_api_usage_events_apiKeyId_api_keys_id_fk",
           "tableFrom": "trackable_api_usage_events",
           "tableTo": "api_keys",
           "columnsFrom": [
-            "api_key_id"
+            "apiKeyId"
           ],
           "columnsTo": [
             "id"
@@ -389,42 +389,965 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.batch_job_leases": {
-      "name": "batch_job_leases",
+    "public.auth_accounts": {
+      "name": "auth_accounts",
       "schema": "",
       "columns": {
-        "batch_job_id": {
-          "name": "batch_job_id",
-          "type": "uuid",
+        "id": {
+          "name": "id",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },
-        "job_key": {
-          "name": "job_key",
+        "accountId": {
+          "name": "accountId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "locked_until": {
-          "name": "locked_until",
+        "providerId": {
+          "name": "providerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accessToken": {
+          "name": "accessToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshToken": {
+          "name": "refreshToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idToken": {
+          "name": "idToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accessTokenExpiresAt": {
+          "name": "accessTokenExpiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshTokenExpiresAt": {
+          "name": "refreshTokenExpiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "auth_accounts_userId_auth_users_id_fk": {
+          "name": "auth_accounts_userId_auth_users_id_fk",
+          "tableFrom": "auth_accounts",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auth_jwks": {
+      "name": "auth_jwks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "publicKey": {
+          "name": "publicKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "privateKey": {
+          "name": "privateKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
-        "locked_by": {
-          "name": "locked_by",
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_access_tokens": {
+      "name": "oauth_access_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clientId": {
+          "name": "clientId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "run_id": {
-          "name": "run_id",
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshId": {
+          "name": "refreshId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referenceId": {
+          "name": "referenceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_access_tokens_clientId_oauth_clients_clientId_fk": {
+          "name": "oauth_access_tokens_clientId_oauth_clients_clientId_fk",
+          "tableFrom": "oauth_access_tokens",
+          "tableTo": "oauth_clients",
+          "columnsFrom": [
+            "clientId"
+          ],
+          "columnsTo": [
+            "clientId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "oauth_access_tokens_sessionId_auth_sessions_id_fk": {
+          "name": "oauth_access_tokens_sessionId_auth_sessions_id_fk",
+          "tableFrom": "oauth_access_tokens",
+          "tableTo": "auth_sessions",
+          "columnsFrom": [
+            "sessionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "oauth_access_tokens_refreshId_oauth_refresh_tokens_id_fk": {
+          "name": "oauth_access_tokens_refreshId_oauth_refresh_tokens_id_fk",
+          "tableFrom": "oauth_access_tokens",
+          "tableTo": "oauth_refresh_tokens",
+          "columnsFrom": [
+            "refreshId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "oauth_access_tokens_userId_auth_users_id_fk": {
+          "name": "oauth_access_tokens_userId_auth_users_id_fk",
+          "tableFrom": "oauth_access_tokens",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauth_access_tokens_token_unique": {
+          "name": "oauth_access_tokens_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_clients": {
+      "name": "oauth_clients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "clientId": {
+          "name": "clientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clientSecret": {
+          "name": "clientSecret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disabled": {
+          "name": "disabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "skipConsent": {
+          "name": "skipConsent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enableEndSession": {
+          "name": "enableEndSession",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subjectType": {
+          "name": "subjectType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referenceId": {
+          "name": "referenceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uri": {
+          "name": "uri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contacts": {
+          "name": "contacts",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tos": {
+          "name": "tos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "policy": {
+          "name": "policy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softwareId": {
+          "name": "softwareId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softwareVersion": {
+          "name": "softwareVersion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softwareStatement": {
+          "name": "softwareStatement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "redirectUris": {
+          "name": "redirectUris",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postLogoutRedirectUris": {
+          "name": "postLogoutRedirectUris",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tokenEndpointAuthMethod": {
+          "name": "tokenEndpointAuthMethod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grantTypes": {
+          "name": "grantTypes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responseTypes": {
+          "name": "responseTypes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public": {
+          "name": "public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requirePKCE": {
+          "name": "requirePKCE",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_clients_userId_auth_users_id_fk": {
+          "name": "oauth_clients_userId_auth_users_id_fk",
+          "tableFrom": "oauth_clients",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauth_clients_clientId_unique": {
+          "name": "oauth_clients_clientId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "clientId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_consents": {
+      "name": "oauth_consents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "clientId": {
+          "name": "clientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referenceId": {
+          "name": "referenceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_consents_clientId_oauth_clients_clientId_fk": {
+          "name": "oauth_consents_clientId_oauth_clients_clientId_fk",
+          "tableFrom": "oauth_consents",
+          "tableTo": "oauth_clients",
+          "columnsFrom": [
+            "clientId"
+          ],
+          "columnsTo": [
+            "clientId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "oauth_consents_userId_auth_users_id_fk": {
+          "name": "oauth_consents_userId_auth_users_id_fk",
+          "tableFrom": "oauth_consents",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_refresh_tokens": {
+      "name": "oauth_refresh_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clientId": {
+          "name": "clientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sessionId": {
+          "name": "sessionId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referenceId": {
+          "name": "referenceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked": {
+          "name": "revoked",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authTime": {
+          "name": "authTime",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_refresh_tokens_clientId_oauth_clients_clientId_fk": {
+          "name": "oauth_refresh_tokens_clientId_oauth_clients_clientId_fk",
+          "tableFrom": "oauth_refresh_tokens",
+          "tableTo": "oauth_clients",
+          "columnsFrom": [
+            "clientId"
+          ],
+          "columnsTo": [
+            "clientId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "oauth_refresh_tokens_sessionId_auth_sessions_id_fk": {
+          "name": "oauth_refresh_tokens_sessionId_auth_sessions_id_fk",
+          "tableFrom": "oauth_refresh_tokens",
+          "tableTo": "auth_sessions",
+          "columnsFrom": [
+            "sessionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "oauth_refresh_tokens_userId_auth_users_id_fk": {
+          "name": "oauth_refresh_tokens_userId_auth_users_id_fk",
+          "tableFrom": "oauth_refresh_tokens",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauth_refresh_tokens_token_unique": {
+          "name": "oauth_refresh_tokens_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auth_sessions": {
+      "name": "auth_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ipAddress": {
+          "name": "ipAddress",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userAgent": {
+          "name": "userAgent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "auth_sessions_userId_auth_users_id_fk": {
+          "name": "auth_sessions_userId_auth_users_id_fk",
+          "tableFrom": "auth_sessions",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "auth_sessions_token_unique": {
+          "name": "auth_sessions_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auth_users": {
+      "name": "auth_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "emailVerified": {
+          "name": "emailVerified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastLoginMethod": {
+          "name": "lastLoginMethod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "auth_users_email_unique": {
+          "name": "auth_users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auth_verifications": {
+      "name": "auth_verifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.batch_job_leases": {
+      "name": "batch_job_leases",
+      "schema": "",
+      "columns": {
+        "batchJobId": {
+          "name": "batchJobId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "jobKey": {
+          "name": "jobKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lockedUntil": {
+          "name": "lockedUntil",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lockedBy": {
+          "name": "lockedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "runId": {
+          "name": "runId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -436,7 +1359,7 @@
           "name": "batch_job_leases_job_key_idx",
           "columns": [
             {
-              "expression": "job_key",
+              "expression": "jobKey",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -451,7 +1374,7 @@
           "name": "batch_job_leases_locked_until_idx",
           "columns": [
             {
-              "expression": "locked_until",
+              "expression": "lockedUntil",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -464,12 +1387,12 @@
         }
       },
       "foreignKeys": {
-        "batch_job_leases_batch_job_id_batch_jobs_id_fk": {
-          "name": "batch_job_leases_batch_job_id_batch_jobs_id_fk",
+        "batch_job_leases_batchJobId_batch_jobs_id_fk": {
+          "name": "batch_job_leases_batchJobId_batch_jobs_id_fk",
           "tableFrom": "batch_job_leases",
           "tableTo": "batch_jobs",
           "columnsFrom": [
-            "batch_job_id"
+            "batchJobId"
           ],
           "columnsTo": [
             "id"
@@ -495,14 +1418,14 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "batch_job_id": {
-          "name": "batch_job_id",
+        "batchJobId": {
+          "name": "batchJobId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "job_key": {
-          "name": "job_key",
+        "jobKey": {
+          "name": "jobKey",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -521,21 +1444,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "started_at": {
-          "name": "started_at",
+        "startedAt": {
+          "name": "startedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "completed_at": {
-          "name": "completed_at",
+        "completedAt": {
+          "name": "completedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "duration_ms": {
-          "name": "duration_ms",
+        "durationMs": {
+          "name": "durationMs",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -546,8 +1469,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "error_details": {
-          "name": "error_details",
+        "errorDetails": {
+          "name": "errorDetails",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -558,8 +1481,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -571,7 +1494,7 @@
           "name": "batch_job_runs_job_key_idx",
           "columns": [
             {
-              "expression": "job_key",
+              "expression": "jobKey",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -586,7 +1509,7 @@
           "name": "batch_job_runs_batch_job_idx",
           "columns": [
             {
-              "expression": "batch_job_id",
+              "expression": "batchJobId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -601,7 +1524,7 @@
           "name": "batch_job_runs_started_at_idx",
           "columns": [
             {
-              "expression": "started_at",
+              "expression": "startedAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -614,12 +1537,12 @@
         }
       },
       "foreignKeys": {
-        "batch_job_runs_batch_job_id_batch_jobs_id_fk": {
-          "name": "batch_job_runs_batch_job_id_batch_jobs_id_fk",
+        "batch_job_runs_batchJobId_batch_jobs_id_fk": {
+          "name": "batch_job_runs_batchJobId_batch_jobs_id_fk",
           "tableFrom": "batch_job_runs",
           "tableTo": "batch_jobs",
           "columnsFrom": [
-            "batch_job_id"
+            "batchJobId"
           ],
           "columnsTo": [
             "id"
@@ -670,40 +1593,40 @@
           "notNull": true,
           "default": true
         },
-        "last_started_at": {
-          "name": "last_started_at",
+        "lastStartedAt": {
+          "name": "lastStartedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "last_completed_at": {
-          "name": "last_completed_at",
+        "lastCompletedAt": {
+          "name": "lastCompletedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "last_status": {
-          "name": "last_status",
+        "lastStatus": {
+          "name": "lastStatus",
           "type": "batch_job_run_status",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
-        "last_summary": {
-          "name": "last_summary",
+        "lastSummary": {
+          "name": "lastSummary",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -745,8 +1668,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -757,20 +1680,20 @@
           "primaryKey": false,
           "notNull": true
         },
-        "key_prefix": {
-          "name": "key_prefix",
+        "keyPrefix": {
+          "name": "keyPrefix",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "secret_hash": {
-          "name": "secret_hash",
+        "secretHash": {
+          "name": "secretHash",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "last_four": {
-          "name": "last_four",
+        "lastFour": {
+          "name": "lastFour",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -788,34 +1711,34 @@
           "notNull": true,
           "default": "'active'"
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "last_used_at": {
-          "name": "last_used_at",
+        "lastUsedAt": {
+          "name": "lastUsedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "usage_count": {
-          "name": "usage_count",
+        "usageCount": {
+          "name": "usageCount",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -827,7 +1750,7 @@
           "name": "mcp_access_tokens_key_prefix_idx",
           "columns": [
             {
-              "expression": "key_prefix",
+              "expression": "keyPrefix",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -857,7 +1780,7 @@
           "name": "mcp_access_tokens_created_by_idx",
           "columns": [
             {
-              "expression": "created_by_user_id",
+              "expression": "createdByUserId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -887,34 +1810,33 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "lemon_squeezy_subscription_id": {
-          "name": "lemon_squeezy_subscription_id",
+        "lemonSqueezySubscriptionId": {
+          "name": "lemonSqueezySubscriptionId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "lemon_squeezy_customer_id": {
-          "name": "lemon_squeezy_customer_id",
+        "lemonSqueezyCustomerId": {
+          "name": "lemonSqueezyCustomerId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "variant_id": {
-          "name": "variant_id",
+        "variantId": {
+          "name": "variantId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "tier": {
           "name": "tier",
-          "type": "subscription_tier",
-          "typeSchema": "public",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "'free'"
@@ -927,21 +1849,21 @@
           "notNull": true,
           "default": "'active'"
         },
-        "current_period_end": {
-          "name": "current_period_end",
+        "currentPeriodEnd": {
+          "name": "currentPeriodEnd",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -953,7 +1875,7 @@
           "name": "workspace_subscriptions_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -968,26 +1890,26 @@
           "name": "workspace_subscriptions_ls_sub_idx",
           "columns": [
             {
-              "expression": "lemon_squeezy_subscription_id",
+              "expression": "lemonSqueezySubscriptionId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"workspace_subscriptions\".\"lemon_squeezy_subscription_id\" is not null",
+          "where": "\"workspace_subscriptions\".\"lemonSqueezySubscriptionId\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "workspace_subscriptions_workspace_id_workspaces_id_fk": {
-          "name": "workspace_subscriptions_workspace_id_workspaces_id_fk",
+        "workspace_subscriptions_workspaceId_workspaces_id_fk": {
+          "name": "workspace_subscriptions_workspaceId_workspaces_id_fk",
           "tableFrom": "workspace_subscriptions",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -1013,26 +1935,26 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "invited_user_id": {
-          "name": "invited_user_id",
+        "invitedUserId": {
+          "name": "invitedUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "invited_email": {
-          "name": "invited_email",
+        "invitedEmail": {
+          "name": "invitedEmail",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "invited_by_user_id": {
-          "name": "invited_by_user_id",
+        "invitedByUserId": {
+          "name": "invitedByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1053,15 +1975,15 @@
           "notNull": true,
           "default": "'pending'"
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1073,7 +1995,7 @@
           "name": "workspace_invitations_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1088,7 +2010,7 @@
           "name": "workspace_invitations_invited_user_idx",
           "columns": [
             {
-              "expression": "invited_user_id",
+              "expression": "invitedUserId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1103,7 +2025,7 @@
           "name": "workspace_invitations_invited_email_idx",
           "columns": [
             {
-              "expression": "invited_email",
+              "expression": "invitedEmail",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1118,20 +2040,20 @@
           "name": "workspace_invitations_pending_user_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "invited_user_id",
+              "expression": "invitedUserId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"workspace_invitations\".\"status\" = 'pending' and \"workspace_invitations\".\"invited_user_id\" is not null",
+          "where": "\"workspace_invitations\".\"status\" = 'pending' and \"workspace_invitations\".\"invitedUserId\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1140,32 +2062,32 @@
           "name": "workspace_invitations_pending_email_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "invited_email",
+              "expression": "invitedEmail",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"workspace_invitations\".\"status\" = 'pending' and \"workspace_invitations\".\"invited_email\" is not null",
+          "where": "\"workspace_invitations\".\"status\" = 'pending' and \"workspace_invitations\".\"invitedEmail\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "workspace_invitations_workspace_id_workspaces_id_fk": {
-          "name": "workspace_invitations_workspace_id_workspaces_id_fk",
+        "workspace_invitations_workspaceId_workspaces_id_fk": {
+          "name": "workspace_invitations_workspaceId_workspaces_id_fk",
           "tableFrom": "workspace_invitations",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -1173,12 +2095,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "workspace_invitations_invited_user_id_users_id_fk": {
-          "name": "workspace_invitations_invited_user_id_users_id_fk",
+        "workspace_invitations_invitedUserId_users_id_fk": {
+          "name": "workspace_invitations_invitedUserId_users_id_fk",
           "tableFrom": "workspace_invitations",
           "tableTo": "users",
           "columnsFrom": [
-            "invited_user_id"
+            "invitedUserId"
           ],
           "columnsTo": [
             "id"
@@ -1186,12 +2108,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "workspace_invitations_invited_by_user_id_users_id_fk": {
-          "name": "workspace_invitations_invited_by_user_id_users_id_fk",
+        "workspace_invitations_invitedByUserId_users_id_fk": {
+          "name": "workspace_invitations_invitedByUserId_users_id_fk",
           "tableFrom": "workspace_invitations",
           "tableTo": "users",
           "columnsFrom": [
-            "invited_by_user_id"
+            "invitedByUserId"
           ],
           "columnsTo": [
             "id"
@@ -1206,7 +2128,7 @@
       "checkConstraints": {
         "workspace_invitations_target_check": {
           "name": "workspace_invitations_target_check",
-          "value": "\"workspace_invitations\".\"invited_user_id\" is not null or \"workspace_invitations\".\"invited_email\" is not null"
+          "value": "\"workspace_invitations\".\"invitedUserId\" is not null or \"workspace_invitations\".\"invitedEmail\" is not null"
         }
       },
       "isRLSEnabled": false
@@ -1222,14 +2144,14 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1242,27 +2164,27 @@
           "notNull": true,
           "default": "'member'"
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "revoked_at": {
-          "name": "revoked_at",
+        "revokedAt": {
+          "name": "revokedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1274,7 +2196,7 @@
           "name": "workspace_members_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1289,7 +2211,7 @@
           "name": "workspace_members_user_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1304,32 +2226,32 @@
           "name": "workspace_members_workspace_user_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"workspace_members\".\"revoked_at\" is null",
+          "where": "\"workspace_members\".\"revokedAt\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "workspace_members_workspace_id_workspaces_id_fk": {
-          "name": "workspace_members_workspace_id_workspaces_id_fk",
+        "workspace_members_workspaceId_workspaces_id_fk": {
+          "name": "workspace_members_workspaceId_workspaces_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -1337,12 +2259,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "workspace_members_user_id_users_id_fk": {
-          "name": "workspace_members_user_id_users_id_fk",
+        "workspace_members_userId_users_id_fk": {
+          "name": "workspace_members_userId_users_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "users",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -1350,12 +2272,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "workspace_members_created_by_user_id_users_id_fk": {
-          "name": "workspace_members_created_by_user_id_users_id_fk",
+        "workspace_members_createdByUserId_users_id_fk": {
+          "name": "workspace_members_createdByUserId_users_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -1393,21 +2315,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1432,12 +2354,12 @@
         }
       },
       "foreignKeys": {
-        "workspaces_created_by_user_id_users_id_fk": {
-          "name": "workspaces_created_by_user_id_users_id_fk",
+        "workspaces_createdByUserId_users_id_fk": {
+          "name": "workspaces_createdByUserId_users_id_fk",
           "tableFrom": "workspaces",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -1463,27 +2385,27 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "subject_type": {
-          "name": "subject_type",
+        "subjectType": {
+          "name": "subjectType",
           "type": "trackable_access_subject_type",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
-        "subject_user_id": {
-          "name": "subject_user_id",
+        "subjectUserId": {
+          "name": "subjectUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "subject_email": {
-          "name": "subject_email",
+        "subjectEmail": {
+          "name": "subjectEmail",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1496,33 +2418,33 @@
           "notNull": true,
           "default": "'submit'"
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "accepted_at": {
-          "name": "accepted_at",
+        "acceptedAt": {
+          "name": "acceptedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "revoked_at": {
-          "name": "revoked_at",
+        "revokedAt": {
+          "name": "revokedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1534,7 +2456,7 @@
           "name": "trackable_access_grants_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1549,20 +2471,20 @@
           "name": "trackable_access_grants_trackable_user_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "subject_user_id",
+              "expression": "subjectUserId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"trackable_access_grants\".\"subject_user_id\" is not null",
+          "where": "\"trackable_access_grants\".\"subjectUserId\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1571,32 +2493,32 @@
           "name": "trackable_access_grants_trackable_email_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "subject_email",
+              "expression": "subjectEmail",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "\"trackable_access_grants\".\"subject_email\" is not null",
+          "where": "\"trackable_access_grants\".\"subjectEmail\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "trackable_access_grants_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_access_grants_trackable_id_trackable_items_id_fk",
+        "trackable_access_grants_trackableId_trackable_items_id_fk": {
+          "name": "trackable_access_grants_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_access_grants",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -1604,12 +2526,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_access_grants_subject_user_id_users_id_fk": {
-          "name": "trackable_access_grants_subject_user_id_users_id_fk",
+        "trackable_access_grants_subjectUserId_users_id_fk": {
+          "name": "trackable_access_grants_subjectUserId_users_id_fk",
           "tableFrom": "trackable_access_grants",
           "tableTo": "users",
           "columnsFrom": [
-            "subject_user_id"
+            "subjectUserId"
           ],
           "columnsTo": [
             "id"
@@ -1617,12 +2539,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_access_grants_created_by_user_id_users_id_fk": {
-          "name": "trackable_access_grants_created_by_user_id_users_id_fk",
+        "trackable_access_grants_createdByUserId_users_id_fk": {
+          "name": "trackable_access_grants_createdByUserId_users_id_fk",
           "tableFrom": "trackable_access_grants",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -1637,7 +2559,7 @@
       "checkConstraints": {
         "trackable_access_grants_subject_check": {
           "name": "trackable_access_grants_subject_check",
-          "value": "(\n        \"trackable_access_grants\".\"subject_type\" = 'user'\n        and \"trackable_access_grants\".\"subject_user_id\" is not null\n        and \"trackable_access_grants\".\"subject_email\" is null\n      ) or (\n        \"trackable_access_grants\".\"subject_type\" = 'email'\n        and \"trackable_access_grants\".\"subject_user_id\" is null\n        and \"trackable_access_grants\".\"subject_email\" is not null\n      )"
+          "value": "(\n        \"trackable_access_grants\".\"subjectType\" = 'user'\n        and \"trackable_access_grants\".\"subjectUserId\" is not null\n        and \"trackable_access_grants\".\"subjectEmail\" is null\n      ) or (\n        \"trackable_access_grants\".\"subjectType\" = 'email'\n        and \"trackable_access_grants\".\"subjectUserId\" is null\n        and \"trackable_access_grants\".\"subjectEmail\" is not null\n      )"
         }
       },
       "isRLSEnabled": false
@@ -1653,20 +2575,20 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "uploaded_by_user_id": {
-          "name": "uploaded_by_user_id",
+        "uploadedByUserId": {
+          "name": "uploadedByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "public_token": {
-          "name": "public_token",
+        "publicToken": {
+          "name": "publicToken",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1678,14 +2600,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "original_file_name": {
-          "name": "original_file_name",
+        "originalFileName": {
+          "name": "originalFileName",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "mime_type": {
-          "name": "mime_type",
+        "mimeType": {
+          "name": "mimeType",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -1696,51 +2618,51 @@
           "primaryKey": false,
           "notNull": true
         },
-        "original_bytes": {
-          "name": "original_bytes",
+        "originalBytes": {
+          "name": "originalBytes",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "stored_bytes": {
-          "name": "stored_bytes",
+        "storedBytes": {
+          "name": "storedBytes",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "storage_key": {
-          "name": "storage_key",
+        "storageKey": {
+          "name": "storageKey",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "image_width": {
-          "name": "image_width",
+        "imageWidth": {
+          "name": "imageWidth",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "image_height": {
-          "name": "image_height",
+        "imageHeight": {
+          "name": "imageHeight",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "image_format": {
-          "name": "image_format",
+        "imageFormat": {
+          "name": "imageFormat",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1752,7 +2674,7 @@
           "name": "trackable_assets_public_token_idx",
           "columns": [
             {
-              "expression": "public_token",
+              "expression": "publicToken",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1767,7 +2689,7 @@
           "name": "trackable_assets_storage_key_idx",
           "columns": [
             {
-              "expression": "storage_key",
+              "expression": "storageKey",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1782,7 +2704,7 @@
           "name": "trackable_assets_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1797,7 +2719,7 @@
           "name": "trackable_assets_uploaded_by_idx",
           "columns": [
             {
-              "expression": "uploaded_by_user_id",
+              "expression": "uploadedByUserId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1812,7 +2734,7 @@
           "name": "trackable_assets_created_at_idx",
           "columns": [
             {
-              "expression": "created_at",
+              "expression": "createdAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1825,12 +2747,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_assets_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_assets_trackable_id_trackable_items_id_fk",
+        "trackable_assets_trackableId_trackable_items_id_fk": {
+          "name": "trackable_assets_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_assets",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -1838,12 +2760,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_assets_uploaded_by_user_id_users_id_fk": {
-          "name": "trackable_assets_uploaded_by_user_id_users_id_fk",
+        "trackable_assets_uploadedByUserId_users_id_fk": {
+          "name": "trackable_assets_uploadedByUserId_users_id_fk",
           "tableFrom": "trackable_assets",
           "tableTo": "users",
           "columnsFrom": [
-            "uploaded_by_user_id"
+            "uploadedByUserId"
           ],
           "columnsTo": [
             "id"
@@ -1869,14 +2791,14 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "submission_id": {
-          "name": "submission_id",
+        "submissionId": {
+          "name": "submissionId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "field_id": {
-          "name": "field_id",
+        "fieldId": {
+          "name": "fieldId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1887,8 +2809,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1900,13 +2822,13 @@
           "name": "trackable_form_answers_submission_field_idx",
           "columns": [
             {
-              "expression": "submission_id",
+              "expression": "submissionId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "field_id",
+              "expression": "fieldId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1921,7 +2843,7 @@
           "name": "trackable_form_answers_submission_idx",
           "columns": [
             {
-              "expression": "submission_id",
+              "expression": "submissionId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1934,12 +2856,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_form_answers_submission_id_trackable_form_submissions_id_fk": {
-          "name": "trackable_form_answers_submission_id_trackable_form_submissions_id_fk",
+        "trackable_form_answers_submissionId_trackable_form_submissions_id_fk": {
+          "name": "trackable_form_answers_submissionId_trackable_form_submissions_id_fk",
           "tableFrom": "trackable_form_answers",
           "tableTo": "trackable_form_submissions",
           "columnsFrom": [
-            "submission_id"
+            "submissionId"
           ],
           "columnsTo": [
             "id"
@@ -1947,12 +2869,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_form_answers_field_id_trackable_form_fields_id_fk": {
-          "name": "trackable_form_answers_field_id_trackable_form_fields_id_fk",
+        "trackable_form_answers_fieldId_trackable_form_fields_id_fk": {
+          "name": "trackable_form_answers_fieldId_trackable_form_fields_id_fk",
           "tableFrom": "trackable_form_answers",
           "tableTo": "trackable_form_fields",
           "columnsFrom": [
-            "field_id"
+            "fieldId"
           ],
           "columnsTo": [
             "id"
@@ -1978,8 +2900,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "form_id": {
-          "name": "form_id",
+        "formId": {
+          "name": "formId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -2029,22 +2951,22 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_archived": {
-          "name": "is_archived",
+        "isArchived": {
+          "name": "isArchived",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2056,7 +2978,7 @@
           "name": "trackable_form_fields_form_key_idx",
           "columns": [
             {
-              "expression": "form_id",
+              "expression": "formId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2077,7 +2999,7 @@
           "name": "trackable_form_fields_form_position_idx",
           "columns": [
             {
-              "expression": "form_id",
+              "expression": "formId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2098,7 +3020,7 @@
           "name": "trackable_form_fields_form_idx",
           "columns": [
             {
-              "expression": "form_id",
+              "expression": "formId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2111,12 +3033,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_form_fields_form_id_trackable_forms_id_fk": {
-          "name": "trackable_form_fields_form_id_trackable_forms_id_fk",
+        "trackable_form_fields_formId_trackable_forms_id_fk": {
+          "name": "trackable_form_fields_formId_trackable_forms_id_fk",
           "tableFrom": "trackable_form_fields",
           "tableTo": "trackable_forms",
           "columnsFrom": [
-            "form_id"
+            "formId"
           ],
           "columnsTo": [
             "id"
@@ -2142,32 +3064,32 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "form_id": {
-          "name": "form_id",
+        "formId": {
+          "name": "formId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "share_link_id": {
-          "name": "share_link_id",
+        "shareLinkId": {
+          "name": "shareLinkId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "submitted_by_user_id": {
-          "name": "submitted_by_user_id",
+        "submittedByUserId": {
+          "name": "submittedByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "submitted_email": {
-          "name": "submitted_email",
+        "submittedEmail": {
+          "name": "submittedEmail",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -2179,8 +3101,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "submission_snapshot": {
-          "name": "submission_snapshot",
+        "submissionSnapshot": {
+          "name": "submissionSnapshot",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
@@ -2192,8 +3114,8 @@
           "notNull": true,
           "default": "'{}'::jsonb"
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2205,7 +3127,7 @@
           "name": "trackable_form_submissions_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2220,7 +3142,7 @@
           "name": "trackable_form_submissions_form_idx",
           "columns": [
             {
-              "expression": "form_id",
+              "expression": "formId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2235,7 +3157,7 @@
           "name": "trackable_form_submissions_created_at_idx",
           "columns": [
             {
-              "expression": "created_at",
+              "expression": "createdAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2248,12 +3170,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_form_submissions_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_form_submissions_trackable_id_trackable_items_id_fk",
+        "trackable_form_submissions_trackableId_trackable_items_id_fk": {
+          "name": "trackable_form_submissions_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_form_submissions",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -2261,12 +3183,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_form_submissions_form_id_trackable_forms_id_fk": {
-          "name": "trackable_form_submissions_form_id_trackable_forms_id_fk",
+        "trackable_form_submissions_formId_trackable_forms_id_fk": {
+          "name": "trackable_form_submissions_formId_trackable_forms_id_fk",
           "tableFrom": "trackable_form_submissions",
           "tableTo": "trackable_forms",
           "columnsFrom": [
-            "form_id"
+            "formId"
           ],
           "columnsTo": [
             "id"
@@ -2274,12 +3196,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_form_submissions_share_link_id_trackable_share_links_id_fk": {
-          "name": "trackable_form_submissions_share_link_id_trackable_share_links_id_fk",
+        "trackable_form_submissions_shareLinkId_trackable_share_links_id_fk": {
+          "name": "trackable_form_submissions_shareLinkId_trackable_share_links_id_fk",
           "tableFrom": "trackable_form_submissions",
           "tableTo": "trackable_share_links",
           "columnsFrom": [
-            "share_link_id"
+            "shareLinkId"
           ],
           "columnsTo": [
             "id"
@@ -2287,12 +3209,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "trackable_form_submissions_submitted_by_user_id_users_id_fk": {
-          "name": "trackable_form_submissions_submitted_by_user_id_users_id_fk",
+        "trackable_form_submissions_submittedByUserId_users_id_fk": {
+          "name": "trackable_form_submissions_submittedByUserId_users_id_fk",
           "tableFrom": "trackable_form_submissions",
           "tableTo": "users",
           "columnsFrom": [
-            "submitted_by_user_id"
+            "submittedByUserId"
           ],
           "columnsTo": [
             "id"
@@ -2318,8 +3240,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -2350,27 +3272,27 @@
           "notNull": true,
           "default": "'draft'"
         },
-        "submit_label": {
-          "name": "submit_label",
+        "submitLabel": {
+          "name": "submitLabel",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "success_message": {
-          "name": "success_message",
+        "successMessage": {
+          "name": "successMessage",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2382,7 +3304,7 @@
           "name": "trackable_forms_trackable_version_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2403,7 +3325,7 @@
           "name": "trackable_forms_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2416,12 +3338,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_forms_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_forms_trackable_id_trackable_items_id_fk",
+        "trackable_forms_trackableId_trackable_items_id_fk": {
+          "name": "trackable_forms_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_forms",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -2447,8 +3369,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -2478,8 +3400,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "active_form_id": {
-          "name": "active_form_id",
+        "activeFormId": {
+          "name": "activeFormId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -2491,47 +3413,47 @@
           "notNull": true,
           "default": "'{}'::jsonb"
         },
-        "submission_count": {
-          "name": "submission_count",
+        "submissionCount": {
+          "name": "submissionCount",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "api_usage_count": {
-          "name": "api_usage_count",
+        "apiUsageCount": {
+          "name": "apiUsageCount",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "last_submission_at": {
-          "name": "last_submission_at",
+        "lastSubmissionAt": {
+          "name": "lastSubmissionAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "last_api_usage_at": {
-          "name": "last_api_usage_at",
+        "lastApiUsageAt": {
+          "name": "lastApiUsageAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "archived_at": {
-          "name": "archived_at",
+        "archivedAt": {
+          "name": "archivedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2543,7 +3465,7 @@
           "name": "trackable_items_workspace_slug_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2564,7 +3486,7 @@
           "name": "trackable_items_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2577,12 +3499,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_items_workspace_id_workspaces_id_fk": {
-          "name": "trackable_items_workspace_id_workspaces_id_fk",
+        "trackable_items_workspaceId_workspaces_id_fk": {
+          "name": "trackable_items_workspaceId_workspaces_id_fk",
           "tableFrom": "trackable_items",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -2590,12 +3512,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_items_active_form_id_trackable_forms_id_fk": {
-          "name": "trackable_items_active_form_id_trackable_forms_id_fk",
+        "trackable_items_activeFormId_trackable_forms_id_fk": {
+          "name": "trackable_items_activeFormId_trackable_forms_id_fk",
           "tableFrom": "trackable_items",
           "tableTo": "trackable_forms",
           "columnsFrom": [
-            "active_form_id"
+            "activeFormId"
           ],
           "columnsTo": [
             "id"
@@ -2621,8 +3543,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -2641,46 +3563,46 @@
           "notNull": true,
           "default": "'submit'"
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "revoked_at": {
-          "name": "revoked_at",
+        "revokedAt": {
+          "name": "revokedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "last_used_at": {
-          "name": "last_used_at",
+        "lastUsedAt": {
+          "name": "lastUsedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "usage_count": {
-          "name": "usage_count",
+        "usageCount": {
+          "name": "usageCount",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2707,7 +3629,7 @@
           "name": "trackable_share_links_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2720,12 +3642,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_share_links_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_share_links_trackable_id_trackable_items_id_fk",
+        "trackable_share_links_trackableId_trackable_items_id_fk": {
+          "name": "trackable_share_links_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_share_links",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -2733,12 +3655,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_share_links_created_by_user_id_users_id_fk": {
-          "name": "trackable_share_links_created_by_user_id_users_id_fk",
+        "trackable_share_links_createdByUserId_users_id_fk": {
+          "name": "trackable_share_links_createdByUserId_users_id_fk",
           "tableFrom": "trackable_share_links",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -2763,59 +3685,52 @@
           "primaryKey": true,
           "notNull": true
         },
-        "primary_email": {
-          "name": "primary_email",
+        "primaryEmail": {
+          "name": "primaryEmail",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "display_name": {
-          "name": "display_name",
+        "displayName": {
+          "name": "displayName",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "image_url": {
-          "name": "image_url",
+        "imageUrl": {
+          "name": "imageUrl",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "active_workspace_id": {
-          "name": "active_workspace_id",
+        "activeWorkspaceId": {
+          "name": "activeWorkspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "has_admin_controls": {
-          "name": "has_admin_controls",
+        "isProfilePrivate": {
+          "name": "isProfilePrivate",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "is_profile_private": {
-          "name": "is_profile_private",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "last_seen_at": {
-          "name": "last_seen_at",
+        "lastSeenAt": {
+          "name": "lastSeenAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2827,7 +3742,7 @@
           "name": "users_primary_email_idx",
           "columns": [
             {
-              "expression": "primary_email",
+              "expression": "primaryEmail",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2840,12 +3755,12 @@
         }
       },
       "foreignKeys": {
-        "users_active_workspace_id_workspaces_id_fk": {
-          "name": "users_active_workspace_id_workspaces_id_fk",
+        "users_activeWorkspaceId_workspaces_id_fk": {
+          "name": "users_activeWorkspaceId_workspaces_id_fk",
           "tableFrom": "users",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "active_workspace_id"
+            "activeWorkspaceId"
           ],
           "columnsTo": [
             "id"
@@ -2871,33 +3786,33 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "webhook_id": {
-          "name": "webhook_id",
+        "webhookId": {
+          "name": "webhookId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -2909,7 +3824,7 @@
           "name": "trackable_webhook_connections_trackable_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2924,7 +3839,7 @@
           "name": "trackable_webhook_connections_webhook_idx",
           "columns": [
             {
-              "expression": "webhook_id",
+              "expression": "webhookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2939,13 +3854,13 @@
           "name": "trackable_webhook_connections_trackable_webhook_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "webhook_id",
+              "expression": "webhookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2958,12 +3873,12 @@
         }
       },
       "foreignKeys": {
-        "trackable_webhook_connections_trackable_id_trackable_items_id_fk": {
-          "name": "trackable_webhook_connections_trackable_id_trackable_items_id_fk",
+        "trackable_webhook_connections_trackableId_trackable_items_id_fk": {
+          "name": "trackable_webhook_connections_trackableId_trackable_items_id_fk",
           "tableFrom": "trackable_webhook_connections",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -2971,12 +3886,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_webhook_connections_webhook_id_workspace_webhooks_id_fk": {
-          "name": "trackable_webhook_connections_webhook_id_workspace_webhooks_id_fk",
+        "trackable_webhook_connections_webhookId_workspace_webhooks_id_fk": {
+          "name": "trackable_webhook_connections_webhookId_workspace_webhooks_id_fk",
           "tableFrom": "trackable_webhook_connections",
           "tableTo": "workspace_webhooks",
           "columnsFrom": [
-            "webhook_id"
+            "webhookId"
           ],
           "columnsTo": [
             "id"
@@ -2984,12 +3899,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "trackable_webhook_connections_created_by_user_id_users_id_fk": {
-          "name": "trackable_webhook_connections_created_by_user_id_users_id_fk",
+        "trackable_webhook_connections_createdByUserId_users_id_fk": {
+          "name": "trackable_webhook_connections_createdByUserId_users_id_fk",
           "tableFrom": "trackable_webhook_connections",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -3015,32 +3930,32 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "webhook_id": {
-          "name": "webhook_id",
+        "webhookId": {
+          "name": "webhookId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "trigger_rule_id": {
-          "name": "trigger_rule_id",
+        "triggerRuleId": {
+          "name": "triggerRuleId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "trackable_id": {
-          "name": "trackable_id",
+        "trackableId": {
+          "name": "trackableId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "usage_event_id": {
-          "name": "usage_event_id",
+        "usageEventId": {
+          "name": "usageEventId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "submission_id": {
-          "name": "submission_id",
+        "submissionId": {
+          "name": "submissionId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -3059,26 +3974,26 @@
           "primaryKey": false,
           "notNull": true
         },
-        "request_payload": {
-          "name": "request_payload",
+        "requestPayload": {
+          "name": "requestPayload",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
-        "response_payload": {
-          "name": "response_payload",
+        "responsePayload": {
+          "name": "responsePayload",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
-        "error_message": {
-          "name": "error_message",
+        "errorMessage": {
+          "name": "errorMessage",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "attempted_at": {
-          "name": "attempted_at",
+        "attemptedAt": {
+          "name": "attemptedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -3090,13 +4005,13 @@
           "name": "webhook_delivery_attempts_webhook_attempted_idx",
           "columns": [
             {
-              "expression": "webhook_id",
+              "expression": "webhookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "attempted_at",
+              "expression": "attemptedAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3111,13 +4026,13 @@
           "name": "webhook_delivery_attempts_trackable_attempted_idx",
           "columns": [
             {
-              "expression": "trackable_id",
+              "expression": "trackableId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "attempted_at",
+              "expression": "attemptedAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3132,7 +4047,7 @@
           "name": "webhook_delivery_attempts_usage_event_idx",
           "columns": [
             {
-              "expression": "usage_event_id",
+              "expression": "usageEventId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3147,7 +4062,7 @@
           "name": "webhook_delivery_attempts_submission_idx",
           "columns": [
             {
-              "expression": "submission_id",
+              "expression": "submissionId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3160,12 +4075,12 @@
         }
       },
       "foreignKeys": {
-        "webhook_delivery_attempts_webhook_id_workspace_webhooks_id_fk": {
-          "name": "webhook_delivery_attempts_webhook_id_workspace_webhooks_id_fk",
+        "webhook_delivery_attempts_webhookId_workspace_webhooks_id_fk": {
+          "name": "webhook_delivery_attempts_webhookId_workspace_webhooks_id_fk",
           "tableFrom": "webhook_delivery_attempts",
           "tableTo": "workspace_webhooks",
           "columnsFrom": [
-            "webhook_id"
+            "webhookId"
           ],
           "columnsTo": [
             "id"
@@ -3173,12 +4088,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "webhook_delivery_attempts_trigger_rule_id_workspace_webhook_trigger_rules_id_fk": {
-          "name": "webhook_delivery_attempts_trigger_rule_id_workspace_webhook_trigger_rules_id_fk",
+        "webhook_delivery_attempts_triggerRuleId_workspace_webhook_trigger_rules_id_fk": {
+          "name": "webhook_delivery_attempts_triggerRuleId_workspace_webhook_trigger_rules_id_fk",
           "tableFrom": "webhook_delivery_attempts",
           "tableTo": "workspace_webhook_trigger_rules",
           "columnsFrom": [
-            "trigger_rule_id"
+            "triggerRuleId"
           ],
           "columnsTo": [
             "id"
@@ -3186,12 +4101,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "webhook_delivery_attempts_trackable_id_trackable_items_id_fk": {
-          "name": "webhook_delivery_attempts_trackable_id_trackable_items_id_fk",
+        "webhook_delivery_attempts_trackableId_trackable_items_id_fk": {
+          "name": "webhook_delivery_attempts_trackableId_trackable_items_id_fk",
           "tableFrom": "webhook_delivery_attempts",
           "tableTo": "trackable_items",
           "columnsFrom": [
-            "trackable_id"
+            "trackableId"
           ],
           "columnsTo": [
             "id"
@@ -3199,12 +4114,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "webhook_delivery_attempts_usage_event_id_trackable_api_usage_events_id_fk": {
-          "name": "webhook_delivery_attempts_usage_event_id_trackable_api_usage_events_id_fk",
+        "webhook_delivery_attempts_usageEventId_trackable_api_usage_events_id_fk": {
+          "name": "webhook_delivery_attempts_usageEventId_trackable_api_usage_events_id_fk",
           "tableFrom": "webhook_delivery_attempts",
           "tableTo": "trackable_api_usage_events",
           "columnsFrom": [
-            "usage_event_id"
+            "usageEventId"
           ],
           "columnsTo": [
             "id"
@@ -3212,12 +4127,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "webhook_delivery_attempts_submission_id_trackable_form_submissions_id_fk": {
-          "name": "webhook_delivery_attempts_submission_id_trackable_form_submissions_id_fk",
+        "webhook_delivery_attempts_submissionId_trackable_form_submissions_id_fk": {
+          "name": "webhook_delivery_attempts_submissionId_trackable_form_submissions_id_fk",
           "tableFrom": "webhook_delivery_attempts",
           "tableTo": "trackable_form_submissions",
           "columnsFrom": [
-            "submission_id"
+            "submissionId"
           ],
           "columnsTo": [
             "id"
@@ -3243,8 +4158,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "webhook_id": {
-          "name": "webhook_id",
+        "webhookId": {
+          "name": "webhookId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -3276,15 +4191,15 @@
           "notNull": true,
           "default": 0
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -3296,7 +4211,7 @@
           "name": "workspace_webhook_trigger_rules_webhook_idx",
           "columns": [
             {
-              "expression": "webhook_id",
+              "expression": "webhookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3311,7 +4226,7 @@
           "name": "workspace_webhook_trigger_rules_webhook_position_idx",
           "columns": [
             {
-              "expression": "webhook_id",
+              "expression": "webhookId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3330,12 +4245,12 @@
         }
       },
       "foreignKeys": {
-        "workspace_webhook_trigger_rules_webhook_id_workspace_webhooks_id_fk": {
-          "name": "workspace_webhook_trigger_rules_webhook_id_workspace_webhooks_id_fk",
+        "workspace_webhook_trigger_rules_webhookId_workspace_webhooks_id_fk": {
+          "name": "workspace_webhook_trigger_rules_webhookId_workspace_webhooks_id_fk",
           "tableFrom": "workspace_webhook_trigger_rules",
           "tableTo": "workspace_webhooks",
           "columnsFrom": [
-            "webhook_id"
+            "webhookId"
           ],
           "columnsTo": [
             "id"
@@ -3361,8 +4276,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
+        "workspaceId": {
+          "name": "workspaceId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -3393,21 +4308,21 @@
           "notNull": true,
           "default": true
         },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
+        "createdByUserId": {
+          "name": "createdByUserId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -3419,7 +4334,7 @@
           "name": "workspace_webhooks_workspace_idx",
           "columns": [
             {
-              "expression": "workspace_id",
+              "expression": "workspaceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3447,12 +4362,12 @@
         }
       },
       "foreignKeys": {
-        "workspace_webhooks_workspace_id_workspaces_id_fk": {
-          "name": "workspace_webhooks_workspace_id_workspaces_id_fk",
+        "workspace_webhooks_workspaceId_workspaces_id_fk": {
+          "name": "workspace_webhooks_workspaceId_workspaces_id_fk",
           "tableFrom": "workspace_webhooks",
           "tableTo": "workspaces",
           "columnsFrom": [
-            "workspace_id"
+            "workspaceId"
           ],
           "columnsTo": [
             "id"
@@ -3460,12 +4375,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "workspace_webhooks_created_by_user_id_users_id_fk": {
-          "name": "workspace_webhooks_created_by_user_id_users_id_fk",
+        "workspace_webhooks_createdByUserId_users_id_fk": {
+          "name": "workspace_webhooks_createdByUserId_users_id_fk",
           "tableFrom": "workspace_webhooks",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by_user_id"
+            "createdByUserId"
           ],
           "columnsTo": [
             "id"
@@ -3517,15 +4432,6 @@
         "expired",
         "paused",
         "past_due"
-      ]
-    },
-    "public.subscription_tier": {
-      "name": "subscription_tier",
-      "schema": "public",
-      "values": [
-        "free",
-        "plus",
-        "pro"
       ]
     },
     "public.trackable_access_role": {

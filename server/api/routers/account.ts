@@ -1,4 +1,3 @@
-import { clerkClient } from "@clerk/nextjs/server"
 import { TRPCError } from "@trpc/server"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
@@ -21,6 +20,10 @@ import {
   getWorkspaceMemberships,
 } from "@/server/workspaces"
 import { accessControlService } from "@/server/services/access-control.service"
+import {
+  deleteProfileImageByUrl,
+  saveProfileImage,
+} from "@/server/services/profile-image.service"
 
 export const accountRouter = createTRPCRouter({
   getProfilePrivacy: protectedProcedure.query(async ({ ctx }) => {
@@ -149,16 +152,6 @@ export const accountRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = getRequiredUserId(ctx)
 
-      const clerk = await clerkClient()
-      const clerkUser = await clerk.users.getUser(userId)
-
-      await clerk.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          ...(clerkUser.publicMetadata ?? {}),
-          isProfilePrivate: input.isProfilePrivate,
-        },
-      })
-
       await db
         .update(users)
         .set({
@@ -171,5 +164,27 @@ export const accountRouter = createTRPCRouter({
         hasAdminControls: await hasAdminControlsEnabled(userId),
         isProfilePrivate: input.isProfilePrivate,
       }
+    }),
+
+  uploadProfileImage: protectedProcedure
+    .input(
+      z.object({
+        contentBase64: z.string().min(1),
+        mimeType: z.string().trim().min(1).max(100),
+        previousImageUrl: z.string().trim().min(1).nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = getRequiredUserId(ctx)
+
+      const upload = await saveProfileImage({
+        fileBuffer: Buffer.from(input.contentBase64, "base64"),
+        mimeType: input.mimeType,
+        userId,
+      })
+
+      await deleteProfileImageByUrl(input.previousImageUrl)
+
+      return upload
     }),
 })

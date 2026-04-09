@@ -1,13 +1,5 @@
 import { relations } from "drizzle-orm"
-import {
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  uniqueIndex,
-  uuid,
-} from "drizzle-orm/pg-core"
+import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 
 import {
   createdByUserId,
@@ -17,22 +9,8 @@ import {
   uuidPrimaryKey,
   usageCount,
 } from "@/db/schema/_shared"
+import type { McpTokenCapabilities } from "@/lib/mcp-token-capabilities"
 import { users } from "@/db/schema/users"
-
-/**
- * Represents the capabilities granted to an MCP token.
- *
- * - tools: "all" grants access to all tools; an array limits access to named tools
- * - workspaceIds: optional array of workspace UUIDs this token may access;
- *   omitting this field grants access to all workspaces the token owner can access
- * - trackableIds: optional array of trackable UUIDs this token may access;
- *   omitting this field grants access to all accessible trackables
- */
-export interface McpTokenCapabilities {
-  tools: "all" | string[]
-  workspaceIds?: string[]
-  trackableIds?: string[]
-}
 
 /**
  * Machine-style access tokens for MCP connections.
@@ -49,19 +27,19 @@ export const mcpAccessTokens = pgTable(
   {
     id: uuidPrimaryKey(),
     createdByUserId: createdByUserId(),
-    name: text("name").notNull(),
+    name: text().notNull(),
     /** First 20 characters of the raw token, used as the cache/lookup key */
-    keyPrefix: text("key_prefix").notNull(),
+    keyPrefix: text().notNull(),
     /** SHA256 hex digest of the full raw token */
-    secretHash: text("secret_hash").notNull(),
+    secretHash: text().notNull(),
     /** Last 4 characters for display only */
-    lastFour: text("last_four").notNull(),
+    lastFour: text().notNull(),
     /** Scoped capabilities: which tools and which trackables */
-    capabilities: jsonb("capabilities").$type<McpTokenCapabilities>().notNull(),
+    capabilities: jsonb().$type<McpTokenCapabilities>().notNull(),
     /** "active" or "revoked" */
-    status: text("status").notNull().default("active"),
+    status: text().notNull().default("active"),
     expiresAt: expiresAt(),
-    lastUsedAt: nullableTimestamp("last_used_at"),
+    lastUsedAt: nullableTimestamp(),
     usageCount: usageCount(),
     ...timestamps,
   },

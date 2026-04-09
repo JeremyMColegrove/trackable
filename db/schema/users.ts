@@ -24,17 +24,17 @@ import {
 export const users = pgTable(
   "users",
   {
-    id: text("id").primaryKey(),
-    primaryEmail: text("primary_email").notNull(),
-    displayName: text("display_name"),
-    imageUrl: text("image_url"),
-    activeWorkspaceId: uuid("active_workspace_id").references(
+    id: text().primaryKey(),
+    primaryEmail: text().notNull(),
+    displayName: text(),
+    imageUrl: text(),
+    activeWorkspaceId: uuid().references(
       (): AnyPgColumn => workspaces.id,
       {
         onDelete: "set null",
       }
     ),
-    isProfilePrivate: boolean("is_profile_private").default(false).notNull(),
+    isProfilePrivate: boolean().default(false).notNull(),
     lastSeenAt: lastSeenAt(),
     ...timestamps,
   },

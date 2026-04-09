@@ -20,6 +20,7 @@ const UNLIMITED_LIMITS: TierLimits = {
 }
 
 type AppSettings = {
+  authEmailServiceEnabled: boolean
   subscriptionEnforcementEnabled: boolean
   workspaceBillingEnabled: boolean
   workspacePlans: readonly PublicWorkspacePlan[]
@@ -76,6 +77,7 @@ export function AppSettingsProvider({
   return (
     <AppSettingsContext.Provider
       value={{
+        authEmailServiceEnabled: settings?.authEmailServiceEnabled ?? false,
         subscriptionEnforcementEnabled:
           settings?.subscriptionEnforcementEnabled ?? false,
         workspaceBillingEnabled: settings?.workspaceBillingEnabled ?? false,

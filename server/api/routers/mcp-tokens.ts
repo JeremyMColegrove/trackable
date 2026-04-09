@@ -1,18 +1,60 @@
 import { randomBytes, createHash } from "node:crypto"
 
 import { TRPCError } from "@trpc/server"
-import { and, eq } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
-import { mcpAccessTokens } from "@/db/schema"
+import { mcpAccessTokens, trackableItems } from "@/db/schema"
+import {
+  mcpTokenCapabilitiesSchema,
+  normalizeMcpTokenCapabilities,
+} from "@/lib/mcp-token-capabilities"
 import {
   createTRPCRouter,
   getRequiredUserId,
   protectedProcedure,
 } from "@/server/api/trpc"
+import { getWorkspaceMemberships } from "@/server/workspaces"
+
+async function getAccessibleCreationOptions(userId: string) {
+  const memberships = await getWorkspaceMemberships(userId)
+  const workspaceIds = memberships.map((membership) => membership.workspaceId)
+
+  const trackables =
+    workspaceIds.length === 0
+      ? []
+      : await db.query.trackableItems.findMany({
+          where: and(
+            inArray(trackableItems.workspaceId, workspaceIds),
+            isNull(trackableItems.archivedAt)
+          ),
+          columns: {
+            id: true,
+            workspaceId: true,
+            name: true,
+            kind: true,
+          },
+          orderBy: [desc(trackableItems.createdAt)],
+        })
+
+  return {
+    workspaces: memberships.map((membership) => ({
+      id: membership.workspace.id,
+      name: membership.workspace.name,
+      slug: membership.workspace.slug,
+      role: membership.role,
+    })),
+    trackables,
+  }
+}
 
 export const mcpTokensRouter = createTRPCRouter({
+  getCreationOptions: protectedProcedure.query(async ({ ctx }) => {
+    const userId = getRequiredUserId(ctx)
+    return getAccessibleCreationOptions(userId)
+  }),
+
   listTokens: protectedProcedure.query(async ({ ctx }) => {
     const userId = getRequiredUserId(ctx)
 
@@ -46,10 +88,12 @@ export const mcpTokensRouter = createTRPCRouter({
           .min(1, { message: "Name is required." })
           .max(100, { message: "Name must be 100 characters or fewer." }),
         expiresAt: z.string().datetime().nullable(),
+        capabilities: mcpTokenCapabilitiesSchema,
       })
     )
     .mutation(async ({ ctx, input }) => {
       const userId = getRequiredUserId(ctx)
+      const creationOptions = await getAccessibleCreationOptions(userId)
 
       // Generate token: trk_mcp_<32 chars base64url>
       const rawSuffix = randomBytes(24).toString("base64url").slice(0, 32)
@@ -58,6 +102,44 @@ export const mcpTokensRouter = createTRPCRouter({
       const keyPrefix = rawToken.slice(0, 20)
       const secretHash = createHash("sha256").update(rawToken).digest("hex")
       const lastFour = rawToken.slice(-4)
+      const capabilities = normalizeMcpTokenCapabilities(input.capabilities)
+      const allowedWorkspaceIds = new Set(
+        creationOptions.workspaces.map((workspace) => workspace.id)
+      )
+      const trackablesById = new Map(
+        creationOptions.trackables.map((trackable) => [trackable.id, trackable])
+      )
+
+      for (const workspaceId of capabilities.workspaceIds ?? []) {
+        if (!allowedWorkspaceIds.has(workspaceId)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "One or more selected workspaces are not accessible.",
+          })
+        }
+      }
+
+      for (const trackableId of capabilities.trackableIds ?? []) {
+        const trackable = trackablesById.get(trackableId)
+
+        if (!trackable) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "One or more selected trackables are not accessible.",
+          })
+        }
+
+        if (
+          capabilities.workspaceIds &&
+          !capabilities.workspaceIds.includes(trackable.workspaceId)
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Trackable scope must stay within the selected workspace scope.",
+          })
+        }
+      }
 
       await db.insert(mcpAccessTokens).values({
         createdByUserId: userId,
@@ -65,12 +147,12 @@ export const mcpTokensRouter = createTRPCRouter({
         keyPrefix,
         secretHash,
         lastFour,
-        capabilities: { tools: "all" },
+        capabilities,
         status: "active",
         expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
       })
 
-      return { token: rawToken, name: input.name }
+      return { token: rawToken, name: input.name, capabilities }
     }),
 
   revokeToken: protectedProcedure

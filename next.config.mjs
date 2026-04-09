@@ -39,11 +39,14 @@ const securityHeaders = [
     : []),
 ]
 
+const ngrokHost = appUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   cacheComponents: false,
   output: "standalone",
   poweredByHeader: false,
+  allowedDevOrigins: ngrokHost ? [ngrokHost] : [],
   async headers() {
     return [
       {

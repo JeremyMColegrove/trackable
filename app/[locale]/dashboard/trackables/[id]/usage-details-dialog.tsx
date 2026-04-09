@@ -102,8 +102,8 @@ export function UsageDetailsDialog({
             <span className="text-border">•</span>
             <span>
               {isGroupedRow
-                ? `${usageEvent.totalHits} hits in this group`
-                : formatRelativeTime(usageEvent.lastOccurredAt)}
+                ? `${usageEvent.totalHits} ${gt("hits in this group")}`
+                : formatRelativeTime(usageEvent.lastOccurredAt, gt)}
             </span>
           </div>
 

@@ -25,6 +25,7 @@ export async function register() {
         ...getLoggerConfiguration(),
         runtimeConfigPath: getRuntimeConfigPath(),
         features: {
+          authEmailServiceEnabled: runtimeConfig.auth.emailServiceEnabled,
           batchSchedulerEnabled: runtimeConfig.features.batchSchedulerEnabled,
           subscriptionEnforcementEnabled:
             runtimeConfig.features.subscriptionEnforcementEnabled,
@@ -35,9 +36,8 @@ export async function register() {
         env: summarizeEnvPresence({
           databaseUrl: process.env.DATABASE_URL,
           redisUrl: process.env.REDIS_URL,
-          clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-          clerkSecretKey: process.env.CLERK_SECRET_KEY,
-          clerkWebhookSecret: process.env.CLERK_WEBHOOK_SIGNING_SECRET,
+          betterAuthSecret: process.env.BETTER_AUTH_SECRET,
+          betterAuthUrl: process.env.BETTER_AUTH_URL,
           lemonSqueezyWebhookSecret: process.env.LEMON_SQUEEZY_WEBHOOK_SECRET,
         }),
         targets: {

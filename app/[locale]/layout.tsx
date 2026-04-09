@@ -2,15 +2,12 @@ import { AppSettingsProvider } from "@/components/app-settings-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TRPCReactProvider } from "@/components/trpc-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { getClerkLocalization } from "@/lib/clerk-localization"
 import { supportedLocales } from "@/lib/discovery-files"
 import { buildAbsoluteUrl, siteConfig } from "@/lib/site-config"
 import { cn } from "@/lib/utils"
-import { ClerkProvider } from "@clerk/nextjs"
 import { GTProvider } from "gt-next"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { Children, Fragment, Suspense } from "react"
 import { Toaster } from "sonner"
 import "../globals.css"
 
@@ -46,11 +43,9 @@ export function generateStaticParams() {
 }
 
 export default async function RootLayout({
-  auth,
   children,
   params,
 }: Readonly<{
-  auth?: React.ReactNode
   children: React.ReactNode
   params: Promise<{ locale: string }>
 }>) {
@@ -60,10 +55,6 @@ export default async function RootLayout({
     notFound()
   }
 
-  const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"
-  const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up"
-  const clerkLocalization = getClerkLocalization(locale)
-
   return (
     <html
       lang={locale}
@@ -71,31 +62,18 @@ export default async function RootLayout({
       className={cn("antialiased", "font-sans")}
     >
       <body className="min-h-svh bg-background">
-        <ClerkProvider
-          localization={clerkLocalization}
-          signInUrl={signInUrl}
-          signUpUrl={signUpUrl}
-        >
-          <GTProvider>
-            <TRPCReactProvider>
-              <AppSettingsProvider>
-                <TooltipProvider>
-                  <ThemeProvider>
-                    {Children.toArray([
-                      <Fragment key="page">{children}</Fragment>,
-                      auth ? (
-                        <Suspense key="auth-slot" fallback={null}>
-                          <Fragment>{auth}</Fragment>
-                        </Suspense>
-                      ) : null,
-                      <Toaster key="toaster" position="top-center" />,
-                    ])}
-                  </ThemeProvider>
-                </TooltipProvider>
-              </AppSettingsProvider>
-            </TRPCReactProvider>
-          </GTProvider>
-        </ClerkProvider>
+        <GTProvider>
+          <TRPCReactProvider>
+            <AppSettingsProvider>
+              <TooltipProvider>
+                <ThemeProvider>
+                  {children}
+                  <Toaster position="top-center" />
+                </ThemeProvider>
+              </TooltipProvider>
+            </AppSettingsProvider>
+          </TRPCReactProvider>
+        </GTProvider>
       </body>
     </html>
   )

@@ -58,5 +58,8 @@ export async function validateCustomMcpToken(
   return new McpAuthContextImpl({
     userId: token.createdByUserId,
     scopes: [],
+    tools: token.capabilities.tools,
+    workspaceIds: token.capabilities.workspaceIds,
+    trackableIds: token.capabilities.trackableIds,
   })
 }

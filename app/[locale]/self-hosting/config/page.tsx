@@ -111,7 +111,7 @@ function Section({
         {title}
         <a
           href={`#${id}`}
-          className="text-lg text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+          className="text-lg text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
           aria-label={`Link to ${id} section`}
         >
           #
@@ -122,7 +122,6 @@ function Section({
     </section>
   )
 }
-
 
 function ConfigExampleSkeleton() {
   return <Skeleton className="h-48 rounded-xl" />
@@ -183,8 +182,9 @@ export default async function ConfigReferencePage() {
             </code>
             {". "}
             <T>
-              This file controls runtime product behavior — plan limits,
-              billing, webhooks, and feature flags. It is separate from
+              This file controls runtime product behavior — plan limits, auth
+              email delivery, billing, webhooks, and feature flags. It is
+              separate from
             </T>{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-sm font-medium text-foreground">
               .env
@@ -243,7 +243,35 @@ export default async function ConfigReferencePage() {
                   description: (
                     <T>
                       List of email addresses with admin access. Must match the
-                      email associated with the user&apos;s Clerk account.
+                      email associated with the user&apos;s Trackables account.
+                    </T>
+                  ),
+                },
+              ]}
+            />
+          </Section>
+
+          {/* features */}
+          <Section id="auth" title={<T>auth</T>}>
+            <p className="mb-4 text-muted-foreground">
+              <T>
+                Auth-specific runtime settings. Email delivery is opt-in and
+                uses a Redis-backed queue rather than direct SMTP delivery from
+                the app process.
+              </T>
+            </p>
+            <FieldTable
+              rows={[
+                {
+                  field: "emailServiceEnabled",
+                  type: "boolean",
+                  required: "Required",
+                  description: (
+                    <T>
+                      When true, auth emails are rendered with React Email and
+                      enqueued into Redis for a separate sender process or
+                      sideloaded worker. When false, verification, password
+                      reset, and change-email flows are disabled.
                     </T>
                   ),
                 },
@@ -304,9 +332,10 @@ export default async function ConfigReferencePage() {
                   description: (
                     <T>
                       When false, the MCP server authenticates using the
-                      standard OAuth/Clerk token. When true, self-managed API
-                      tokens are used instead — useful for environments without
-                      Clerk MCP support.
+                      built-in OAuth bearer tokens issued by Trackables. When
+                      true, self-managed API tokens are used instead — useful
+                      for environments where you want MCP access to bypass the
+                      built-in OAuth flow.
                     </T>
                   ),
                 },
@@ -327,8 +356,7 @@ export default async function ConfigReferencePage() {
                 to apply to all users regardless of plan. For simple deployments
                 with no billing, a single entry with
               </T>{" "}
-              <code>&quot;billingTier&quot;: null</code>{" "}
-              <T>is sufficient.</T>{" "}
+              <code>&quot;billingTier&quot;: null</code> <T>is sufficient.</T>{" "}
               <code>null</code> <T>values for numeric limits mean unlimited.</T>
             </p>
             <FieldTable
@@ -442,12 +470,11 @@ export default async function ConfigReferencePage() {
           <Section id="billing" title={<T>billing</T>}>
             <p className="mb-4 text-muted-foreground">
               <T>
-                Optional billing configuration for Lemon Squeezy integration.
-                If you are not using paid plans, set
+                Optional billing configuration for Lemon Squeezy integration. If
+                you are not using paid plans, set
               </T>{" "}
-              <code>lemonSqueezyStoreId</code> <T>and</T>{" "}
-              <code>manageUrl</code> <T>to</T> <code>null</code>{" "}
-              <T>and leave</T> <code>tiers</code>{" "}
+              <code>lemonSqueezyStoreId</code> <T>and</T> <code>manageUrl</code>{" "}
+              <T>to</T> <code>null</code> <T>and leave</T> <code>tiers</code>{" "}
               <T>
                 as an empty array. Tier id values are referenced by
                 limits[].billingTier — they must match exactly.
@@ -515,9 +542,7 @@ export default async function ConfigReferencePage() {
                   field: "priceLabel",
                   type: "string",
                   required: "Required",
-                  description: (
-                    <T>Price string shown in the UI (e.g. $25).</T>
-                  ),
+                  description: <T>Price string shown in the UI (e.g. $25).</T>,
                 },
                 {
                   field: "priceInterval",
@@ -735,8 +760,7 @@ export default async function ConfigReferencePage() {
             <AppBrand className="text-xl font-bold tracking-tight opacity-80 grayscale" />
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Trackables.{" "}
-            <T>All rights reserved.</T>
+            © {new Date().getFullYear()} Trackables. <T>All rights reserved.</T>
           </p>
           <div className="flex gap-6">
             <Link

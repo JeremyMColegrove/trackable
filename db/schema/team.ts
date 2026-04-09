@@ -28,8 +28,8 @@ export const workspaces = pgTable(
   "workspaces",
   {
     id: uuidPrimaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").notNull(),
+    name: text().notNull(),
+    slug: text().notNull(),
     createdByUserId: createdByUserId().references(() => users.id, {
       onDelete: "cascade",
     }),
@@ -42,13 +42,13 @@ export const workspaceMembers = pgTable(
   "workspace_members",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    userId: text("user_id")
+    userId: text()
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: workspaceRoleEnum("role").default("member").notNull(),
+    role: workspaceRoleEnum().default("member").notNull(),
     createdByUserId: createdByUserId().references(() => users.id, {
       onDelete: "cascade",
     }),
@@ -68,21 +68,21 @@ export const workspaceInvitations = pgTable(
   "workspace_invitations",
   {
     id: uuidPrimaryKey(),
-    workspaceId: uuid("workspace_id")
+    workspaceId: uuid()
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    invitedUserId: text("invited_user_id").references(() => users.id, {
+    invitedUserId: text().references(() => users.id, {
       onDelete: "cascade",
     }),
-    invitedEmail: text("invited_email"),
-    invitedByUserId: createdByUserId("invited_by_user_id").references(
+    invitedEmail: text(),
+    invitedByUserId: createdByUserId().references(
       () => users.id,
       {
         onDelete: "cascade",
       }
     ),
-    role: workspaceRoleEnum("role").default("member").notNull(),
-    status: workspaceInvitationStatusEnum("status")
+    role: workspaceRoleEnum().default("member").notNull(),
+    status: workspaceInvitationStatusEnum()
       .default("pending")
       .notNull(),
     ...timestamps,

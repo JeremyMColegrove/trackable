@@ -27,14 +27,14 @@ export const batchJobs = pgTable(
   "batch_jobs",
   {
     id: uuidPrimaryKey(),
-    key: text("key").notNull(),
-    name: text("name").notNull(),
-    schedule: text("schedule").notNull(),
-    enabled: boolean("enabled").default(true).notNull(),
-    lastStartedAt: nullableTimestamp("last_started_at"),
-    lastCompletedAt: nullableTimestamp("last_completed_at"),
-    lastStatus: batchJobRunStatusEnum("last_status"),
-    lastSummary: text("last_summary"),
+    key: text().notNull(),
+    name: text().notNull(),
+    schedule: text().notNull(),
+    enabled: boolean().default(true).notNull(),
+    lastStartedAt: nullableTimestamp(),
+    lastCompletedAt: nullableTimestamp(),
+    lastStatus: batchJobRunStatusEnum(),
+    lastSummary: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -45,20 +45,20 @@ export const batchJobRuns = pgTable(
   "batch_job_runs",
   {
     id: uuidPrimaryKey(),
-    batchJobId: uuid("batch_job_id")
+    batchJobId: uuid()
       .notNull()
       .references(() => batchJobs.id, { onDelete: "cascade" }),
-    jobKey: text("job_key").notNull(),
-    trigger: batchJobTriggerEnum("trigger").notNull(),
-    status: batchJobRunStatusEnum("status").notNull(),
-    startedAt: timestamp("started_at", { mode: "date", withTimezone: true })
+    jobKey: text().notNull(),
+    trigger: batchJobTriggerEnum().notNull(),
+    status: batchJobRunStatusEnum().notNull(),
+    startedAt: timestamp({ mode: "date", withTimezone: true })
       .defaultNow()
       .notNull(),
-    completedAt: nullableTimestamp("completed_at"),
-    durationMs: integer("duration_ms"),
-    summary: text("summary"),
-    errorDetails: jsonb("error_details").$type<BatchJobRunError>(),
-    metadata: jsonb("metadata").$type<BatchJobRunMetadata>(),
+    completedAt: nullableTimestamp(),
+    durationMs: integer(),
+    summary: text(),
+    errorDetails: jsonb().$type<BatchJobRunError>(),
+    metadata: jsonb().$type<BatchJobRunMetadata>(),
     createdAt: createdAt(),
   },
   (table) => [
@@ -71,16 +71,16 @@ export const batchJobRuns = pgTable(
 export const batchJobLeases = pgTable(
   "batch_job_leases",
   {
-    batchJobId: uuid("batch_job_id")
+    batchJobId: uuid()
       .primaryKey()
       .references(() => batchJobs.id, { onDelete: "cascade" }),
-    jobKey: text("job_key").notNull(),
-    lockedUntil: timestamp("locked_until", {
+    jobKey: text().notNull(),
+    lockedUntil: timestamp({
       mode: "date",
       withTimezone: true,
     }).notNull(),
-    lockedBy: text("locked_by").notNull(),
-    runId: uuid("run_id"),
+    lockedBy: text().notNull(),
+    runId: uuid(),
     updatedAt: updatedAt(),
   },
   (table) => [

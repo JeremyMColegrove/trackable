@@ -74,15 +74,15 @@ async function createPgMemUsageEventDatabase() {
   await client.query(`
     create table api_keys(
       id uuid primary key,
-      last_four text not null,
+      "lastFour" text not null,
       name text not null,
-      key_prefix text not null
+      "keyPrefix" text not null
     );
     create table trackable_api_usage_events(
       id uuid primary key,
-      trackable_id uuid not null,
-      api_key_id uuid not null,
-      occurred_at timestamptz not null,
+      "trackableId" uuid not null,
+      "apiKeyId" uuid not null,
+      "occurredAt" timestamptz not null,
       payload jsonb not null,
       metadata jsonb
     );
@@ -97,26 +97,26 @@ test("UsageEventSqlRepository fetchFlatRows only returns a cursor when another p
   const fakeDb = new FakeRawSqlDatabase([
     [
       {
-        api_key_id: "223e4567-e89b-42d3-a456-426614174000",
-        api_key_last_four: "1234",
-        api_key_name: "Primary key",
-        api_key_prefix: "trk_test",
+        apiKeyId: "223e4567-e89b-42d3-a456-426614174000",
+        apiKeyLastFour: "1234",
+        apiKeyName: "Primary key",
+        apiKeyPrefix: "trk_test",
         id: "00000000-0000-4000-8000-000000000001",
         metadata: { clientId: "abc-1" },
-        occurred_at: "2026-03-31T00:00:00.000Z",
+        occurredAt: "2026-03-31T00:00:00.000Z",
         payload: { event: "log", level: "info" },
-        sort_value: "log",
+        sortValue: "log",
       },
       {
-        api_key_id: "223e4567-e89b-42d3-a456-426614174000",
-        api_key_last_four: "1234",
-        api_key_name: "Primary key",
-        api_key_prefix: "trk_test",
+        apiKeyId: "223e4567-e89b-42d3-a456-426614174000",
+        apiKeyLastFour: "1234",
+        apiKeyName: "Primary key",
+        apiKeyPrefix: "trk_test",
         id: "00000000-0000-4000-8000-000000000002",
         metadata: { clientId: "abc-2" },
-        occurred_at: "2026-03-31T00:01:00.000Z",
+        occurredAt: "2026-03-31T00:01:00.000Z",
         payload: { event: "warn", level: "warn" },
-        sort_value: "warn",
+        sortValue: "warn",
       },
     ],
   ])
@@ -148,8 +148,8 @@ test("UsageEventSqlRepository fetchFlatRows only returns a cursor when another p
   assert.equal(decodedCursor.id, "00000000-0000-4000-8000-000000000001")
   assert.equal(decodedCursor.occurredAt, "2026-03-31T00:00:00.000Z")
   assert.equal(result.hasMore, true)
-  assert.match(fakeDb.sql[0] ?? "", /as "api_key_id"/)
-  assert.match(fakeDb.sql[0] ?? "", /as "occurred_at"/)
+  assert.match(fakeDb.sql[0] ?? "", /as "apiKeyId"/)
+  assert.match(fakeDb.sql[0] ?? "", /as "occurredAt"/)
 })
 
 test("UsageEventSqlRepository fetchFlatRows omits the cursor on the last page", async () => {
@@ -158,15 +158,15 @@ test("UsageEventSqlRepository fetchFlatRows omits the cursor on the last page", 
   const fakeDb = new FakeRawSqlDatabase([
     [
       {
-        api_key_id: "223e4567-e89b-42d3-a456-426614174000",
-        api_key_last_four: "1234",
-        api_key_name: "Primary key",
-        api_key_prefix: "trk_test",
+        apiKeyId: "223e4567-e89b-42d3-a456-426614174000",
+        apiKeyLastFour: "1234",
+        apiKeyName: "Primary key",
+        apiKeyPrefix: "trk_test",
         id: "00000000-0000-4000-8000-000000000001",
         metadata: { clientId: "abc-1" },
-        occurred_at: "2026-03-31T00:00:00.000Z",
+        occurredAt: "2026-03-31T00:00:00.000Z",
         payload: { event: "log", level: "info" },
-        sort_value: "log",
+        sortValue: "log",
       },
     ],
   ])
@@ -191,34 +191,34 @@ test("UsageEventSqlRepository fetchGroupedRows only returns a cursor when anothe
   const fakeDb = new FakeRawSqlDatabase([
     [
       {
-        api_keys: [
+        apiKeys: [
           {
             id: "223e4567-e89b-42d3-a456-426614174000",
             name: "Primary key",
             maskedKey: "trk_test...1234",
           },
         ],
-        first_occurred_at: "2026-03-31T00:00:00.000Z",
-        group_identity: '"warn"',
-        group_value: "warn",
-        last_occurred_at: "2026-03-31T00:01:00.000Z",
-        sort_value: "warn",
-        total_hits: "2",
+        firstOccurredAt: "2026-03-31T00:00:00.000Z",
+        groupIdentity: '"warn"',
+        groupValue: "warn",
+        lastOccurredAt: "2026-03-31T00:01:00.000Z",
+        sortValue: "warn",
+        totalHits: "2",
       },
       {
-        api_keys: [
+        apiKeys: [
           {
             id: "223e4567-e89b-42d3-a456-426614174000",
             name: "Primary key",
             maskedKey: "trk_test...1234",
           },
         ],
-        first_occurred_at: "2026-03-31T00:02:00.000Z",
-        group_identity: '"/billing"',
-        group_value: "/billing",
-        last_occurred_at: "2026-03-31T00:03:00.000Z",
-        sort_value: "/billing",
-        total_hits: "1",
+        firstOccurredAt: "2026-03-31T00:02:00.000Z",
+        groupIdentity: '"/billing"',
+        groupValue: "/billing",
+        lastOccurredAt: "2026-03-31T00:03:00.000Z",
+        sortValue: "/billing",
+        totalHits: "1",
       },
     ],
     [{ count: "2" }],
@@ -255,7 +255,7 @@ test("UsageEventSqlRepository fetchGroupedRows only returns a cursor when anothe
   assert.equal(totals.totalMatchedEvents, 2)
   assert.equal(totals.totalGroupedRows, 2)
   assert.equal(result.hasMore, true)
-  assert.match(fakeDb.sql[0] ?? "", /"group_identity"/)
+  assert.match(fakeDb.sql[0] ?? "", /"groupIdentity"/)
 })
 
 test("UsageEventSqlRepository fetchGroupedRows omits the cursor on the last page", async () => {
@@ -264,19 +264,19 @@ test("UsageEventSqlRepository fetchGroupedRows omits the cursor on the last page
   const fakeDb = new FakeRawSqlDatabase([
     [
       {
-        api_keys: [
+        apiKeys: [
           {
             id: "223e4567-e89b-42d3-a456-426614174000",
             name: "Primary key",
             maskedKey: "trk_test...1234",
           },
         ],
-        first_occurred_at: "2026-03-31T00:00:00.000Z",
-        group_identity: '"warn"',
-        group_value: "warn",
-        last_occurred_at: "2026-03-31T00:01:00.000Z",
-        sort_value: "warn",
-        total_hits: "2",
+        firstOccurredAt: "2026-03-31T00:00:00.000Z",
+        groupIdentity: '"warn"',
+        groupValue: "warn",
+        lastOccurredAt: "2026-03-31T00:01:00.000Z",
+        sortValue: "warn",
+        totalHits: "2",
       },
     ],
     [{ count: "2" }],
@@ -344,16 +344,16 @@ test("UsageEventSqlRepository executes an apiKey.id search by casting the UUID t
 
   try {
     await client.query(`
-      insert into api_keys (id, last_four, name, key_prefix)
+      insert into api_keys (id, "lastFour", name, "keyPrefix")
       values
         ('223e4567-e89b-42d3-a456-426614174000', '1234', 'Primary key', 'trk_test'),
         ('223e4567-e89b-42d3-a456-426614174001', '5678', 'Backup key', 'trk_test');
 
       insert into trackable_api_usage_events (
         id,
-        trackable_id,
-        api_key_id,
-        occurred_at,
+        "trackableId",
+        "apiKeyId",
+        "occurredAt",
         payload,
         metadata
       )

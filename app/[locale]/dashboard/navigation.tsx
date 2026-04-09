@@ -23,6 +23,10 @@ export function getDashboardNavItems(
             href: "/dashboard/internal/batch",
             label: <T>Batch Jobs</T>,
           },
+          {
+            href: "/dashboard/internal/oauth-clients",
+            label: <T>OAuth Clients</T>,
+          },
         ]
       : []),
   ]

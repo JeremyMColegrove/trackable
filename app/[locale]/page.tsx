@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import { getAuth } from "@/server/get-auth"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
@@ -23,7 +23,7 @@ export async function generateMetadata({
 }
 
 async function LandingPageRedirect() {
-  const { userId } = await auth()
+  const { userId } = await getAuth()
 
   if (userId) {
     redirect("/dashboard")

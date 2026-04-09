@@ -77,9 +77,9 @@ test("UsageEventSqlRepository builds the exact flat count SQL", () => {
       select count("trackable_api_usage_events"."id")
       from "trackable_api_usage_events"
       inner join "api_keys"
-        on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+        on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
       where (
-        "trackable_api_usage_events"."trackable_id" = $1
+        "trackable_api_usage_events"."trackableId" = $1
         and (
           (
             case
@@ -165,13 +165,13 @@ test("UsageEventSqlRepository builds the exact flat fetch SQL", () => {
     normalizeSql(query.sql),
     normalizeSql(`
       select
-        "api_keys"."id" as "api_key_id",
-        "api_keys"."last_four" as "api_key_last_four",
-        "api_keys"."name" as "api_key_name",
-        "api_keys"."key_prefix" as "api_key_prefix",
+        "api_keys"."id" as "apiKeyId",
+        "api_keys"."lastFour" as "apiKeyLastFour",
+        "api_keys"."name" as "apiKeyName",
+        "api_keys"."keyPrefix" as "apiKeyPrefix",
         "trackable_api_usage_events"."id" as "id",
         "trackable_api_usage_events"."metadata" as "metadata",
-        "trackable_api_usage_events"."occurred_at" as "occurred_at",
+        "trackable_api_usage_events"."occurredAt" as "occurredAt",
         "trackable_api_usage_events"."payload" as "payload",
         coalesce(
           case
@@ -182,12 +182,12 @@ test("UsageEventSqlRepository builds the exact flat fetch SQL", () => {
             else ((("trackable_api_usage_events"."payload" #> ARRAY[$5]::text[])))::text
           end,
           ''
-        ) as "sort_value"
+        ) as "sortValue"
       from "trackable_api_usage_events"
       inner join "api_keys"
-        on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+        on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
       where (
-        "trackable_api_usage_events"."trackable_id" = $6
+        "trackable_api_usage_events"."trackableId" = $6
         and (
           (
             case
@@ -226,7 +226,7 @@ test("UsageEventSqlRepository builds the exact flat fetch SQL", () => {
           end ~ $29
         )
       )
-      order by "trackable_api_usage_events"."occurred_at" desc, "trackable_api_usage_events"."id" desc
+      order by "trackable_api_usage_events"."occurredAt" desc, "trackable_api_usage_events"."id" desc
       limit $30
     `)
   )
@@ -287,13 +287,13 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
     normalizeSql(query.sql),
     normalizeSql(`
       select
-        "api_keys"."id" as "api_key_id",
-        "api_keys"."last_four" as "api_key_last_four",
-        "api_keys"."name" as "api_key_name",
-        "api_keys"."key_prefix" as "api_key_prefix",
+        "api_keys"."id" as "apiKeyId",
+        "api_keys"."lastFour" as "apiKeyLastFour",
+        "api_keys"."name" as "apiKeyName",
+        "api_keys"."keyPrefix" as "apiKeyPrefix",
         "trackable_api_usage_events"."id" as "id",
         "trackable_api_usage_events"."metadata" as "metadata",
-        "trackable_api_usage_events"."occurred_at" as "occurred_at",
+        "trackable_api_usage_events"."occurredAt" as "occurredAt",
         "trackable_api_usage_events"."payload" as "payload",
         coalesce(
           case
@@ -304,13 +304,13 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
             else ((("trackable_api_usage_events"."payload" #> ARRAY[$5]::text[])))::text
           end,
           ''
-        ) as "sort_value"
+        ) as "sortValue"
       from "trackable_api_usage_events"
       inner join "api_keys"
-        on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+        on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
       where (
         (
-          "trackable_api_usage_events"."trackable_id" = $6
+          "trackable_api_usage_events"."trackableId" = $6
           and
           (
             case
@@ -328,8 +328,8 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
                 then (("trackable_api_usage_events"."metadata" #> ARRAY[$15]::text[])) #>> ARRAY[]::text[]
               else ((("trackable_api_usage_events"."metadata" #> ARRAY[$16]::text[])))::text
             end ~ $17
-            and to_char("trackable_api_usage_events"."occurred_at" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') is not null
-            and to_char("trackable_api_usage_events"."occurred_at" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') ~ $18
+            and to_char("trackable_api_usage_events"."occurredAt" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') is not null
+            and to_char("trackable_api_usage_events"."occurredAt" at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') ~ $18
           )
         )
         and (
@@ -360,7 +360,7 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
               ),
               ''
             ) = $30
-            and "trackable_api_usage_events"."occurred_at" > $31
+            and "trackable_api_usage_events"."occurredAt" > $31
           )
           or (
             coalesce(
@@ -376,7 +376,7 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
               ),
               ''
             ) = $37
-            and "trackable_api_usage_events"."occurred_at" = $38
+            and "trackable_api_usage_events"."occurredAt" = $38
             and "trackable_api_usage_events"."id" > $39
           )
         )
@@ -395,7 +395,7 @@ test("UsageEventSqlRepository builds the exact event-sort keyset SQL", () => {
           ),
           ''
         ) asc,
-        "trackable_api_usage_events"."occurred_at" asc,
+        "trackable_api_usage_events"."occurredAt" asc,
         "trackable_api_usage_events"."id" asc
       limit $45
     `)
@@ -662,13 +662,13 @@ test("UsageEventSqlRepository builds the exact grouped fetch SQL", () => {
     normalizeSql(query.sql),
     normalizeSql(`
       select
-        "api_keys",
-        "first_occurred_at",
-        "group_identity",
-        "group_value",
-        "last_occurred_at",
-        "sort_value",
-        "total_hits"
+        "apiKeys",
+        "firstOccurredAt",
+        "groupIdentity",
+        "groupValue",
+        "lastOccurredAt",
+        "sortValue",
+        "totalHits"
       from (
         select
           coalesce(
@@ -676,37 +676,37 @@ test("UsageEventSqlRepository builds the exact grouped fetch SQL", () => {
               distinct jsonb_build_object(
                 'id', "id",
                 'name', "name",
-                'maskedKey', "key_prefix" || '...' || "last_four"
+                'maskedKey', "keyPrefix" || '...' || "lastFour"
               )
             ) filter (where "id" is not null),
             '[]'::jsonb
-          ) as "api_keys",
-          min("occurred_at") as "first_occurred_at",
-          "group_identity",
-          max("group_value") as "group_value",
-          max("occurred_at") as "last_occurred_at",
-          coalesce(max("group_value"), '') as "sort_value",
-          count(*) as "total_hits"
+          ) as "apiKeys",
+          min("occurredAt") as "firstOccurredAt",
+          "groupIdentity",
+          max("groupValue") as "groupValue",
+          max("occurredAt") as "lastOccurredAt",
+          coalesce(max("groupValue"), '') as "sortValue",
+          count(*) as "totalHits"
         from (
           select
             "api_keys"."id",
-            "api_keys"."last_four",
+            "api_keys"."lastFour",
             "api_keys"."name",
-            "api_keys"."key_prefix",
-            coalesce(("trackable_api_usage_events"."payload" #> ARRAY[$1]::text[])::text, $2) as "group_identity",
+            "api_keys"."keyPrefix",
+            coalesce(("trackable_api_usage_events"."payload" #> ARRAY[$1]::text[])::text, $2) as "groupIdentity",
             case
               when (("trackable_api_usage_events"."payload" #> ARRAY[$3]::text[])) is null then null
               when jsonb_typeof((("trackable_api_usage_events"."payload" #> ARRAY[$4]::text[]))) = 'null' then null
               when jsonb_typeof((("trackable_api_usage_events"."payload" #> ARRAY[$5]::text[]))) in ('string', 'number', 'boolean')
                 then nullif(btrim((("trackable_api_usage_events"."payload" #> ARRAY[$6]::text[])) #>> ARRAY[]::text[]), '')
               else ((("trackable_api_usage_events"."payload" #> ARRAY[$7]::text[])))::text
-            end as "group_value",
-            "trackable_api_usage_events"."occurred_at"
+            end as "groupValue",
+            "trackable_api_usage_events"."occurredAt"
           from "trackable_api_usage_events"
           inner join "api_keys"
-            on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+            on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
           where (
-            "trackable_api_usage_events"."trackable_id" = $8
+            "trackable_api_usage_events"."trackableId" = $8
             and (
               case
                 when (("trackable_api_usage_events"."payload" #> ARRAY[$9]::text[])) is null then null
@@ -742,10 +742,10 @@ test("UsageEventSqlRepository builds the exact grouped fetch SQL", () => {
             )
           )
         ) "usage_event_group_source"
-        group by "group_identity"
+        group by "groupIdentity"
       ) "usage_event_groups"
-      where ("total_hits" < $31 or ("total_hits" = $32 and "group_identity" < $33))
-      order by "total_hits" desc, "group_identity" desc
+      where ("totalHits" < $31 or ("totalHits" = $32 and "groupIdentity" < $33))
+      order by "totalHits" desc, "groupIdentity" desc
       limit $34
     `)
   )
@@ -809,9 +809,9 @@ test("UsageEventSqlRepository builds the exact grouped count SQL", () => {
       select count(distinct coalesce(("trackable_api_usage_events"."payload" #> ARRAY[$1]::text[])::text, $2)) as "count"
       from "trackable_api_usage_events"
       inner join "api_keys"
-        on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+        on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
       where (
-        "trackable_api_usage_events"."trackable_id" = $3
+        "trackable_api_usage_events"."trackableId" = $3
         and (
           case
             when (("trackable_api_usage_events"."payload" #> ARRAY[$4]::text[])) is null then null
@@ -899,10 +899,10 @@ test("UsageEventSqlRepository builds the exact aggregate field discovery SQL", (
       select distinct payload_keys.field
       from "trackable_api_usage_events"
       inner join "api_keys"
-        on "trackable_api_usage_events"."api_key_id" = "api_keys"."id"
+        on "trackable_api_usage_events"."apiKeyId" = "api_keys"."id"
       cross join lateral jsonb_object_keys("trackable_api_usage_events"."payload") as payload_keys(field)
       where (
-        "trackable_api_usage_events"."trackable_id" = $1
+        "trackable_api_usage_events"."trackableId" = $1
         and (
           case
             when (("trackable_api_usage_events"."payload" #> ARRAY[$2]::text[])) is null then null

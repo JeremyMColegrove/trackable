@@ -7,7 +7,7 @@ import { LayoutTemplateIcon, SendIcon } from "lucide-react"
 import { useState } from "react"
 import { ActivityDetailsDialog } from "./activity-details-dialog"
 import { buildFormSubmissionExportPayload } from "./form-submission-export"
-import { formSubmissionColumns } from "./form-submission-columns"
+import { getFormSubmissionColumns } from "./form-submission-columns"
 import { SurveyShareDialog } from "./survey-share-dialog"
 import type { ShareLinkRow, SubmissionRow } from "./table-types"
 import { hasConfiguredTrackableForm } from "./trackable-form-status"
@@ -38,6 +38,7 @@ export function FormSubmissionsTable({
   const hasActiveShareLink = hasUsableShareLink(
     trackable.shareSettings.shareLinks
   )
+  const columns = getFormSubmissionColumns(gt)
 
   const emptyState = hasReceivedSubmission ? (
     gt("No responses found.")
@@ -83,7 +84,7 @@ export function FormSubmissionsTable({
   return (
     <>
       <DataTable
-        columns={formSubmissionColumns}
+        columns={columns}
         data={data}
         title={gt("Survey Data")}
         description={gt(

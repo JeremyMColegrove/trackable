@@ -196,10 +196,14 @@ export function InviteMemberDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">
-                  Admin (Manage Workspace & Trackables)
+                  <T>Admin (Manage Workspace & Trackables)</T>
                 </SelectItem>
-                <SelectItem value="member">Member (Edit Trackables)</SelectItem>
-                <SelectItem value="viewer">Viewer (View Only)</SelectItem>
+                <SelectItem value="member">
+                  <T>Member (Edit Trackables)</T>
+                </SelectItem>
+                <SelectItem value="viewer">
+                  <T>Viewer (View Only)</T>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

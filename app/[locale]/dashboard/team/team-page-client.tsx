@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTRPC } from "@/trpc/client"
-import { useUser } from "@clerk/nextjs"
+import { useSession } from "@/lib/auth-client"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { ColumnDef } from "@tanstack/react-table"
 import { T, useGT } from "gt-next"
@@ -73,7 +73,7 @@ export function TeamPageClient() {
 
 function TeamPageContent() {
   const gt = useGT()
-  const { user } = useUser()
+  const { data: session } = useSession()
   const { getTierLimits, subscriptionEnforcementEnabled } = useAppSettings()
   const {
     currentTier,
@@ -94,7 +94,7 @@ function TeamPageContent() {
   )
 
   const members = useMemo(() => membersQuery.data ?? [], [membersQuery.data])
-  const currentUserId = user?.id ?? null
+  const currentUserId = session?.user?.id ?? null
   const maxWorkspaceMembers = getTierLimits(currentTier).maxWorkspaceMembers
   const isCheckingMemberLimit =
     subscriptionEnforcementEnabled &&
@@ -429,11 +429,11 @@ function TeamPageContent() {
                       <Badge variant="secondary">{invitation.roleLabel}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Invited by {invitation.invitedByDisplayName} (
+                      <T>Invited by</T> {invitation.invitedByDisplayName} (
                       {invitation.invitedByEmail})
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Sent {formatDateLabel(invitation.createdAt)}
+                      <T>Sent</T> {formatDateLabel(invitation.createdAt)}
                     </p>
                   </div>
 

@@ -31,6 +31,9 @@ const billingTierSchema = z.object({
 
 const runtimeConfigObjectShape = z.object({
   admins: z.array(z.string().email()).optional().default([]),
+  auth: z.object({
+    emailServiceEnabled: z.boolean(),
+  }),
   features: z.object({
     subscriptionEnforcementEnabled: z.boolean(),
     workspaceBillingEnabled: z.boolean(),
@@ -172,6 +175,7 @@ export type BillingTierConfig = RuntimeConfig["billing"]["tiers"][number]
 const configFileSchema = z
   .object({
     admins: z.array(z.string().email()).optional(),
+    auth: runtimeConfigObjectShape.shape.auth.partial().optional(),
     features: runtimeConfigObjectShape.shape.features.partial().optional(),
     limits: z.array(limitEntrySchema).optional(),
     billing: z
@@ -201,6 +205,9 @@ const DEFAULT_RUNTIME_CONFIG: Omit<RuntimeConfig, "admins" | "limits"> & {
   limits: undefined
 } = {
   admins: [],
+  auth: {
+    emailServiceEnabled: false,
+  },
   features: {
     subscriptionEnforcementEnabled: true,
     workspaceBillingEnabled: false,
@@ -348,6 +355,10 @@ function mergeRuntimeConfig(
 ): RuntimeConfig {
   return {
     admins: overrides.admins ?? DEFAULT_RUNTIME_CONFIG.admins,
+    auth: {
+      ...DEFAULT_RUNTIME_CONFIG.auth,
+      ...overrides.auth,
+    },
     features: {
       ...DEFAULT_RUNTIME_CONFIG.features,
       ...overrides.features,

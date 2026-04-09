@@ -1,77 +1,77 @@
 import { sql } from "drizzle-orm"
 import { integer, jsonb, text, timestamp, uuid } from "drizzle-orm/pg-core"
 
-export function uuidPrimaryKey(name = "id") {
-  return uuid(name).defaultRandom().primaryKey()
+export function uuidPrimaryKey() {
+  return uuid().defaultRandom().primaryKey()
 }
 
-export function createdAt(name = "created_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function createdAt() {
+  return timestamp({ mode: "date", withTimezone: true })
     .defaultNow()
     .notNull()
 }
 
-export function updatedAt(name = "updated_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function updatedAt() {
+  return timestamp({ mode: "date", withTimezone: true })
     .defaultNow()
     .notNull()
 }
 
-export function archivedAt(name = "archived_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function archivedAt() {
+  return timestamp({ mode: "date", withTimezone: true })
 }
 
-export function revokedAt(name = "revoked_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function revokedAt() {
+  return timestamp({ mode: "date", withTimezone: true })
 }
 
-export function expiresAt(name = "expires_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function expiresAt() {
+  return timestamp({ mode: "date", withTimezone: true })
 }
 
-export function occurredAt(name = "occurred_at") {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function occurredAt() {
+  return timestamp({ mode: "date", withTimezone: true })
     .defaultNow()
     .notNull()
 }
 
-export function nullableTimestamp(name: string) {
-  return timestamp(name, { mode: "date", withTimezone: true })
+export function nullableTimestamp() {
+  return timestamp({ mode: "date", withTimezone: true })
 }
 
-export function lastSeenAt(name = "last_seen_at") {
-  return nullableTimestamp(name)
+export function lastSeenAt() {
+  return nullableTimestamp()
 }
 
-export function sortOrder(name = "position") {
-  return integer(name).default(0).notNull()
+export function sortOrder() {
+  return integer().default(0).notNull()
 }
 
-export function usageCount(name = "usage_count") {
-  return integer(name).default(0).notNull()
+export function usageCount() {
+  return integer().default(0).notNull()
 }
 
-export function submissionCount(name = "submission_count") {
-  return integer(name).default(0).notNull()
+export function submissionCount() {
+  return integer().default(0).notNull()
 }
 
-export function ownerId(name = "owner_id") {
-  return text(name).notNull()
+export function ownerId() {
+  return text().notNull()
 }
 
-export function createdByUserId(name = "created_by_user_id") {
-  return text(name).notNull()
+export function createdByUserId() {
+  return text().notNull()
 }
 
-export function metadataJson<T>(name = "metadata") {
-  return jsonb(name)
+export function metadataJson<T>() {
+  return jsonb()
     .$type<T>()
     .default(sql`'{}'::jsonb`)
     .notNull()
 }
 
-export function settingsJson<T>(name = "settings") {
-  return jsonb(name)
+export function settingsJson<T>() {
+  return jsonb()
     .$type<T>()
     .default(sql`'{}'::jsonb`)
     .notNull()

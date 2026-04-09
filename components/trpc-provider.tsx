@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from "@clerk/nextjs"
+import { useSession } from "@/lib/auth-client"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { httpBatchLink } from "@trpc/client"
 import { createTRPCClient } from "@trpc/client"
@@ -28,7 +28,9 @@ export function TRPCReactProvider({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { isLoaded, userId } = useAuth()
+  const { data: session, isPending } = useSession()
+  const isLoaded = !isPending
+  const userId = session?.user?.id ?? null
   const queryClient = getQueryClient()
   const previousViewerIdRef = useRef<string | null | undefined>(undefined)
   const [trpcClient] = useState(() =>

@@ -60,7 +60,7 @@ Trackables supports two main workflows:
 - PostgreSQL
 - Redis
 - Tailwind CSS
-- Clerk for authentication
+- better-auth for authentication
 
 ## Self-Hosting
 
@@ -75,21 +75,24 @@ Trackables can be self-hosted with Docker. The repository includes working examp
 - Docker and Docker Compose
 - PostgreSQL
 - Redis
-- A Clerk application for authentication
+- A `better-auth` deployment configuration
 
 ### Basic Setup
 
 1. Copy [example/.env.example](/example/.env.example) to `.env` and fill in your secrets and connection values.
 2. Copy [example/trackables.config.example.json](/example/trackables.config.example.json) to `config.json`.
 3. Keep secrets and infrastructure wiring in `.env`. Keep app behavior, plan metadata, limits, queue settings, and billing display config in `config.json`.
-4. Create a Clerk app and add your publishable key, secret key, and webhook signing secret.
-5. Create a Clerk webhook pointing to `https://<your-domain>/api/clerk/webhook`.
-6. Subscribe that webhook to `user.created`, `user.updated`, and `user.deleted`.
-7. If you want paid billing, enable it in `config.json` and add the Lemon Squeezy API key and webhook secret to `.env`.
-8. Copy [example/docker-compose.yml](/example/docker-compose.yml) into your deployment directory. It reads container environment variables from `.env` via `env_file`, mounts `config.json` into the container at `/config.json`, and relies on app-side defaults instead of Compose-side env defaulting.
-9. Start the stack with `docker compose up -d`.
+4. Set the required auth env vars in `.env`: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `NEXT_PUBLIC_APP_URL`.
+5. If you want Microsoft sign-in, add `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and optionally `MICROSOFT_TENANT_ID`, then register the redirect URI at `https://<your-domain>/api/auth/callback/microsoft`.
+6. If you want auth emails, enable `auth.emailServiceEnabled` in `config.json`, keep `REDIS_URL` reachable, and optionally override `EMAIL_QUEUE_NAME` / `EMAIL_QUEUE_JOB_NAME`.
+7. Trackables only renders and enqueues auth emails. For actual delivery, run a separate sender process or fork [trackables-email](https://github.com/JeremyMColegrove/trackables-email) as a sideloaded worker that consumes the Redis queue and forwards mail to your SMTP or provider setup.
+8. If you want paid billing, enable it in `config.json` and add the Lemon Squeezy API key and webhook secret to `.env`.
+9. Copy [example/docker-compose.yml](/example/docker-compose.yml) into your deployment directory. It reads container environment variables from `.env` via `env_file`, mounts `config.json` into the container at `/config.json`, and relies on app-side defaults instead of Compose-side env defaulting.
+10. Start the stack with `docker compose up -d`.
 
-After startup, open your app URL and sign in. Clerk handles authentication, while Trackables stores its app data in PostgreSQL and uses Redis for caching and queued work. The app reads deploy-time product/runtime settings from the external JSON config on startup, fills in omitted fields with app defaults, and fails fast only when the file is missing or contains invalid explicit values.
+Required `.env` values for a minimal deployment are `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, and `REDIS_URL`. Optional values include `DATABASE_SSL_MODE`, `DATABASE_SSL_REJECT_UNAUTHORIZED`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID`, `EMAIL_QUEUE_NAME`, `EMAIL_QUEUE_JOB_NAME`, `LEMON_SQUEEZY_API_KEY`, and `LEMON_SQUEEZY_WEBHOOK_SECRET`.
+
+After startup, open your app URL and sign up or sign in. Trackables handles authentication through `better-auth`, stores app data in PostgreSQL, and uses Redis for caching and queued work. The app reads deploy-time product/runtime settings from the external JSON config on startup, fills in omitted fields with app defaults, and fails fast only when the file is missing or contains invalid explicit values.
 
 ## Contributing
 

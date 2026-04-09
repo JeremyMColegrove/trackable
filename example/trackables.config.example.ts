@@ -9,6 +9,11 @@
 type Config = {
   // array of site admin emails, they have access to things like batch process pages
   admins: string[]
+  auth: {
+    // when true, better-auth verification/reset/change-email emails are rendered and queued in Redis
+    // Trackables does not send SMTP directly; a separate worker consumes the queue and delivers the message
+    emailServiceEnabled: boolean
+  }
   features: {
     // if upgrading or viewing plans other than free are enabled. If false, it would show billing coming soon
     subscriptionEnforcementEnabled: boolean
@@ -16,8 +21,8 @@ type Config = {
     workspaceBillingEnabled: boolean
     // if batch process scheduler should be enabled
     batchSchedulerEnabled: boolean
-    // use the standard oauth/clerk api token to access mcp server
-    // if custom, use self managed api tokens
+    // when false, the MCP server accepts OAuth bearer tokens issued by Trackables' built-in auth server
+    // when true, self-managed MCP access tokens are used instead
     customMCPServerTokens: boolean
   }
   // define limits for the system. To tie a limit to a billing tier, pass the billing tier id into billingTier field

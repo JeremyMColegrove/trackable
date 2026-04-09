@@ -12,8 +12,8 @@ import {
   userMembershipsCache,
 } from "@/server/redis/access-control-cache.repository"
 import { subscriptionService } from "@/server/subscriptions/subscription-service.singleton"
-import { assertCanCreateWorkspaceWithCount } from "@/server/workspace-creation-limit"
 import { applyWorkspaceCreationSideEffects } from "@/server/workspace-creation-side-effects"
+import { assertCanCreateWorkspaceWithCount } from "@/server/workspace-creation-limit"
 
 export function buildDefaultWorkspaceName(
   _displayName: string | null,
@@ -150,23 +150,20 @@ export async function createDefaultWorkspaceForUser(input: {
   displayName: string | null
 }) {
   const name = buildDefaultWorkspaceName(input.displayName, input.primaryEmail)
-  const slug = generateWorkspaceSlug(name, input.userId)
-
   const activeWorkspaceId = await userActiveWorkspaceCache.get(input.userId)
-
   const existingMemberships = await getWorkspaceMemberships(input.userId)
 
   if (existingMemberships.length > 0) {
-    const defaultWorkspaceId =
+    const workspaceId =
       existingMemberships.find(
         (membership) => membership.workspaceId === activeWorkspaceId
       )?.workspaceId ?? existingMemberships[0]!.workspaceId
 
-    if (defaultWorkspaceId !== activeWorkspaceId) {
+    if (workspaceId !== activeWorkspaceId) {
       await db
         .update(users)
         .set({
-          activeWorkspaceId: defaultWorkspaceId,
+          activeWorkspaceId: workspaceId,
           updatedAt: new Date(),
         })
         .where(eq(users.id, input.userId))
@@ -174,12 +171,13 @@ export async function createDefaultWorkspaceForUser(input: {
       await userActiveWorkspaceCache.delete(input.userId)
     }
 
-    return defaultWorkspaceId
+    return workspaceId
   }
 
   const workspace = await createWorkspaceForUser({
     userId: input.userId,
     name,
+    setActive: true,
   })
 
   return workspace.id

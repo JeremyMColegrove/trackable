@@ -13,9 +13,18 @@ const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
   numeric: "auto",
 })
 
-export function formatRelativeTime(value: string | null) {
+type TranslateFn = (value: string) => string
+
+function identity(value: string) {
+  return value
+}
+
+export function formatRelativeTime(
+  value: string | null,
+  gt: TranslateFn = identity
+) {
   if (!value) {
-    return "Never"
+    return gt("Never")
   }
 
   const timestamp = new Date(value).getTime()
@@ -64,81 +73,92 @@ export function formatStatusLabel(value: string) {
     .replace(/^./, (char) => char.toUpperCase())
 }
 
-export function formatSubmissionSource(value: string) {
+export function formatSubmissionSource(
+  value: string,
+  gt: TranslateFn = identity
+) {
   switch (value) {
     case "public_link":
-      return "Public link"
+      return gt("Public link")
     case "user_grant":
-      return "Shared user"
+      return gt("Shared user")
     case "email_grant":
-      return "Shared email"
+      return gt("Shared email")
     default:
       return value
   }
 }
 
-export function formatFieldKind(value: string) {
+export function formatFieldKind(value: string, gt: TranslateFn = identity) {
   switch (value) {
     case "rating":
-      return "Quick rating"
+      return gt("Quick rating")
     case "checkboxes":
-      return "Checkboxes"
+      return gt("Checkboxes")
     case "notes":
-      return "Notes"
+      return gt("Notes")
     case "short_text":
-      return "Short text"
+      return gt("Short text")
     case "file_upload":
-      return "File upload"
+      return gt("File upload")
     case "youtube_video":
-      return "YouTube video"
+      return gt("YouTube video")
     default:
       return value
   }
 }
 
-export function formatFieldConfigSummary(config: FormFieldConfig) {
+export function formatFieldConfigSummary(
+  config: FormFieldConfig,
+  gt: TranslateFn = identity
+) {
   switch (config.kind) {
     case "rating":
-      return `${config.scale}-point scale`
+      return `${config.scale}-${gt("point scale")}`
     case "checkboxes":
-      return `${config.options.length} option${config.options.length === 1 ? "" : "s"}`
+      return `${config.options.length} ${gt(
+        config.options.length === 1 ? "option" : "options"
+      )}`
     case "notes":
       return config.maxLength
-        ? `Up to ${config.maxLength} characters`
-        : "Free text"
+        ? `${gt("Up to")} ${config.maxLength} ${gt("characters")}`
+        : gt("Free text")
     case "short_text":
       return config.maxLength
-        ? `Up to ${config.maxLength} characters`
-        : "Single line"
+        ? `${gt("Up to")} ${config.maxLength} ${gt("characters")}`
+        : gt("Single line")
     case "file_upload":
       return config.asset
         ? config.asset.kind === "image"
-          ? "Displays uploaded image"
-          : "Displays downloadable file"
-        : "No asset selected"
+          ? gt("Displays uploaded image")
+          : gt("Displays downloadable file")
+        : gt("No asset selected")
     case "youtube_video":
-      return "Embedded player"
+      return gt("Embedded player")
     default:
-      return "Configured field"
+      return gt("Configured field")
   }
 }
 
-export function formatAnswerValue(value: FormAnswerValue | undefined) {
+export function formatAnswerValue(
+  value: FormAnswerValue | undefined,
+  gt: TranslateFn = identity
+) {
   if (!value) {
-    return "No response"
+    return gt("No response")
   }
 
   switch (value.kind) {
     case "rating":
       return `${value.value}`
     case "checkboxes":
-      return value.value.length > 0 ? value.value.join(", ") : "No selections"
+      return value.value.length > 0 ? value.value.join(", ") : gt("No selections")
     case "notes":
-      return value.value.trim() ? value.value : "No response"
+      return value.value.trim() ? value.value : gt("No response")
     case "short_text":
-      return value.value.trim() ? value.value : "No response"
+      return value.value.trim() ? value.value : gt("No response")
     default:
-      return "No response"
+      return gt("No response")
   }
 }
 
@@ -202,14 +222,17 @@ export function formatUsageFieldLabel(value: string) {
     .replace(/^./, (char) => char.toUpperCase())
 }
 
-export function formatUsageUserAgent(metadata: Record<string, unknown> | null) {
+export function formatUsageUserAgent(
+  metadata: Record<string, unknown> | null,
+  gt: TranslateFn = identity
+) {
   if (!metadata) {
-    return "No user agent"
+    return gt("No user agent")
   }
 
   const userAgent = metadata.userAgent
 
   return typeof userAgent === "string" && userAgent.trim()
     ? userAgent
-    : "No user agent"
+    : gt("No user agent")
 }

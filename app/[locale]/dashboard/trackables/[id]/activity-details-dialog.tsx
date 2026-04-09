@@ -13,7 +13,7 @@ import {
 import { formatAnswerValue, formatSubmissionSource } from "./display-utils"
 import { isAnswerableField } from "@/lib/trackable-form-submission"
 import type { SubmissionRow } from "./table-types"
-import { T } from "gt-next"
+import { T, useGT } from "gt-next"
 
 export function ActivityDetailsDialog({
   submission,
@@ -26,6 +26,7 @@ export function ActivityDetailsDialog({
   onOpenChange?: (open: boolean) => void
   hideTrigger?: boolean
 }) {
+  const gt = useGT()
   const fields = submission.submissionSnapshot.form.fields
     .filter(isAnswerableField)
     .map((field) => ({
@@ -55,14 +56,15 @@ export function ActivityDetailsDialog({
           </SheetTitle>
           <SheetDescription>
             {submission.submitterLabel} <T>submitted via</T>{" "}
-            {formatSubmissionSource(submission.source)}.
+            {formatSubmissionSource(submission.source, gt)}.
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto pt-2 pb-10">
           {fields.map(({ field, answer }, index) => {
-            const answerValue = formatAnswerValue(answer?.value)
+            const answerValue = formatAnswerValue(answer?.value, gt)
             const isNoResponse =
-              answerValue === "No response" || answerValue === "No selections"
+              answerValue === gt("No response") ||
+              answerValue === gt("No selections")
 
             return (
               <div

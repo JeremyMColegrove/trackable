@@ -22,6 +22,11 @@ const SYNTHETIC_DEFAULT_LIMITS_ENTRY: LimitsEntry = {
   ...UNLIMITED_LIMITS,
 }
 
+const LEGACY_LEMON_SQUEEZY_VARIANT_TIER_IDS: Record<string, string> = {
+  "1482028": "plus",
+  "1482029": "pro",
+}
+
 // Internal Map cache — rebuilt whenever the runtime config reference changes.
 let _limitsMapConfig: RuntimeConfig | null = null
 let _limitsMap: Map<string, LimitsEntry> = new Map()
@@ -73,7 +78,15 @@ export function getDefaultTierId(): string {
 /** Returns limits for a given tier ID. Falls back to unlimited limits if not found. */
 export function getLimitsForTier(tierId: string): TierLimits {
   const entry = getLimitsMap().get(tierId)
-  if (!entry) return UNLIMITED_LIMITS
+  if (!entry) {
+    if (tierId === "free") {
+      const defaultEntry = getDefaultLimitsEntry()
+      const { id: _id, billingTier: _billingTier, ...defaultLimits } = defaultEntry
+      return defaultLimits
+    }
+
+    return UNLIMITED_LIMITS
+  }
   const { id: _id, billingTier: _billingTier, ...limits } = entry
   return limits
 }
@@ -87,7 +100,9 @@ export function resolveTierFromVariantId(variantId: string): string | null {
   const billingTier = getRuntimeConfig().billing.tiers.find(
     (t) => t.lemonSqueezyVariantId === variantId
   )
-  if (!billingTier) return null
+  if (!billingTier) {
+    return LEGACY_LEMON_SQUEEZY_VARIANT_TIER_IDS[variantId] ?? null
+  }
 
   const entries = getLimitsEntries()
   const limitsEntry = entries.find((e) => e.billingTier === billingTier.id)

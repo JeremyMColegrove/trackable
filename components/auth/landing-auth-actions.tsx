@@ -1,8 +1,7 @@
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getAuth } from "@/server/get-auth"
 import { cn } from "@/lib/utils"
-import { SignOutButton } from "@clerk/nextjs"
-import { auth } from "@clerk/nextjs/server"
 import { T } from "gt-next"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
@@ -32,9 +31,8 @@ export function LandingAuthActionsSkeleton({
 }
 
 export async function LandingAuthActions({ section }: LandingAuthActionsProps) {
-  const { userId } = await auth()
+  const { userId } = await getAuth()
   const isSignedIn = Boolean(userId)
-  const homeHref = `/`
   const dashboardHref = `/dashboard`
   const signInHref = `/sign-in`
   const signUpHref = `/sign-up`
@@ -49,16 +47,16 @@ export async function LandingAuthActions({ section }: LandingAuthActionsProps) {
                 <T>Dashboard</T>
               </Link>
             </Button>
-            <SignOutButton redirectUrl={homeHref}>
+            <form action="/api/auth/sign-out" method="POST">
               <button
-                type="button"
+                type="submit"
                 className={cn(
                   buttonVariants({ variant: "default", size: "sm" })
                 )}
               >
                 <T>Sign out</T>
               </button>
-            </SignOutButton>
+            </form>
           </>
         ) : (
           <>
@@ -88,11 +86,11 @@ export async function LandingAuthActions({ section }: LandingAuthActionsProps) {
               <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>
-          <SignOutButton redirectUrl={homeHref}>
-            <Button size="lg" variant="outline">
+          <form action="/api/auth/sign-out" method="POST">
+            <Button size="lg" variant="outline" type="submit">
               <T>Sign out</T>
             </Button>
-          </SignOutButton>
+          </form>
         </>
       ) : (
         <>
@@ -112,3 +110,4 @@ export async function LandingAuthActions({ section }: LandingAuthActionsProps) {
     </div>
   )
 }
+
