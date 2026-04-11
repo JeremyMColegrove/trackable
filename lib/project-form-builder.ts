@@ -4,6 +4,12 @@ import type {
   TrackableFormFieldSnapshot,
   TrackableFormSnapshot,
 } from "@/db/schema/types"
+import {
+  ratingConfigSchema,
+  notesConfigSchema,
+  shortTextConfigSchema,
+  trackableAssetReferenceSchema,
+} from "@/lib/form-schemas"
 import { extractYouTubeVideoId } from "@/lib/youtube"
 
 const fieldKindSchema = z.enum([
@@ -15,18 +21,9 @@ const fieldKindSchema = z.enum([
   "youtube_video",
 ])
 
-const ratingFieldConfigSchema = z.object({
-  kind: z.literal("rating"),
-  scale: z.int().min(3).max(10),
-  icon: z.enum(["star", "thumb", "heart"]).optional(),
-  labels: z
-    .object({
-      low: z.string().trim().max(80).optional(),
-      high: z.string().trim().max(80).optional(),
-    })
-    .optional(),
-})
-
+// Checkboxes config uses UI-specific error messages and stricter option
+// id validation (uuid), so it is defined locally rather than reusing the
+// shared checkboxesConfigSchema from lib/form-schemas.
 const checkboxOptionSchema = z.object({
   id: z.string().uuid(),
   label: z.string().trim().min(1).max(80),
@@ -40,8 +37,8 @@ const checkboxesFieldConfigSchema = z
       .array(checkboxOptionSchema)
       .min(1, "Add at least one checkbox option."),
     allowOther: z.boolean().optional(),
-    minSelections: z.int().min(0).optional(),
-    maxSelections: z.int().min(1).optional(),
+    minSelections: z.number().int().min(0).optional(),
+    maxSelections: z.number().int().min(1).optional(),
   })
   .superRefine((value, ctx) => {
     const optionLimit = value.options.length + (value.allowOther ? 1 : 0)
@@ -72,33 +69,8 @@ const checkboxesFieldConfigSchema = z
     }
   })
 
-const notesFieldConfigSchema = z.object({
-  kind: z.literal("notes"),
-  placeholder: z.string().trim().max(160).optional(),
-  maxLength: z.int().min(1).max(5000).optional(),
-})
-
-const shortTextFieldConfigSchema = z.object({
-  kind: z.literal("short_text"),
-  placeholder: z.string().trim().max(160).optional(),
-  maxLength: z.int().min(1).max(500).optional(),
-})
-
-const fileUploadFieldConfigSchema = z.object({
-  kind: z.literal("file_upload"),
-  asset: z
-    .object({
-      id: z.string().uuid(),
-      publicToken: z.string().trim().min(1),
-      kind: z.enum(["image", "file"]),
-      originalFileName: z.string().trim().min(1).max(120),
-      mimeType: z.string().trim().min(1).max(255),
-      imageWidth: z.number().int().positive().nullable(),
-      imageHeight: z.number().int().positive().nullable(),
-    })
-    .nullable(),
-})
-
+// YouTube config adds a domain-specific refine that is not appropriate in the
+// shared data schema, so it is kept local.
 const youtubeVideoFieldConfigSchema = z.object({
   kind: z.literal("youtube_video"),
   url: z
@@ -111,11 +83,16 @@ const youtubeVideoFieldConfigSchema = z.object({
     ),
 })
 
+const fileUploadFieldConfigSchema = z.object({
+  kind: z.literal("file_upload"),
+  asset: trackableAssetReferenceSchema.nullable(),
+})
+
 const formFieldConfigSchema = z.discriminatedUnion("kind", [
-  ratingFieldConfigSchema,
+  ratingConfigSchema,
   checkboxesFieldConfigSchema,
-  notesFieldConfigSchema,
-  shortTextFieldConfigSchema,
+  notesConfigSchema,
+  shortTextConfigSchema,
   fileUploadFieldConfigSchema,
   youtubeVideoFieldConfigSchema,
 ])

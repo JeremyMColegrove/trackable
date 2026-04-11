@@ -1,5 +1,6 @@
 import { DiscordWebhookProvider } from "@/server/webhooks/providers/discord-webhook.provider"
 import { GenericWebhookProvider } from "@/server/webhooks/providers/generic-webhook.provider"
+import { MicrosoftTeamsWebhookProvider } from "@/server/webhooks/providers/microsoft-teams-webhook.provider"
 import type { WebhookProvider } from "@/db/schema/types"
 import type { WebhookProviderContract } from "@/server/webhooks/webhook.types"
 
@@ -29,4 +30,5 @@ export class WebhookProviderRegistry {
 export const webhookProviderRegistry = new WebhookProviderRegistry([
   new GenericWebhookProvider(),
   new DiscordWebhookProvider(),
+  new MicrosoftTeamsWebhookProvider(),
 ])

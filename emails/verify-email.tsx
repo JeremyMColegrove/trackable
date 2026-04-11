@@ -1,3 +1,4 @@
+import Logo from "@/images/macos/AppIcon Small.png";
 import {
 	Body,
 	Button,
@@ -36,14 +37,9 @@ export const VerifyEmail = ({
 			<Head />
 			<Tailwind>
 				<Body className="bg-[#f6f9fc] py-2.5">
-					<Preview>Welcome to Trackables</Preview>
+					<Preview>Verify your email for Trackables</Preview>
 					<Container className="bg-white border border-solid border-[#f0f0f0] p-[45px]">
-						<Img
-							src={`${baseUrl}/static/logo.png`}
-							width="40"
-							height="33"
-							alt="Trackables"
-						/>
+						<Img src={Logo.src} width="40" height="40" alt="Trackables" />
 						<Section>
 							<Text
 								className="text-base font-light text-[#404040] leading-[26px]"
@@ -55,8 +51,8 @@ export const VerifyEmail = ({
 								className="text-base font-light text-[#404040] leading-[26px]"
 								style={serifFontStyle}
 							>
-								Welcome to your new Trackables account! Let's verify your email
-								so you can get tracking! Click here to verify your email:
+								Please verify your email address to continue using Trackables.
+								Click here to verify your email:
 							</Text>
 							<Button
 								className="bg-[#000] rounded text-white text-[15px] no-underline text-center block w-[210px] py-[14px] px-[7px]"
@@ -69,8 +65,8 @@ export const VerifyEmail = ({
 								className="text-base font-light text-[#404040] leading-[26px]"
 								style={serifFontStyle}
 							>
-								If you didn&apos;t create an account, just ignore and delete
-								this message.
+								If you didn&apos;t request this, just ignore and delete this
+								message.
 							</Text>
 							<Text
 								className="text-base font-light text-[#404040] leading-[26px]"

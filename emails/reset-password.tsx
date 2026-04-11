@@ -12,6 +12,7 @@ import {
 	Text,
 } from "@react-email/components";
 
+import Logo from "@/images/macos/AppIcon Small.png";
 // import { emailTailwindConfig } from "@/server/email/tailwind";
 
 export interface TrackablesResetPasswordEmailProps {
@@ -19,7 +20,6 @@ export interface TrackablesResetPasswordEmailProps {
 	resetUrl?: string;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 const serifFontStyle = {
 	fontFamily:
 		'"Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -40,12 +40,7 @@ export const ResetPasswordEmail = ({
 				<Body className="bg-[#f6f9fc] py-2.5">
 					<Preview>Trackables reset your password</Preview>
 					<Container className="bg-white border border-solid border-[#f0f0f0] p-[45px]">
-						<Img
-							src={`${baseUrl}/static/logo.png`}
-							width="40"
-							height="33"
-							alt="Trackables"
-						/>
+						<Img src={Logo.src} width="40" height="40" alt="Trackables" />
 						<Section>
 							<Text
 								className="text-base font-light text-[#404040] leading-[26px]"

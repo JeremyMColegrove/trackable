@@ -1,7 +1,7 @@
 import type {
   LogCountMatchTriggerConfig,
   LogMatchTriggerConfig,
-} from "@/db/schema/types"
+} from "@/server/webhooks/webhook.schemas"
 
 export class WebhookTriggerSearchBuilder {
   buildLogMatchQuery(input: {

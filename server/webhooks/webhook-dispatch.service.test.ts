@@ -5,6 +5,7 @@ import { WebhookDispatchService } from "@/server/webhooks/webhook-dispatch.servi
 import { WebhookProviderRegistry } from "@/server/webhooks/webhook-provider-registry"
 import { DiscordWebhookProvider } from "@/server/webhooks/providers/discord-webhook.provider"
 import { GenericWebhookProvider } from "@/server/webhooks/providers/generic-webhook.provider"
+import { MicrosoftTeamsWebhookProvider } from "@/server/webhooks/providers/microsoft-teams-webhook.provider"
 import type {
   WebhookDeliveryContext,
   WebhookHttpClient,
@@ -54,12 +55,19 @@ class StubDeliveryRepository {
   }
 }
 
-function buildContext(provider: "discord" | "generic"): WebhookDeliveryContext {
+function buildContext(
+  provider: "discord" | "generic" | "microsoft_teams"
+): WebhookDeliveryContext {
   return {
     webhook: {
       id: "webhook-1",
       workspaceId: "workspace-1",
-      name: provider === "generic" ? "Generic webhook" : "Discord webhook",
+      name:
+        provider === "generic"
+          ? "Generic webhook"
+          : provider === "discord"
+            ? "Discord webhook"
+            : "Teams webhook",
       provider,
       enabled: true,
       config:
@@ -72,6 +80,11 @@ function buildContext(provider: "discord" | "generic"): WebhookDeliveryContext {
                 "x-custom": "true",
               },
             }
+          : provider === "microsoft_teams"
+            ? {
+                provider: "microsoft_teams",
+                url: "https://outlook.office.com/webhook/123/abc",
+              }
           : {
               provider: "discord",
               url: "https://discord.com/api/webhooks/123/abc",
@@ -189,6 +202,38 @@ test("Discord webhook delivery sends an embed-shaped payload", async () => {
     body.embeds?.[0]?.fields[4]?.value ?? "",
     /\[Open filtered logs\]\(https:\/\/trackables\.org\/dashboard\/trackables\/trackable-1\?q=metadata\.logId%3A%22log-123%22\)/
   )
+})
+
+test("Teams webhook delivery sends a message-card payload", async () => {
+  const httpClient = new StubHttpClient()
+  const deliveryRepository = new StubDeliveryRepository()
+  const service = new WebhookDispatchService(
+    new WebhookProviderRegistry([new MicrosoftTeamsWebhookProvider()]),
+    httpClient,
+    deliveryRepository as never
+  )
+
+  const result = await service.dispatch(buildContext("microsoft_teams"))
+
+  assert.equal(result.ok, true)
+  assert.equal(result.statusCode, 204)
+  assert.equal(result.failureKind, null)
+  assert.equal(
+    httpClient.requests[0]?.url,
+    "https://outlook.office.com/webhook/123/abc"
+  )
+
+  const body = JSON.parse(httpClient.requests[0]?.body ?? "{}") as {
+    "@type"?: string
+    title?: string
+    sections?: Array<{ facts: Array<{ name: string; value: string }> }>
+  }
+
+  assert.equal(body["@type"], "MessageCard")
+  assert.equal(body.title, "Webhook fired: Teams webhook")
+  assert.equal(body.sections?.[0]?.facts[0]?.name, "Trackable")
+  assert.equal(body.sections?.[0]?.facts[2]?.name, "Log ID")
+  assert.equal(body.sections?.[0]?.facts[2]?.value, "log-123")
 })
 
 test("Discord webhook delivery omits invalid usernames", async () => {

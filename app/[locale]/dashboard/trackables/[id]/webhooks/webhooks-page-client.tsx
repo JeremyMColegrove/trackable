@@ -45,6 +45,7 @@ export function WebhooksPageClient() {
 
   const discordWebhook = webhooks?.find((w) => w.provider === "discord")
   const genericWebhook = webhooks?.find((w) => w.provider === "generic")
+  const teamsWebhook = webhooks?.find((w) => w.provider === "microsoft_teams")
 
   if (!canManageWebhooks) {
     return (
@@ -62,7 +63,7 @@ export function WebhooksPageClient() {
   return (
     <TrackablePageFrame title={gt("Webhooks")} description={description}>
       <Tabs defaultValue="generic" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+        <TabsList className="grid w-full max-w-[600px] grid-cols-3">
           <TabsTrigger value="generic">
             <T>General Webhook</T>
             <StatusDot webhook={genericWebhook} />
@@ -70,6 +71,10 @@ export function WebhooksPageClient() {
           <TabsTrigger value="discord">
             <T>Discord Webhook</T>
             <StatusDot webhook={discordWebhook} />
+          </TabsTrigger>
+          <TabsTrigger value="microsoft_teams">
+            <T>Microsoft Teams</T>
+            <StatusDot webhook={teamsWebhook} />
           </TabsTrigger>
         </TabsList>
         <TabsContent value="generic">
@@ -83,6 +88,13 @@ export function WebhooksPageClient() {
           <TrackableWebhookTab
             trackableId={trackable.id}
             provider="discord"
+            canManageWebhooks={canManageWebhooks}
+          />
+        </TabsContent>
+        <TabsContent value="microsoft_teams">
+          <TrackableWebhookTab
+            trackableId={trackable.id}
+            provider="microsoft_teams"
             canManageWebhooks={canManageWebhooks}
           />
         </TabsContent>

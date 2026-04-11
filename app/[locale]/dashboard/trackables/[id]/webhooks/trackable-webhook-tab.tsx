@@ -45,7 +45,7 @@ export function TrackableWebhookTab({
   canManageWebhooks = true,
 }: {
   trackableId: string
-  provider: "generic" | "discord"
+  provider: "generic" | "discord" | "microsoft_teams"
   canManageWebhooks?: boolean
 }) {
   const trpc = useTRPC()

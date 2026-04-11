@@ -6,27 +6,31 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Microsoft } from "@/icons/microsoft"
 import {
+  buildMicrosoftRecoveryUrl,
   getAuthRedirectQuery,
   resolveSafeAuthRedirectPath,
 } from "@/lib/auth-redirect"
 import { signIn } from "@/lib/auth-client"
 import { T } from "gt-next"
 import { Loader2 } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export function SignInPageClient({
   authEmailServiceEnabled,
+  initialEmail,
   redirectUrl,
   showMicrosoftSignIn,
 }: {
   authEmailServiceEnabled: boolean
+  initialEmail: string
   redirectUrl: string
   showMicrosoftSignIn: boolean
 }) {
   const router = useRouter()
   const safeRedirectUrl = resolveSafeAuthRedirectPath(redirectUrl)
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -57,6 +61,7 @@ export function SignInPageClient({
     await signIn.social({
       provider: "microsoft",
       callbackURL: safeRedirectUrl,
+      errorCallbackURL: buildMicrosoftRecoveryUrl(safeRedirectUrl),
     })
   }
 
@@ -134,12 +139,12 @@ export function SignInPageClient({
             />
             {authEmailServiceEnabled ? (
               <div className="text-right">
-                <a
+                <Link
                   href="/forgot-password"
                   className="text-xs text-muted-foreground underline-offset-4 hover:underline"
                 >
                   <T>Forgot password?</T>
-                </a>
+                </Link>
               </div>
             ) : null}
           </div>
@@ -159,7 +164,7 @@ export function SignInPageClient({
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          <T>Don't have an account?</T>{" "}
+          <T>Don&apos;t have an account?</T>{" "}
           <a
             href={`/sign-up${getAuthRedirectQuery(safeRedirectUrl)}`}
             className="underline-offset-4 hover:underline"

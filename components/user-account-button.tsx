@@ -49,7 +49,7 @@ export function UserAccountButton() {
           >
             <UserAvatar
               className="size-9"
-              fallbackClassName="bg-linear-to-br from-violet-500 via-indigo-500 to-sky-500 text-xs font-semibold text-white"
+              fallbackClassName="text-xs"
               imageUrl={user?.image}
               name={user?.name}
               email={user?.email}
@@ -61,7 +61,7 @@ export function UserAccountButton() {
             <DropdownMenuLabel className="px-2 py-2 text-foreground">
               <div className="flex items-center gap-3">
                 <UserAvatar
-                  fallbackClassName="bg-linear-to-br from-violet-500 via-indigo-500 to-sky-500 text-sm font-semibold text-white"
+                  fallbackClassName="text-sm"
                   imageUrl={user.image}
                   name={user.name}
                   email={user.email}

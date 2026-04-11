@@ -2,7 +2,7 @@ import type {
   LogCountMatchTriggerConfig,
   LogMatchTriggerConfig,
   SurveyResponseReceivedTriggerConfig,
-} from "@/db/schema/types"
+} from "@/server/webhooks/webhook.schemas"
 import { resolveWebhookLogId } from "@/server/webhooks/webhook-log"
 import { webhookTriggerSearchBuilder } from "@/server/webhooks/webhook-trigger-search"
 import type {

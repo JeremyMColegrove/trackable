@@ -15,6 +15,7 @@ import {
   getRequiredUserId,
   protectedProcedure,
 } from "@/server/api/trpc"
+import { listEnrichedAccountSessions } from "@/server/services/account-session-enrichment"
 import {
   changeEmailInputSchema,
   changePasswordInputSchema,
@@ -136,12 +137,16 @@ export const meRouter = createTRPCRouter({
       return result
     }),
 
-  listSessions: protectedProcedure.query(async () => {
-    return (
-      (await auth.api.listSessions({
-        headers: new Headers(await headers()),
-      })) ?? []
-    )
+  listSessions: protectedProcedure.query(async ({ ctx }) => {
+    const requestHeaders = new Headers(await headers())
+
+    return listEnrichedAccountSessions({
+      currentSessionToken: ctx.auth.session?.session?.token ?? null,
+      listSessions: async () =>
+        (await auth.api.listSessions({
+          headers: requestHeaders,
+        })) ?? [],
+    })
   }),
 
   revokeSession: protectedProcedure

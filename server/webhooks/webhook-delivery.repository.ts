@@ -3,6 +3,7 @@ import { webhookDeliveryAttempts } from "@/db/schema"
 import type {
   WebhookDeliveryRequestPayload,
   WebhookDeliveryResponsePayload,
+  WebhookProvider,
 } from "@/db/schema/types"
 
 export class WebhookDeliveryRepository {
@@ -12,7 +13,7 @@ export class WebhookDeliveryRepository {
     trackableId: string
     usageEventId?: string | null
     submissionId?: string | null
-    provider: "discord" | "generic"
+    provider: WebhookProvider
     status: "failed" | "success"
     requestPayload: WebhookDeliveryRequestPayload
     responsePayload: WebhookDeliveryResponsePayload | null

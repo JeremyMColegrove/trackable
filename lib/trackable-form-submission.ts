@@ -12,7 +12,7 @@ import type {
   TrackableFormSnapshot,
   TrackableSubmissionSnapshot,
   YouTubeVideoFieldConfig,
-} from "@/db/schema/types"
+} from "@/lib/form-schemas"
 
 const otherCheckboxValue = "__other__"
 

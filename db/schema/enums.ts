@@ -46,6 +46,7 @@ export const apiKeyStatusEnum = pgEnum("api_key_status", ["active", "revoked"])
 export const webhookProviderEnum = pgEnum("webhook_provider", [
   "generic",
   "discord",
+  "microsoft_teams",
 ])
 
 export const webhookTriggerTypeEnum = pgEnum("webhook_trigger_type", [

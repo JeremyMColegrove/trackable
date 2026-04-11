@@ -7,7 +7,9 @@ import { RedirectIfSignedIn } from "@/components/auth/redirect-if-signed-in"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Microsoft } from "@/icons/microsoft"
 import {
+  buildMicrosoftRecoveryUrl,
   getAuthRedirectQuery,
   resolveSafeAuthRedirectPath,
 } from "@/lib/auth-redirect"
@@ -66,6 +68,7 @@ export function SignUpPageClient({
     await signIn.social({
       provider: "microsoft",
       callbackURL: safeRedirectUrl,
+      errorCallbackURL: buildMicrosoftRecoveryUrl(safeRedirectUrl),
     })
   }
 
@@ -109,7 +112,7 @@ export function SignUpPageClient({
               {isMicrosoftPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
-                <MicrosoftIcon className="mr-2 size-4" />
+                <Microsoft className="mr-2 size-4" />
               )}
               <T>Continue with Microsoft</T>
             </Button>
@@ -199,21 +202,5 @@ export function SignUpPageClient({
         </p>
       </div>
     </>
-  )
-}
-
-function MicrosoftIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 21 21"
-      fill="none"
-      aria-hidden="true"
-    >
-      <rect x="1" y="1" width="9" height="9" fill="#F25022" />
-      <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
-      <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
-      <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
-    </svg>
   )
 }

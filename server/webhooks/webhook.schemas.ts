@@ -40,9 +40,27 @@ export const discordWebhookConfigSchema = z.object({
   avatarUrl: z.url().nullable().optional(),
 })
 
+export const microsoftTeamsWebhookConfigSchema = z.object({
+  provider: z.literal("microsoft_teams"),
+  url: z.string().trim().url().superRefine((value, ctx) => {
+    try {
+      validateWebhookTargetUrl(value)
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Webhook target is invalid.",
+      })
+    }
+  }),
+})
+
 export const webhookProviderConfigSchema = z.discriminatedUnion("provider", [
   genericWebhookConfigSchema,
   discordWebhookConfigSchema,
+  microsoftTeamsWebhookConfigSchema,
 ])
 
 export const logMatchTriggerConfigSchema = z.object({
@@ -100,6 +118,22 @@ export const attachWebhookToTrackableInputSchema = z.object({
   trackableId: z.string().uuid(),
   webhookId: z.string().uuid(),
 })
+
+export type DiscordWebhookConfig = z.infer<typeof discordWebhookConfigSchema>
+export type GenericWebhookConfig = z.infer<typeof genericWebhookConfigSchema>
+export type MicrosoftTeamsWebhookConfig = z.infer<
+  typeof microsoftTeamsWebhookConfigSchema
+>
+export type WebhookProviderConfig = z.infer<typeof webhookProviderConfigSchema>
+
+export type LogMatchTriggerConfig = z.infer<typeof logMatchTriggerConfigSchema>
+export type LogCountMatchTriggerConfig = z.infer<
+  typeof logCountMatchTriggerConfigSchema
+>
+export type SurveyResponseReceivedTriggerConfig = z.infer<
+  typeof surveyResponseReceivedTriggerConfigSchema
+>
+export type WebhookTriggerConfig = z.infer<typeof webhookTriggerConfigSchema>
 
 export type CreateWebhookInput = z.infer<typeof createWebhookInputSchema>
 export type UpdateWebhookInput = z.infer<typeof updateWebhookInputSchema>

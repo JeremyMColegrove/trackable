@@ -2,26 +2,49 @@ import "server-only";
 
 import { getRuntimeConfig } from "@/lib/runtime-config";
 import {
-	sendChangeEmail,
 	sendResetPasswordEmail,
 	sendVerifyEmail,
 } from "@/server/email";
 
 type VerifyEmailData = Parameters<typeof sendVerifyEmail>[0];
 type ResetPasswordEmailData = Parameters<typeof sendResetPasswordEmail>[0];
-type ChangeEmailData = Parameters<typeof sendChangeEmail>[0];
 
 type AuthEmailService = {
 	sendVerifyEmail(data: VerifyEmailData): Promise<unknown>;
 	sendResetPasswordEmail(data: ResetPasswordEmailData): Promise<unknown>;
-	sendChangeEmail(data: ChangeEmailData): Promise<unknown>;
 };
+
+function buildVerifiedChangeEmailCallback(url: string) {
+	try {
+		const verificationUrl = new URL(url);
+		const callbackURL = verificationUrl.searchParams.get("callbackURL");
+
+		if (!callbackURL) {
+			return url;
+		}
+
+		const parsedCallbackURL = new URL(callbackURL, "http://localhost");
+
+		if (!parsedCallbackURL.pathname.endsWith("/auth/change-email")) {
+			return url;
+		}
+
+		parsedCallbackURL.searchParams.set("complete", "1");
+		verificationUrl.searchParams.set(
+			"callbackURL",
+			`${parsedCallbackURL.pathname}${parsedCallbackURL.search}${parsedCallbackURL.hash}`,
+		);
+
+		return verificationUrl.toString();
+	} catch {
+		return url;
+	}
+}
 
 function getAuthEmailService(): AuthEmailService {
 	return {
 		sendVerifyEmail,
 		sendResetPasswordEmail,
-		sendChangeEmail,
 	};
 }
 
@@ -65,7 +88,7 @@ export function buildAuthEmailSettings(
 				await emailService.sendVerifyEmail({
 					email: user.email,
 					name: user.name ?? undefined,
-					verificationUrl: url,
+					verificationUrl: buildVerifiedChangeEmailCallback(url),
 				});
 			},
 		},
@@ -87,26 +110,7 @@ export function buildAuthEmailSettings(
 			},
 		},
 		user: {
-			changeEmail: {
-				...user.changeEmail,
-				sendChangeEmailConfirmation: async ({
-					user,
-					newEmail,
-					url,
-				}: {
-					user: { email: string; name?: string | null };
-					newEmail: string;
-					url: string;
-					token: string;
-				}) => {
-					await emailService.sendChangeEmail({
-						email: user.email,
-						name: user.name ?? undefined,
-						newEmail,
-						confirmationUrl: url,
-					});
-				},
-			},
+			changeEmail: user.changeEmail,
 		},
 	};
 }

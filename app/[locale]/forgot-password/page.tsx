@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { Suspense } from "react"
+import { AuthPageShell } from "@/components/auth/auth-page-shell"
 import { getPublicAppConfig } from "@/lib/public-app-config"
 import { createNoIndexMetadata } from "@/lib/seo"
-import { LandingPage } from "../landing-page"
-import { AuthModal } from "@/components/auth/auth-modal"
 import { ForgotPasswordClient } from "./forgot-password-client"
 
 export const metadata: Metadata = createNoIndexMetadata({
@@ -11,17 +11,21 @@ export const metadata: Metadata = createNoIndexMetadata({
   description: "Reset your Trackables account password.",
 })
 
-export default function ForgotPasswordPage() {
+async function ForgotPasswordPageContent() {
+  await connection()
   const { authEmailServiceEnabled } = getPublicAppConfig()
 
   return (
+    <AuthPageShell>
+      <ForgotPasswordClient authEmailServiceEnabled={authEmailServiceEnabled} />
+    </AuthPageShell>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
     <Suspense fallback={null}>
-      <LandingPage />
-      <AuthModal>
-        <ForgotPasswordClient
-          authEmailServiceEnabled={authEmailServiceEnabled}
-        />
-      </AuthModal>
+      <ForgotPasswordPageContent />
     </Suspense>
   )
 }

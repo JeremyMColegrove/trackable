@@ -1,4 +1,4 @@
-const DEFAULT_AUTH_REDIRECT_PATH = "/dashboard"
+export const DEFAULT_AUTH_REDIRECT_PATH = "/dashboard"
 
 type ResolveSafeAuthRedirectPathOptions = {
   defaultPath?: string
@@ -53,4 +53,16 @@ export function getAuthRedirectQuery(redirectPath: string) {
   return safeRedirectPath === DEFAULT_AUTH_REDIRECT_PATH
     ? ""
     : `?redirect_url=${encodeURIComponent(safeRedirectPath)}`
+}
+
+const AUTH_RECOVERY_PATH = "/auth/recovery"
+
+export function buildMicrosoftRecoveryUrl(redirectUrl: string) {
+  const safeRedirectUrl = resolveSafeAuthRedirectPath(redirectUrl)
+
+  if (safeRedirectUrl === DEFAULT_AUTH_REDIRECT_PATH) {
+    return `${AUTH_RECOVERY_PATH}?provider=microsoft`
+  }
+
+  return `${AUTH_RECOVERY_PATH}?provider=microsoft&redirect_url=${encodeURIComponent(safeRedirectUrl)}`
 }

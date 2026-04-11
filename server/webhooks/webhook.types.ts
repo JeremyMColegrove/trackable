@@ -1,12 +1,14 @@
 import type {
   SubmissionMetadata,
-  TrackableSubmissionSnapshot,
   WebhookDeliveryRequestPayload,
   WebhookDeliveryResponsePayload,
   WebhookProvider,
+} from "@/db/schema/types"
+import type { TrackableSubmissionSnapshot } from "@/lib/form-schemas"
+import type {
   WebhookProviderConfig,
   WebhookTriggerConfig,
-} from "@/db/schema/types"
+} from "@/server/webhooks/webhook.schemas"
 
 export interface WebhookUsageEvent {
   kind: "usage_event"

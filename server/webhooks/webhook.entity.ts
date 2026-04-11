@@ -1,6 +1,7 @@
 import {
   discordWebhookConfigSchema,
   genericWebhookConfigSchema,
+  microsoftTeamsWebhookConfigSchema,
 } from "@/server/webhooks/webhook.schemas"
 import { WebhookTriggerRule } from "@/server/webhooks/webhook-trigger-rule"
 import type { WorkspaceWebhookRecord } from "@/server/webhooks/webhook.types"
@@ -46,6 +47,10 @@ export class WorkspaceWebhookEntity {
   get providerConfig() {
     if (this.record.provider === "discord") {
       return discordWebhookConfigSchema.parse(this.record.config)
+    }
+
+    if (this.record.provider === "microsoft_teams") {
+      return microsoftTeamsWebhookConfigSchema.parse(this.record.config)
     }
 
     return genericWebhookConfigSchema.parse(this.record.config)

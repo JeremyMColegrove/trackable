@@ -8,6 +8,13 @@
       "when": 1775691948974,
       "tag": "0000_charming_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775827880010,
+      "tag": "0001_wooden_blonde_phantom",
+      "breakpoints": true
     }
   ]
 }

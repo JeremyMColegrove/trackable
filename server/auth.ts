@@ -24,6 +24,9 @@ import {
 } from "@/server/user-provisioning"
 import { getAppOrigin, getMcpResourceUrl } from "@/lib/mcp-oauth"
 
+const AUTH_RECOVERY_PATH = "/auth/recovery"
+const appOrigin = getAppOrigin()
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -55,8 +58,13 @@ export const auth = betterAuth({
     },
   },
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: getAppOrigin(),
+  baseURL: appOrigin,
   basePath: "/api/auth",
+  onAPIError: appOrigin
+    ? {
+        errorURL: `${appOrigin}${AUTH_RECOVERY_PATH}`,
+      }
+    : undefined,
   ...buildAuthEmailSettings(),
   socialProviders: {
     microsoft: process.env.MICROSOFT_CLIENT_ID
@@ -90,7 +98,7 @@ export const auth = betterAuth({
         // verification use the same value. Without this, better-auth defaults
         // the iss to ctx.context.baseURL which includes /api/auth, causing a
         // JWTClaimValidationFailed "unexpected iss claim value" on MCP token verify.
-        issuer: getAppOrigin(),
+        issuer: appOrigin,
       },
     }), // required peer for oauthProvider
     haveIBeenPwned(),

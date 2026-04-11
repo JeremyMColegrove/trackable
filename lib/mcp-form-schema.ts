@@ -16,26 +16,14 @@ import { z } from "zod"
 
 import type { McpValidationError } from "@/server/mcp/errors/mcp-errors"
 import { zodPathToString } from "@/server/mcp/errors/mcp-errors"
+import { ratingConfigSchema } from "@/lib/form-schemas"
 
 // ---------------------------------------------------------------------------
 // Field config schemas
 // ---------------------------------------------------------------------------
 
-const mcpRatingConfigSchema = z.object({
-  kind: z.literal("rating"),
-  scale: z
-    .number()
-    .int("scale must be an integer")
-    .min(3, "scale must be at least 3")
-    .max(10, "scale must be at most 10"),
-  icon: z.enum(["star", "thumb", "heart"]).optional(),
-  labels: z
-    .object({
-      low: z.string().trim().max(80).optional(),
-      high: z.string().trim().max(80).optional(),
-    })
-    .optional(),
-})
+// Rating config is identical to the shared schema; import it directly.
+const mcpRatingConfigSchema = ratingConfigSchema
 
 const mcpCheckboxOptionSchema = z.object({
   label: z.string().trim().min(1, "option label must not be empty").max(80),

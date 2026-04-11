@@ -3,6 +3,7 @@ import test from "node:test"
 
 import { DiscordWebhookProvider } from "@/server/webhooks/providers/discord-webhook.provider"
 import { GenericWebhookProvider } from "@/server/webhooks/providers/generic-webhook.provider"
+import { MicrosoftTeamsWebhookProvider } from "@/server/webhooks/providers/microsoft-teams-webhook.provider"
 import type {
   WebhookDeliveryContext,
   WebhookSurveyResponseEvent,
@@ -94,6 +95,29 @@ function makeDiscordContext(
         provider: "discord",
         url: "https://discord.com/api/webhooks/999/token",
         username: "Trackable Bot",
+      },
+      triggerRules: [LOG_MATCH_RULE],
+    },
+    triggerRule: LOG_MATCH_RULE,
+    event: BASE_USAGE_EVENT,
+    match: BASE_MATCH,
+    ...overrides,
+  }
+}
+
+function makeMicrosoftTeamsContext(
+  overrides: Partial<WebhookDeliveryContext> = {}
+): WebhookDeliveryContext {
+  return {
+    webhook: {
+      id: "webhook-1",
+      workspaceId: "workspace-1",
+      name: "My Teams Webhook",
+      provider: "microsoft_teams",
+      enabled: true,
+      config: {
+        provider: "microsoft_teams",
+        url: "https://outlook.office.com/webhook/999/token",
       },
       triggerRules: [LOG_MATCH_RULE],
     },
@@ -564,5 +588,77 @@ test("DiscordWebhookProvider: throws when given a non-discord config", () => {
   assert.throws(
     () => provider.buildRequest(ctx),
     /DiscordWebhookProvider received a non-discord webhook/
+  )
+})
+
+// ---------------------------------------------------------------------------
+// MicrosoftTeamsWebhookProvider
+// ---------------------------------------------------------------------------
+
+test("MicrosoftTeamsWebhookProvider: POST to configured URL with JSON content-type", () => {
+  const provider = new MicrosoftTeamsWebhookProvider()
+  const { request } = provider.buildRequest(makeMicrosoftTeamsContext())
+
+  assert.equal(request.url, "https://outlook.office.com/webhook/999/token")
+  assert.equal(request.method, "POST")
+  assert.equal(request.headers["content-type"], "application/json")
+})
+
+test("MicrosoftTeamsWebhookProvider: usage_event payload includes compact facts", () => {
+  const provider = new MicrosoftTeamsWebhookProvider()
+  const { request } = provider.buildRequest(makeMicrosoftTeamsContext())
+  const body = JSON.parse(request.body) as {
+    title: string
+    text: string
+    sections: Array<{ facts: Array<{ name: string; value: string }> }>
+  }
+  const factNames = body.sections[0]!.facts.map((fact) => fact.name)
+
+  assert.equal(body.title, "Webhook fired: My Teams Webhook")
+  assert.equal(body.text, "Matched filter: level:error")
+  assert.deepEqual(factNames, [
+    "Trackable",
+    "Trigger",
+    "Log ID",
+    "Event ID",
+    "Timestamp",
+  ])
+  assert.equal(body.sections[0]!.facts[2]!.value, "log-abc")
+})
+
+test("MicrosoftTeamsWebhookProvider: survey_response payload includes submitter facts", () => {
+  const provider = new MicrosoftTeamsWebhookProvider()
+  const ctx = makeMicrosoftTeamsContext()
+  ctx.triggerRule = SURVEY_RULE
+  ctx.event = BASE_SURVEY_EVENT
+  const { request } = provider.buildRequest(ctx)
+  const body = JSON.parse(request.body) as {
+    sections: Array<{ facts: Array<{ name: string; value: string }> }>
+  }
+  const facts = body.sections[0]!.facts
+
+  assert.equal(
+    facts.find((fact) => fact.name === "Submitter")?.value,
+    "alice@example.com"
+  )
+  assert.equal(
+    facts.find((fact) => fact.name === "Source")?.value,
+    "public_link"
+  )
+  assert.equal(facts.find((fact) => fact.name === "Response ID")?.value, "resp-1")
+})
+
+test("MicrosoftTeamsWebhookProvider: throws when given a non-Teams config", () => {
+  const provider = new MicrosoftTeamsWebhookProvider()
+  const ctx = makeMicrosoftTeamsContext()
+  ctx.webhook.config = {
+    provider: "generic",
+    url: "https://example.com/hook",
+    headers: {},
+  } as never
+
+  assert.throws(
+    () => provider.buildRequest(ctx),
+    /MicrosoftTeamsWebhookProvider received a non-Teams webhook/
   )
 })

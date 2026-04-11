@@ -38,7 +38,10 @@ export function UserAvatar({
       {imageUrl ? <AvatarImage src={imageUrl} alt={alt ?? name ?? email ?? ""} /> : null}
       <AvatarFallback
         delayMs={imageUrl ? 300 : undefined}
-        className={cn(fallbackClassName)}
+        className={cn(
+          "bg-linear-to-br from-violet-500 via-indigo-500 to-sky-500 font-semibold text-white",
+          fallbackClassName,
+        )}
       >
         {getInitials(name, email)}
       </AvatarFallback>

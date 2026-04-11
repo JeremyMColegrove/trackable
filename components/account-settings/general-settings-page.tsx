@@ -1,46 +1,27 @@
 "use client";
 
+import {
+	type SignedInDevice,
+	SignedInDevicesSection,
+} from "@/components/account-settings/signed-in-devices-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, signOut, useSession } from "@/lib/auth-client";
-import { resolveSafeAuthRedirectPath } from "@/lib/auth-redirect";
 import { useTRPC, useTRPCClient } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { T, useGT, useLocale } from "gt-next";
-import { LocaleSelector, useSetLocale } from "gt-next/client";
-import { LoaderCircle, LogOut, Pencil } from "lucide-react";
+import { LocaleSelector } from "gt-next/client";
+import { LoaderCircle, LogOut, Moon, Pencil, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 import { toast } from "sonner";
 
-function formatLastLogin(value: Date | string | null) {
-	if (!value) {
-		return "Unavailable";
-	}
-
-	return new Intl.DateTimeFormat(undefined, {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(new Date(value));
-}
-
-function formatLocation(ipAddress: string | null) {
-	return ipAddress || "Unavailable";
-}
-
-function formatLoginMethod(value: string | null) {
-	if (!value) {
-		return "Unavailable";
-	}
-
-	return value.charAt(0).toUpperCase() + value.slice(1);
-}
+const EMAIL_CHANGE_PARAM = "newEmail";
 
 function getErrorMessage(error: unknown, fallback: string) {
 	if (
@@ -54,18 +35,6 @@ function getErrorMessage(error: unknown, fallback: string) {
 	}
 
 	return fallback;
-}
-
-function getLanguageLabel(locale: string, displayLocale: string) {
-	try {
-		const formatter = new Intl.DisplayNames([displayLocale], {
-			type: "language",
-		});
-
-		return formatter.of(locale) ?? locale;
-	} catch {
-		return locale;
-	}
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
@@ -109,31 +78,18 @@ function SettingsSection({
 	);
 }
 
-type AccountDetailRowProps = {
-	label: React.ReactNode;
-	value: React.ReactNode;
-};
-
-function AccountDetailRow({ label, value }: AccountDetailRowProps) {
-	return (
-		<div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-			<dt className="text-sm text-muted-foreground">{label}</dt>
-			<dd className="text-sm font-medium text-foreground">{value}</dd>
-		</div>
-	);
-}
-
 export function GeneralSettingsPage() {
 	const gt = useGT();
 	const locale = useLocale();
-	const setLocale = useSetLocale();
 	const { resolvedTheme, setTheme } = useTheme();
 	const trpc = useTRPC();
 	const trpcClient = useTRPCClient();
 	const queryClient = useQueryClient();
 	const { refetch: refetchSession } = useSession();
 	const meQuery = useQuery(trpc.me.get.queryOptions());
+	const sessionsQuery = useQuery(trpc.me.listSessions.queryOptions());
 	const meQueryKey = trpc.me.get.queryKey();
+	const sessionsQueryKey = trpc.me.listSessions.queryKey();
 	const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
 	const profile = meQuery.data?.appProfile;
@@ -169,8 +125,9 @@ export function GeneralSettingsPage() {
 		await Promise.all([
 			refetchSession(),
 			queryClient.invalidateQueries({ queryKey: meQueryKey }),
+			queryClient.invalidateQueries({ queryKey: sessionsQueryKey }),
 		]);
-	}, [meQueryKey, queryClient, refetchSession]);
+	}, [meQueryKey, queryClient, refetchSession, sessionsQueryKey]);
 
 	const updateName = useMutation({
 		mutationFn: async (nextName: string) => {
@@ -206,10 +163,15 @@ export function GeneralSettingsPage() {
 				throw new Error("Email is required.");
 			}
 
+			const callbackURL = new URL(window.location.origin);
+			callbackURL.pathname = `/${locale}/auth/change-email`;
+			callbackURL.searchParams.set(
+				EMAIL_CHANGE_PARAM,
+				trimmedEmail.toLowerCase(),
+			);
+
 			const result = await authClient.changeEmail({
-				callbackURL: resolveSafeAuthRedirectPath(window.location.href, {
-					origin: window.location.origin,
-				}),
+				callbackURL: `${callbackURL.pathname}${callbackURL.search}${callbackURL.hash}`,
 				newEmail: trimmedEmail,
 			});
 
@@ -224,7 +186,9 @@ export function GeneralSettingsPage() {
 		},
 		onSuccess: async () => {
 			setIsEditingEmail(false);
-			toast.success(gt("Check your email to finish updating your address."));
+			toast.success(
+				gt("Check your new email to finish changing your address."),
+			);
 			await refreshAccountState();
 		},
 	});
@@ -271,6 +235,31 @@ export function GeneralSettingsPage() {
 					},
 				},
 			});
+		},
+	});
+
+	const revokeSession = useMutation({
+		mutationFn: async (session: SignedInDevice) => {
+			if (session.isCurrent) {
+				await signOut({
+					fetchOptions: {
+						onSuccess: () => {
+							window.location.href = "/";
+						},
+					},
+				});
+				return;
+			}
+
+			await trpcClient.me.revokeSession.mutate({
+				token: session.token,
+			});
+		},
+		onError: (error) => {
+			toast.error(getErrorMessage(error, "Unable to log out that device."));
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: sessionsQueryKey });
 		},
 	});
 
@@ -581,41 +570,43 @@ export function GeneralSettingsPage() {
 									<T>Light</T>
 								)}
 							</span>
-							<Switch
-								checked={isThemeReady && resolvedTheme === "dark"}
-								onCheckedChange={(checked) => {
-									setTheme(checked ? "dark" : "light");
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								onClick={() => {
+									setTheme(
+										isThemeReady && resolvedTheme === "dark" ? "light" : "dark",
+									);
 								}}
 								disabled={!isThemeReady}
 								aria-label={gt("Toggle dark mode")}
-							/>
+							>
+								{isThemeReady && resolvedTheme === "dark" ? <Moon /> : <Sun />}
+							</Button>
 						</div>
 					</div>
 				</div>
 			</SettingsSection>
 			<SettingsSection
-				title={<T>Account details</T>}
-				description={<T>Recent sign-in information for this account.</T>}
+				title={<T>Signed-in devices</T>}
+				description={
+					<T>
+						Review active sessions, their locations, and sign out any device.
+					</T>
+				}
 			>
-				<dl className="divide-y">
-					<AccountDetailRow
-						label={<T>Last login</T>}
-						value={formatLastLogin(meQuery.data?.lastLoginAt ?? null)}
+				<div className="mb-4">
+					<SignedInDevicesSection
+						isLoading={sessionsQuery.isLoading && !sessionsQuery.data}
+						isPendingRevoke={revokeSession.isPending}
+						sessions={sessionsQuery.data ?? []}
 					/>
-					<AccountDetailRow
-						label={<T>Sign-in method</T>}
-						value={formatLoginMethod(meQuery.data?.lastLoginMethod ?? null)}
-					/>
-					<AccountDetailRow
-						label={<T>Location</T>}
-						value={formatLocation(meQuery.data?.lastLoginIpAddress ?? null)}
-					/>
-				</dl>
-				<Separator className="my-4" />
+				</div>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<Button
 						type="button"
-						variant="outline"
+						variant="destructive"
 						onClick={() => signOutEverywhere.mutate()}
 						disabled={signOutEverywhere.isPending}
 					>

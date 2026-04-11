@@ -95,7 +95,7 @@ const ruleSchema = z
 const formSchema = z
   .object({
     enabled: z.boolean(),
-    provider: z.enum(["generic", "discord"]),
+    provider: z.enum(["generic", "discord", "microsoft_teams"]),
     url: z.string().trim(),
     username: z.string().optional(),
     secret: z.string().optional(),
@@ -136,7 +136,7 @@ export function WebhookForm({
 }: {
   state: WebhookFormState
   trackableId: string
-  providerOverride: "generic" | "discord"
+  providerOverride: "generic" | "discord" | "microsoft_teams"
 }) {
   const gt = useGT()
   const trpc = useTRPC()
@@ -258,6 +258,11 @@ export function WebhookForm({
             secret: values.secret || undefined,
             headers: {},
           }
+        : values.provider === "microsoft_teams"
+          ? {
+              provider: "microsoft_teams",
+              url: values.url,
+            }
         : {
             provider: "discord",
             url: values.url,

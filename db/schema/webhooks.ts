@@ -25,9 +25,11 @@ import {
 import type {
   WebhookDeliveryRequestPayload,
   WebhookDeliveryResponsePayload,
+} from "@/db/schema/types"
+import type {
   WebhookProviderConfig,
   WebhookTriggerConfig,
-} from "@/db/schema/types"
+} from "@/server/webhooks/webhook.schemas"
 import { users } from "@/db/schema/users"
 
 export const workspaceWebhooks = pgTable(

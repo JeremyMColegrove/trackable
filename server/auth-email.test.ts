@@ -6,34 +6,20 @@ import { registerServerOnlyMock } from "@/support/module-mocks/register-module-m
 registerServerOnlyMock()
 
 let buildAuthEmailSettings: typeof import("@/server/auth-email").buildAuthEmailSettings
+let sendVerifyEmail: typeof import("@/server/email").sendVerifyEmail
+let sendResetPasswordEmail: typeof import("@/server/email").sendResetPasswordEmail
 
 before(async () => {
   ;({ buildAuthEmailSettings } = await import("@/server/auth-email"))
+  ;({ sendVerifyEmail, sendResetPasswordEmail } = await import("@/server/email"))
 })
 
-type VerifyEmailData = {
-  email: string
-  name?: string | null
-  verificationUrl: string
-}
-
-type ResetPasswordEmailData = {
-  email: string
-  name?: string | null
-  resetUrl: string
-}
-
-type ChangeEmailData = {
-  email: string
-  name?: string | null
-  newEmail: string
-  confirmationUrl: string
-}
+type VerifyEmailData = Parameters<typeof sendVerifyEmail>[0]
+type ResetPasswordEmailData = Parameters<typeof sendResetPasswordEmail>[0]
 
 class StubEmailService {
   public verifyEmails: VerifyEmailData[] = []
   public resetEmails: ResetPasswordEmailData[] = []
-  public changeEmails: ChangeEmailData[] = []
 
   async sendVerifyEmail(data: VerifyEmailData) {
     this.verifyEmails.push(data)
@@ -41,10 +27,6 @@ class StubEmailService {
 
   async sendResetPasswordEmail(data: ResetPasswordEmailData) {
     this.resetEmails.push(data)
-  }
-
-  async sendChangeEmail(data: ChangeEmailData) {
-    this.changeEmails.push(data)
   }
 }
 
@@ -68,15 +50,14 @@ test("buildAuthEmailSettings enables auth email hooks and dispatches through the
     assert.fail("Expected emailVerification settings to be enabled.")
   }
 
+  const emailVerification = settings.emailVerification
+  assert.ok(emailVerification)
+
   if (!("sendResetPassword" in settings.emailAndPassword)) {
     assert.fail("Expected reset-password email handler to be enabled.")
   }
 
-  if (!("sendChangeEmailConfirmation" in settings.user.changeEmail)) {
-    assert.fail("Expected change-email confirmation handler to be enabled.")
-  }
-
-  await settings.emailVerification.sendVerificationEmail({
+  await emailVerification.sendVerificationEmail({
     user: {
       email: "user@example.com",
       name: "Jamie",
@@ -94,16 +75,6 @@ test("buildAuthEmailSettings enables auth email hooks and dispatches through the
     token: "abc",
   })
 
-  await settings.user.changeEmail.sendChangeEmailConfirmation({
-    user: {
-      email: "user@example.com",
-      name: "Jamie",
-    },
-    newEmail: "new@example.com",
-    url: "https://example.com/change?token=abc",
-    token: "abc",
-  })
-
   assert.deepEqual(emailService.verifyEmails, [
     {
       email: "user@example.com",
@@ -116,14 +87,6 @@ test("buildAuthEmailSettings enables auth email hooks and dispatches through the
       email: "user@example.com",
       name: "Jamie",
       resetUrl: "https://example.com/reset?token=abc",
-    },
-  ])
-  assert.deepEqual(emailService.changeEmails, [
-    {
-      email: "user@example.com",
-      name: "Jamie",
-      newEmail: "new@example.com",
-      confirmationUrl: "https://example.com/change?token=abc",
     },
   ])
 })

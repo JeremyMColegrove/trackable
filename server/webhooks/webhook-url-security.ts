@@ -1,6 +1,18 @@
 import { isIP } from "node:net"
 import { lookup } from "node:dns/promises"
 
+type LookupAddress = {
+  address: string
+  family: number
+}
+
+type LookupAll = (
+  hostname: string,
+  options: {
+    all: true
+  }
+) => Promise<LookupAddress[]>
+
 function normalizeHostname(hostname: string) {
   return hostname
     .trim()
@@ -114,7 +126,7 @@ export function validateWebhookTargetUrl(rawUrl: string) {
 
 export async function assertSafeWebhookTargetUrl(
   rawUrl: string,
-  dnsLookup: typeof lookup = lookup
+  dnsLookup: LookupAll = lookup
 ) {
   const parsedUrl = parseWebhookTargetUrl(rawUrl)
   const hostname = normalizeHostname(parsedUrl.hostname)

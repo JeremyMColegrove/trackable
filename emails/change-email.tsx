@@ -1,3 +1,4 @@
+import Logo from "@/images/macos/AppIcon Small.png";
 import {
 	Body,
 	Button,
@@ -17,7 +18,6 @@ export interface TrackablesChangeEmailProps {
 	confirmationUrl?: string;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 const serifFontStyle = {
 	fontFamily:
 		'"Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -38,12 +38,7 @@ export const ChangeEmail = ({
 				<Body className="bg-[#f6f9fc] py-2.5">
 					<Preview>Trackables reset your password</Preview>
 					<Container className="bg-white border border-solid border-[#f0f0f0] p-[45px]">
-						<Img
-							src={`${baseUrl}/static/logo.png`}
-							width="40"
-							height="33"
-							alt="Trackables"
-						/>
+						<Img src={Logo.src} width="40" height="40" alt="Trackables" />
 						<Section>
 							<Text
 								className="text-base font-light text-[#404040] leading-[26px]"
@@ -56,15 +51,15 @@ export const ChangeEmail = ({
 								style={serifFontStyle}
 							>
 								Someone recently requested an email change for your Trackables
-								account. If this was you, please click here to verify this
-								email:
+								account. If this was you, confirm the change here. After that,
+								we&apos;ll send a verification link to your new email address:
 							</Text>
 							<Button
 								className="bg-[#000] rounded text-white text-[15px] no-underline text-center block w-[210px] py-[14px] px-[7px]"
 								style={sansFontStyle}
 								href={confirmationUrl}
 							>
-								Verify email
+								Confirm email change
 							</Button>
 							<Text
 								className="text-base font-light text-[#404040] leading-[26px]"
