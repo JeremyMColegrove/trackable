@@ -95,8 +95,18 @@ export class SubscriptionService {
   private buildResolvedState(
     subscription: WorkspaceSubscriptionState
   ): ResolvedSubscriptionState {
+    const now = new Date()
+    const isWithinPaidPeriod =
+      subscription.currentPeriodEnd !== null &&
+      subscription.currentPeriodEnd > now
+
     const effectiveTier =
-      subscription.status === "active" ? subscription.tier : getDefaultTierId()
+      subscription.status === "active" ||
+      ((subscription.status === "cancelled" ||
+        subscription.status === "paused") &&
+        isWithinPaidPeriod)
+        ? subscription.tier
+        : getDefaultTierId()
 
     return {
       ...subscription,

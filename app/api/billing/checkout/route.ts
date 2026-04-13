@@ -7,6 +7,7 @@ import { z } from "zod"
 
 import { getLogger } from "@/lib/logger"
 import { getRuntimeConfig } from "@/lib/runtime-config"
+import { getSiteUrl } from "@/lib/site-config"
 import { resolveTierFromVariantId } from "@/lib/subscription-plans"
 import { LemonSqueezySyncService } from "@/server/subscriptions/lemon-squeezy-sync.service"
 import { workspaceSubscriptionRepository } from "@/server/subscriptions/subscription.repository"
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
   }
 
   // No active subscription — create a new checkout session.
-  const origin = new URL(request.url).origin
+  const origin = getSiteUrl().origin
   const tier = resolveTierFromVariantId(variantId)
   const redirectUrl = `${origin}/dashboard?billing=success${tier ? `&plan=${tier}` : ""}`
 

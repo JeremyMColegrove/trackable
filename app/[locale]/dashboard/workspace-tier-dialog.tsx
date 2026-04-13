@@ -16,7 +16,6 @@ import { useTRPC } from "@/trpc/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { T } from "gt-next"
 import { CheckIcon, Loader2Icon, SparklesIcon } from "lucide-react"
-import Link from "next/link"
 import { useState } from "react"
 import { toast } from "sonner"
 import {
@@ -64,6 +63,7 @@ export function WorkspaceTierDialog({
     ? currentTier
     : (mostPopularPlan?.tierId ?? currentTier)
   const [loadingVariantId, setLoadingVariantId] = useState<string | null>(null)
+  const [isLoadingPortal, setIsLoadingPortal] = useState(false)
   const [successScenario, setSuccessScenario] =
     useState<BillingSuccessScenario | null>(null)
   const queryClient = useQueryClient()
@@ -107,6 +107,26 @@ export function WorkspaceTierDialog({
       toast.error("Failed to update plan. Please try again.")
     } finally {
       setLoadingVariantId(null)
+    }
+  }
+
+  async function handleManage() {
+    setIsLoadingPortal(true)
+    try {
+      const res = await fetch(
+        `/api/billing/portal?workspaceId=${encodeURIComponent(workspaceId)}`
+      )
+      const data = await res.json()
+      if (!res.ok || !data.url) {
+        toast.error("Failed to open billing portal. Please try again.")
+        return
+      }
+      window.open(data.url, "_blank", "noreferrer")
+      onOpenChange(false)
+    } catch {
+      toast.error("Failed to open billing portal. Please try again.")
+    } finally {
+      setIsLoadingPortal(false)
     }
   }
 
@@ -339,22 +359,17 @@ export function WorkspaceTierDialog({
 
                   {isFree ? null : isCurrent ? (
                     <Button
-                      asChild
+                      type="button"
                       size="lg"
                       variant="outline"
                       className="mt-auto w-full rounded-xl border-foreground/10 font-semibold text-foreground/70"
+                      disabled={isLoadingPortal}
+                      onClick={handleManage}
                     >
-                      <Link
-                        href={
-                          currentPlan?.manageUrl ??
-                          "https://store.trackables.org/billing"
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => onOpenChange(false)}
-                      >
-                        {ctaLabel}
-                      </Link>
+                      {isLoadingPortal ? (
+                        <Loader2Icon className="mr-2 size-4 animate-spin" />
+                      ) : null}
+                      {ctaLabel}
                     </Button>
                   ) : (
                     <Button

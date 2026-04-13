@@ -892,7 +892,8 @@
     "Sign in again": "قم بتسجيل الدخول مرة أخرى",
     "This link is no longer valid.": "هذا الرابط لم يعد صالحا.",
     "Check your new email to finish changing your address.": "تحقق من بريدك الإلكتروني الجديد لإنهاء تغيير عنوانك.",
-    "Microsoft Teams": "فرق مايكروسوفت"
+    "Microsoft Teams": "فرق مايكروسوفت",
+    "AI and MCP Integration": "تكامل الذكاء الاصطناعي وMCP"
   },
   "de": {
     "Tracking for your team.": "Tracking für Ihr Team.",
@@ -1787,7 +1788,8 @@
     "Sign in again": "Melden Sie sich erneut an",
     "This link is no longer valid.": "Dieser Link ist nicht mehr gültig.",
     "Check your new email to finish changing your address.": "Überprüfen Sie Ihre neue E-Mail, um die Änderung Ihrer Adresse abzuschließen.",
-    "Microsoft Teams": "Microsoft-Teams"
+    "Microsoft Teams": "Microsoft-Teams",
+    "AI and MCP Integration": "KI- und MCP-Integration"
   },
   "es": {
     "Tracking for your team.": "Seguimiento para tu equipo.",
@@ -2682,7 +2684,8 @@
     "Sign in again": "Iniciar sesión nuevamente",
     "This link is no longer valid.": "Este enlace ya no es válido.",
     "Check your new email to finish changing your address.": "Revisa tu nuevo correo electrónico para terminar de cambiar tu dirección.",
-    "Microsoft Teams": "Equipos de Microsoft"
+    "Microsoft Teams": "Equipos de Microsoft",
+    "AI and MCP Integration": "Integración de IA y MCP"
   },
   "fr": {
     "Tracking for your team.": "Suivi de votre équipe.",
@@ -3577,7 +3580,8 @@
     "Sign in again": "Connectez-vous à nouveau",
     "This link is no longer valid.": "Ce lien n'est plus valide.",
     "Check your new email to finish changing your address.": "Vérifiez votre nouvel e-mail pour terminer la modification de votre adresse.",
-    "Microsoft Teams": "Équipes Microsoft"
+    "Microsoft Teams": "Équipes Microsoft",
+    "AI and MCP Integration": "Intégration IA et MCP"
   },
   "hi": {
     "Tracking for your team.": "अपनी टीम के लिए ट्रैकिंग।",
@@ -4472,7 +4476,8 @@
     "Sign in again": "पुनः साइन इन करें",
     "This link is no longer valid.": "यह लिंक अब मान्य नहीं है.",
     "Check your new email to finish changing your address.": "अपना पता बदलना समाप्त करने के लिए अपना नया ईमेल जांचें।",
-    "Microsoft Teams": "माइक्रोसॉफ्ट टीमें"
+    "Microsoft Teams": "माइक्रोसॉफ्ट टीमें",
+    "AI and MCP Integration": "एआई और एमसीपी एकीकरण"
   },
   "id": {
     "Tracking for your team.": "Pelacakan untuk tim Anda.",
@@ -5367,7 +5372,8 @@
     "Sign in again": "Masuk lagi",
     "This link is no longer valid.": "Tautan ini tidak lagi valid.",
     "Check your new email to finish changing your address.": "Periksa email baru Anda untuk menyelesaikan perubahan alamat Anda.",
-    "Microsoft Teams": "Tim Microsoft"
+    "Microsoft Teams": "Tim Microsoft",
+    "AI and MCP Integration": "Integrasi AI dan MCP"
   },
   "it": {
     "Tracking for your team.": "Monitoraggio per la tua squadra.",
@@ -6262,7 +6268,8 @@
     "Sign in again": "Accedi di nuovo",
     "This link is no longer valid.": "Questo collegamento non è più valido.",
     "Check your new email to finish changing your address.": "Controlla la tua nuova email per completare la modifica del tuo indirizzo.",
-    "Microsoft Teams": "Microsoft Teams"
+    "Microsoft Teams": "Microsoft Teams",
+    "AI and MCP Integration": "Integrazione AI e MCP"
   },
   "ja": {
     "Tracking for your team.": "チームの追跡。",
@@ -7157,7 +7164,8 @@
     "Sign in again": "再度サインインする",
     "This link is no longer valid.": "このリンクは無効になりました。",
     "Check your new email to finish changing your address.": "新しいメールを確認して、アドレスの変更を完了します。",
-    "Microsoft Teams": "マイクロソフトチーム"
+    "Microsoft Teams": "マイクロソフトチーム",
+    "AI and MCP Integration": "AIとMCPの統合"
   },
   "ko": {
     "Tracking for your team.": "팀을 추적합니다.",
@@ -8052,7 +8060,8 @@
     "Sign in again": "다시 로그인",
     "This link is no longer valid.": "이 링크는 더 이상 유효하지 않습니다.",
     "Check your new email to finish changing your address.": "새 이메일을 확인하여 주소 변경을 완료하세요.",
-    "Microsoft Teams": "마이크로소프트 팀즈"
+    "Microsoft Teams": "마이크로소프트 팀즈",
+    "AI and MCP Integration": "AI와 MCP 통합"
   },
   "nl": {
     "Tracking for your team.": "Volgen voor uw team.",
@@ -8947,7 +8956,8 @@
     "Sign in again": "Meld u opnieuw aan",
     "This link is no longer valid.": "Deze link is niet langer geldig.",
     "Check your new email to finish changing your address.": "Controleer uw nieuwe e-mailadres om het wijzigen van uw adres te voltooien.",
-    "Microsoft Teams": "Microsoft Teams"
+    "Microsoft Teams": "Microsoft Teams",
+    "AI and MCP Integration": "AI- en MCP-integratie"
   },
   "pl": {
     "Tracking for your team.": "Śledzenie dla Twojego zespołu.",
@@ -9842,7 +9852,8 @@
     "Sign in again": "Zaloguj się ponownie",
     "This link is no longer valid.": "Ten link jest już nieaktualny.",
     "Check your new email to finish changing your address.": "Sprawdź swój nowy adres e-mail, aby dokończyć zmianę adresu.",
-    "Microsoft Teams": "Zespoły Microsoftu"
+    "Microsoft Teams": "Zespoły Microsoftu",
+    "AI and MCP Integration": "Integracja AI i MCP"
   },
   "pt": {
     "Tracking for your team.": "Rastreamento para sua equipe.",
@@ -10737,7 +10748,8 @@
     "Sign in again": "Faça login novamente",
     "This link is no longer valid.": "Este link não é mais válido.",
     "Check your new email to finish changing your address.": "Verifique seu novo e-mail para terminar de alterar seu endereço.",
-    "Microsoft Teams": "Equipes Microsoft"
+    "Microsoft Teams": "Equipes Microsoft",
+    "AI and MCP Integration": "Integração de IA e MCP"
   },
   "ru": {
     "Tracking for your team.": "Отслеживание вашей команды.",
@@ -11632,7 +11644,8 @@
     "Sign in again": "Войдите снова",
     "This link is no longer valid.": "Эта ссылка больше не действительна.",
     "Check your new email to finish changing your address.": "Проверьте свой новый адрес электронной почты, чтобы завершить изменение адреса.",
-    "Microsoft Teams": "Команды Майкрософт"
+    "Microsoft Teams": "Команды Майкрософт",
+    "AI and MCP Integration": "Интеграция AI и MCP"
   },
   "tr": {
     "Tracking for your team.": "Ekibiniz için takip.",
@@ -12527,7 +12540,8 @@
     "Sign in again": "Tekrar oturum açın",
     "This link is no longer valid.": "Bu bağlantı artık geçerli değil.",
     "Check your new email to finish changing your address.": "Adresinizi değiştirmeyi tamamlamak için yeni e-postanızı kontrol edin.",
-    "Microsoft Teams": "Microsoft Ekipleri"
+    "Microsoft Teams": "Microsoft Ekipleri",
+    "AI and MCP Integration": "Yapay Zeka ve MCP Entegrasyonu"
   },
   "vi": {
     "Tracking for your team.": "Theo dõi cho nhóm của bạn.",
@@ -13422,7 +13436,8 @@
     "Sign in again": "Đăng nhập lại",
     "This link is no longer valid.": "Liên kết này không còn hợp lệ.",
     "Check your new email to finish changing your address.": "Kiểm tra email mới của bạn để hoàn tất việc thay đổi địa chỉ của bạn.",
-    "Microsoft Teams": "Nhóm Microsoft"
+    "Microsoft Teams": "Nhóm Microsoft",
+    "AI and MCP Integration": "Tích hợp AI và MCP"
   },
   "zh-CN": {
     "Tracking for your team.": "跟踪您的团队。",
@@ -14317,6 +14332,7 @@
     "Sign in again": "重新登录",
     "This link is no longer valid.": "该链接不再有效。",
     "Check your new email to finish changing your address.": "检查您的新电子邮件以完成地址更改。",
-    "Microsoft Teams": "微软团队"
+    "Microsoft Teams": "微软团队",
+    "AI and MCP Integration": "AI与MCP集成"
   }
 }
