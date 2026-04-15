@@ -339,6 +339,19 @@ export default async function ConfigReferencePage() {
                     </T>
                   ),
                 },
+                {
+                  field: "webhooks",
+                  type: 'boolean | ("teams" | "general" | "discord")[]',
+                  required: "Required",
+                  description: (
+                    <T>
+                      Controls which webhook provider types are available. Set
+                      to true to enable all providers (generic, Microsoft Teams,
+                      Discord), false to disable webhooks entirely, or an array
+                      of provider names to enable a specific subset.
+                    </T>
+                  ),
+                },
               ]}
             />
           </Section>
@@ -602,55 +615,6 @@ export default async function ConfigReferencePage() {
                     <T>
                       When false, this tier is hidden from the upgrade UI even
                       if billing is enabled.
-                    </T>
-                  ),
-                },
-              ]}
-            />
-          </Section>
-
-          {/* usage */}
-          <Section id="usage" title={<T>usage</T>}>
-            <p className="mb-4 text-muted-foreground">
-              <T>
-                Global API usage controls that apply across all workspaces and
-                users.
-              </T>
-            </p>
-            <FieldTable
-              rows={[
-                {
-                  field: "invalidApiKeyRateLimitPerMinute",
-                  type: "number",
-                  required: "Required",
-                  description: (
-                    <T>
-                      Maximum number of requests with an invalid API key allowed
-                      per minute per IP before the source is rate-limited. Helps
-                      prevent credential stuffing.
-                    </T>
-                  ),
-                },
-                {
-                  field: "maxBodyBytes",
-                  type: "number",
-                  required: "Required",
-                  description: (
-                    <T>
-                      Maximum size in bytes for a log request body at the API
-                      gateway level. Requests exceeding this are rejected before
-                      reaching the service layer.
-                    </T>
-                  ),
-                },
-                {
-                  field: "pageSize",
-                  type: "number",
-                  required: "Required",
-                  description: (
-                    <T>
-                      Number of log entries fetched per page when loading the
-                      log viewer.
                     </T>
                   ),
                 },

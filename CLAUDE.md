@@ -77,13 +77,17 @@ Key sections:
 | Section | Purpose |
 |---------|---------|
 | `admins` | Email list with elevated access |
-| `features.*` | Feature flags: `subscriptionEnforcementEnabled`, `workspaceBillingEnabled`, `batchSchedulerEnabled`, `customMCPServerTokens` |
+| `auth.*` | Auth settings: `emailServiceEnabled` |
+| `features.*` | Feature flags: `subscriptionEnforcementEnabled`, `workspaceBillingEnabled`, `batchSchedulerEnabled`, `customMCPServerTokens`, `webhooks` |
 | `limits[]` | Per-tier resource caps (trackable items, API rate limits, log retention) |
 | `billing.*` | Lemon Squeezy store config and tier definitions |
+| `usage.*` | Global API usage controls: rate limits and payload size caps |
 | `webhooks.queue.*` | Webhook delivery queue: `enabled`, rate limit settings |
 | `batch.schedulerTimeZone` | BullMQ scheduler timezone |
 
 `lib/public-app-config.ts` derives a browser-safe subset from the runtime config and exposes it to the client.
+
+**Config page sync rule**: Whenever `lib/runtime-config.ts` schema changes (fields added, removed, or renamed), update the config reference page at `app/[locale]/self-hosting/config/page.tsx` to match. Every field in the Zod schema must have a corresponding row in the appropriate `FieldTable` on that page.
 
 ### Running a single test
 

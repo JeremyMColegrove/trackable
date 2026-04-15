@@ -11,7 +11,6 @@ const sections = [
   "features",
   "limits",
   "billing",
-  "usage",
   "webhooks",
   "batch",
 ]

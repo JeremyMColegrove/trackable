@@ -28,11 +28,6 @@
     "manageUrl": null,
     "tiers": []
   },
-  "usage": {
-    "invalidApiKeyRateLimitPerMinute": 10,
-    "maxBodyBytes": 102400,
-    "pageSize": 50
-  },
   "webhooks": {
     "queue": {
       "enabled": true,

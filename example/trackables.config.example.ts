@@ -74,14 +74,6 @@ type Config = {
       enabled: boolean
     }[]
   }
-  usage: {
-    // how many bad api key bounces allowed per minute
-    invalidApiKeyRateLimitPerMinute: number
-    // max number of bytes in log body
-    maxBodyBytes: number
-    // number of logs per page to load at once
-    pageSize: number
-  }
   // webhook info
   webhooks: {
     // enable webhook queue in redis

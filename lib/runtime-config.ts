@@ -50,11 +50,6 @@ const runtimeConfigObjectShape = z.object({
     manageUrl: z.string().trim().url().nullable(),
     tiers: z.array(billingTierSchema),
   }),
-  usage: z.object({
-    invalidApiKeyRateLimitPerMinute: z.number().int().positive(),
-    maxBodyBytes: z.number().int().positive(),
-    pageSize: z.number().int().positive(),
-  }),
   webhooks: z.object({
     queue: z.object({
       enabled: z.boolean(),
@@ -193,7 +188,6 @@ const configFileSchema = z
         tiers: z.array(billingTierSchema).optional(),
       })
       .optional(),
-    usage: runtimeConfigObjectShape.shape.usage.partial().optional(),
     webhooks: z
       .object({
         queue: runtimeConfigObjectShape.shape.webhooks.shape.queue
@@ -226,11 +220,6 @@ const DEFAULT_RUNTIME_CONFIG: Omit<RuntimeConfig, "admins" | "limits"> & {
     lemonSqueezyStoreId: null,
     manageUrl: null,
     tiers: [],
-  },
-  usage: {
-    invalidApiKeyRateLimitPerMinute: 30,
-    maxBodyBytes: 64 * 1024,
-    pageSize: 101,
   },
   webhooks: {
     queue: {
@@ -379,10 +368,6 @@ function mergeRuntimeConfig(
         overrides.billing?.manageUrl ??
         DEFAULT_RUNTIME_CONFIG.billing.manageUrl,
       tiers: overrides.billing?.tiers ?? DEFAULT_RUNTIME_CONFIG.billing.tiers,
-    },
-    usage: {
-      ...DEFAULT_RUNTIME_CONFIG.usage,
-      ...overrides.usage,
     },
     webhooks: {
       queue: {

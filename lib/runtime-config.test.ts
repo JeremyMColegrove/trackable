@@ -26,7 +26,6 @@ test("loadRuntimeConfigFromPath parses a valid runtime config file", () => {
   assert.equal(config.features.customMCPServerTokens, false)
   assert.equal(config.limits?.length, 1)
   assert.equal(config.billing.tiers.length, 0)
-  assert.equal(config.usage.pageSize, 50)
 })
 
 test("loadRuntimeConfigFromPath defaults customMCPServerTokens to false when omitted", () => {
@@ -115,7 +114,6 @@ test("loadRuntimeConfigFromPath merges sparse config files with app defaults", (
       config.billing.tiers.find((t) => t.id === "plus")?.priceLabel,
       "$29"
     )
-    assert.equal(config.usage.pageSize, 101)
     // limits not specified — should be undefined (unlimited)
     assert.equal(config.limits, undefined)
   } finally {
@@ -156,7 +154,6 @@ test("getRuntimeConfig loads the fixed config.json file from the project root", 
     const config = getRuntimeConfig()
 
     assert.equal(config.limits?.length, 1)
-    assert.equal(config.usage.pageSize, 50)
   } finally {
     if (previousConfig === null) {
       fs.rmSync(rootConfigPath, { force: true })
@@ -233,9 +230,6 @@ test("loadRuntimeConfigFromPath throws useful validation errors for explicit inv
       billing: {
         tiers: [],
       },
-      usage: {
-        pageSize: 0,
-      },
     }),
     "utf8"
   )
@@ -243,7 +237,7 @@ test("loadRuntimeConfigFromPath throws useful validation errors for explicit inv
   try {
     assert.throws(
       () => loadRuntimeConfigFromPath(invalidConfigPath),
-      /nonexistent|usage\.pageSize/
+      /nonexistent/
     )
   } finally {
     fs.rmSync(tempDirectory, { recursive: true, force: true })

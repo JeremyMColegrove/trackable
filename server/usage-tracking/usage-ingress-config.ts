@@ -1,5 +1,5 @@
-import { getRuntimeConfig } from "@/lib/runtime-config"
+import { INVALID_API_KEY_RATE_LIMIT_PER_MINUTE } from "@/lib/internal-config"
 
 export function getInvalidApiKeyAttemptLimit() {
-  return getRuntimeConfig().usage.invalidApiKeyRateLimitPerMinute
+  return INVALID_API_KEY_RATE_LIMIT_PER_MINUTE
 }

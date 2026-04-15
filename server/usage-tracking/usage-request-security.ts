@@ -4,7 +4,7 @@ import { isIP } from "node:net"
 import { TRPCError } from "@trpc/server"
 
 import { fingerprintValue } from "@/lib/log-sanitization"
-import { getRuntimeConfig } from "@/lib/runtime-config"
+import { USAGE_GATEWAY_MAX_BODY_BYTES } from "@/lib/internal-config"
 
 const maxHeaderValueLength = 512
 const maxRequestIdLength = 128
@@ -35,10 +35,6 @@ function parsePositiveInteger(value: string | null) {
   }
 
   return parsedValue
-}
-
-export function getUsagePayloadSizeLimitBytes() {
-  return getRuntimeConfig().usage.maxBodyBytes
 }
 
 export function isJsonContentType(contentType: string | null) {
@@ -124,7 +120,7 @@ export function normalizeUsageRequestId(requestId: string | null) {
 
 export async function parseUsagePayload(
   request: Pick<Request, "headers" | "text">,
-  maxBytes: number = getUsagePayloadSizeLimitBytes()
+  maxBytes: number = USAGE_GATEWAY_MAX_BODY_BYTES
 ) {
   const contentType = request.headers.get("content-type")
 
