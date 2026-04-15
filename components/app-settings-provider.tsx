@@ -7,6 +7,7 @@ import type {
   PublicAppConfig,
   PublicWorkspacePlan,
 } from "@/lib/public-app-config-types"
+import type { WebhookProviderName } from "@/lib/runtime-config"
 import type { TierLimits } from "@/server/subscriptions/types"
 
 const UNLIMITED_LIMITS: TierLimits = {
@@ -26,6 +27,7 @@ type AppSettings = {
   workspacePlans: readonly PublicWorkspacePlan[]
   defaultTierId: string
   customMCPServerTokens: boolean
+  webhooks: boolean | WebhookProviderName[]
   getWorkspacePlan: (tierId: string) => PublicWorkspacePlan | undefined
   getTierLimits: (tierId: string) => TierLimits
   resolveWorkspaceTierFromVariantId: (variantId: string) => string | null
@@ -84,6 +86,7 @@ export function AppSettingsProvider({
         workspacePlans,
         defaultTierId,
         customMCPServerTokens: settings?.customMCPServerTokens ?? false,
+        webhooks: settings?.webhooks ?? true,
         getWorkspacePlan: (tierId) => plansByTierId[tierId],
         getTierLimits: (tierId) =>
           plansByTierId[tierId]?.limits ?? UNLIMITED_LIMITS,

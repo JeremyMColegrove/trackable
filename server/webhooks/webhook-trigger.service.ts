@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger"
+import { getEnabledWebhookProviders } from "@/lib/runtime-config"
 import { WorkspaceWebhookEntity } from "@/server/webhooks/webhook.entity"
 import type { WebhookRepository } from "@/server/webhooks/webhook.repository"
 import type {
@@ -50,6 +51,12 @@ export class WebhookTriggerService {
     trackableId: string
     workspaceId: string
   }) {
+    const enabledProviders = getEnabledWebhookProviders()
+
+    if (enabledProviders === false) {
+      return
+    }
+
     const attachedWebhookRecords = await this.repository.listTrackableWebhooks(
       event.trackableId
     )
@@ -59,6 +66,10 @@ export class WebhookTriggerService {
       const webhook = new WorkspaceWebhookEntity(record)
 
       if (!webhook.isDeliverable()) {
+        continue
+      }
+
+      if (!enabledProviders.has(record.provider)) {
         continue
       }
 

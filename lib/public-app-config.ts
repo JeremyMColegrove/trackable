@@ -15,5 +15,6 @@ export function getPublicAppConfig(): PublicAppConfig {
     workspacePlans: getWorkspaceTierPlans(),
     defaultTierId: getDefaultTierId(),
     customMCPServerTokens: getRuntimeConfig().features.customMCPServerTokens,
+    webhooks: getRuntimeConfig().features.webhooks,
   }
 }

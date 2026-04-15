@@ -71,7 +71,8 @@ function isTrackableChildRoute(
 function getTrackableNavItems(
   trackable: TrackableDetails,
   dashboardBaseHref: string,
-  gt: (value: string) => string
+  gt: (value: string) => string,
+  webhooksEnabled: boolean
 ): TrackableNavItem[] {
   const baseHref = `${dashboardBaseHref}/trackables/${trackable.id}`
 
@@ -96,13 +97,17 @@ function getTrackableNavItems(
         : []),
       ...(trackable.permissions.canManageSettings
         ? [
-            {
-              href: `${baseHref}/webhooks`,
-              label: gt("Webhooks"),
-              icon: Webhook,
-              isActive: (pathname: string) =>
-                pathname.startsWith(`${baseHref}/webhooks`),
-            },
+            ...(webhooksEnabled
+              ? [
+                  {
+                    href: `${baseHref}/webhooks`,
+                    label: gt("Webhooks"),
+                    icon: Webhook,
+                    isActive: (pathname: string) =>
+                      pathname.startsWith(`${baseHref}/webhooks`),
+                  },
+                ]
+              : []),
             {
               href: `${baseHref}/settings`,
               label: gt("Settings"),
@@ -135,13 +140,17 @@ function getTrackableNavItems(
       : []),
     ...(trackable.permissions.canManageSettings
       ? [
-          {
-            href: `${baseHref}/webhooks`,
-            label: gt("Webhooks"),
-            icon: Webhook,
-            isActive: (pathname: string) =>
-              pathname.startsWith(`${baseHref}/webhooks`),
-          },
+          ...(webhooksEnabled
+            ? [
+                {
+                  href: `${baseHref}/webhooks`,
+                  label: gt("Webhooks"),
+                  icon: Webhook,
+                  isActive: (pathname: string) =>
+                    pathname.startsWith(`${baseHref}/webhooks`),
+                },
+              ]
+            : []),
           {
             href: `${baseHref}/settings`,
             label: gt("Settings"),
@@ -258,7 +267,7 @@ function TrackableShellError({
 }
 
 function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
-  const { subscriptionEnforcementEnabled } = useAppSettings()
+  const { subscriptionEnforcementEnabled, webhooks } = useAppSettings()
   const { activeWorkspace } = useWorkspaceContext()
   const gt = useGT()
   const locale = useLocale()
@@ -268,10 +277,12 @@ function TrackableSidebarNav({ trackable }: { trackable: TrackableDetails }) {
   const [dialogTier, setDialogTier] = useState<string>("free")
   const dashboardBaseHref =
     locale === "en" ? "/dashboard" : `/${locale}/dashboard`
+  const webhooksEnabled = webhooks !== false
   const trackableNavItems = getTrackableNavItems(
     trackable,
     dashboardBaseHref,
-    gt
+    gt,
+    webhooksEnabled
   )
   const workspaceNavItems = getWorkspaceNavItems(dashboardBaseHref, gt)
   const trackableBadgeClassName = getTrackableKindVisuals(

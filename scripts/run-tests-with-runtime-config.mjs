@@ -18,11 +18,21 @@ const forwardedArgs = process.argv.slice(2)
 try {
   fs.copyFileSync(exampleConfigPath, configPath)
 
-  const child = spawn("tsx", ["--test", ...forwardedArgs], {
+  const child = spawn(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--import",
+      "./scripts/register-test-asset-hooks.mjs",
+      "--test",
+      ...forwardedArgs,
+    ],
+    {
     cwd: repoRoot,
     stdio: "inherit",
-    shell: true,
-  })
+    },
+  )
 
   child.on("exit", (code, signal) => {
     if (previousConfig === null) {

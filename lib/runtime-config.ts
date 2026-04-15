@@ -39,6 +39,10 @@ const runtimeConfigObjectShape = z.object({
     workspaceBillingEnabled: z.boolean(),
     batchSchedulerEnabled: z.boolean(),
     customMCPServerTokens: z.boolean(),
+    webhooks: z.union([
+      z.boolean(),
+      z.array(z.enum(["teams", "general", "discord"])),
+    ]),
   }),
   limits: z.array(limitEntrySchema).optional(),
   billing: z.object({
@@ -171,6 +175,8 @@ export const RuntimeConfigShape = runtimeConfigObjectShape.superRefine(
 export type RuntimeConfig = z.infer<typeof runtimeConfigObjectShape>
 export type LimitsEntry = NonNullable<RuntimeConfig["limits"]>[number]
 export type BillingTierConfig = RuntimeConfig["billing"]["tiers"][number]
+export type WebhookFeatureConfig = RuntimeConfig["features"]["webhooks"]
+export type WebhookProviderName = "teams" | "general" | "discord"
 
 const configFileSchema = z
   .object({
@@ -213,6 +219,7 @@ const DEFAULT_RUNTIME_CONFIG: Omit<RuntimeConfig, "admins" | "limits"> & {
     workspaceBillingEnabled: false,
     batchSchedulerEnabled: true,
     customMCPServerTokens: false,
+    webhooks: true,
   },
   limits: undefined,
   billing: {
@@ -388,4 +395,21 @@ function mergeRuntimeConfig(
       ...overrides.batch,
     },
   }
+}
+
+const WEBHOOK_PROVIDER_MAP: Record<WebhookProviderName, string> = {
+  general: "generic",
+  teams: "microsoft_teams",
+  discord: "discord",
+}
+
+/**
+ * Returns the set of enabled DB-level provider types, or `false` if all
+ * webhooks are disabled via `features.webhooks: false`.
+ */
+export function getEnabledWebhookProviders(): Set<string> | false {
+  const config = getRuntimeConfig().features.webhooks
+  if (config === false) return false
+  if (config === true) return new Set(Object.values(WEBHOOK_PROVIDER_MAP))
+  return new Set(config.map((name) => WEBHOOK_PROVIDER_MAP[name]))
 }

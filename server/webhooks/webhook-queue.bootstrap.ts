@@ -3,7 +3,7 @@ import "server-only"
 import { Queue, Worker } from "bullmq"
 
 import { getLogger } from "@/lib/logger"
-import { getRuntimeConfig } from "@/lib/runtime-config"
+import { getEnabledWebhookProviders, getRuntimeConfig } from "@/lib/runtime-config"
 import { createBullRedisConnection } from "@/server/redis/redis-client"
 import { webhookDispatchService } from "@/server/webhooks/webhook-dispatch.service.singleton"
 import {
@@ -47,6 +47,16 @@ export function getWebhookQueue() {
 }
 
 export async function bootstrapWebhookWorker() {
+  const enabledProviders = getEnabledWebhookProviders()
+
+  if (enabledProviders === false) {
+    logger.warn(
+      { source: "runtime-config" },
+      "Webhook worker bootstrap skipped: webhooks feature is disabled."
+    )
+    return null
+  }
+
   const enabled = isWebhookQueueEnabled()
 
   if (!enabled) {

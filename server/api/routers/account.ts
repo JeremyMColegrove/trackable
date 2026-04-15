@@ -55,12 +55,12 @@ export const accountRouter = createTRPCRouter({
         getWorkspaceMemberships(userId),
         getCreatedWorkspaceCount(userId),
       ])
-    const activeTier = await subscriptionService.getWorkspaceTier(
-      activeMembership.workspace.id
-    )
     const createdWorkspaceLimit = isSubscriptionEnforcementEnabled()
       ? getFreeTierCreatedWorkspaceLimit()
       : null
+    const subscriptionState = await subscriptionService.getState(
+      activeMembership.workspace.id
+    )
 
     return {
       hasAdminControls: adminEnabled,
@@ -69,7 +69,10 @@ export const accountRouter = createTRPCRouter({
         name: activeMembership.workspace.name,
         slug: activeMembership.workspace.slug,
         role: activeMembership.role,
-        tier: activeTier,
+        tier: subscriptionState.effectiveTier,
+        subscriptionStatus: subscriptionState.status,
+        currentPeriodEnd:
+          subscriptionState.currentPeriodEnd?.toISOString() ?? null,
       },
       workspaces: memberships.map((membership) => ({
         id: membership.workspace.id,

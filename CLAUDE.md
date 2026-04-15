@@ -57,7 +57,7 @@ UI (React Query + tRPC client)
 - **tRPC only** — no REST routes; use existing `/api/usage` and `/api/mcp` patterns for non-browser clients
 - **Tailwind CSS only** — no other styling systems
 - **Drizzle migrations** — never hand-write SQL in `drizzle/`; always run `npm run db:generate` after schema changes
-- Authentication via **Clerk** (JWT for browser, API keys for usage tracking, MCP tokens for agents)
+- Authentication via **better-auth** (JWT for browser, API keys for usage tracking, MCP tokens for agents)
 - Billing via **Lemon Squeezy** webhooks
 
 ### Code Organization Rules (from AGENTS.md)
@@ -67,6 +67,37 @@ UI (React Query + tRPC client)
 - **Authorization is centralized**: `server/services/access-control.service.ts` — do not scatter permission checks
 - **UI components are presentational**: no business logic in React components
 - Prefer explicit, readable code over clever abstractions
+
+### Runtime Config (`config.json`)
+
+The app is configured at runtime via `config.json` in the repo root (or `/config.json` in Docker). It is validated on startup by `lib/runtime-config.ts` against a Zod schema. The file is **partial** — only override what you need; defaults are defined in `DEFAULT_RUNTIME_CONFIG`. See `example/trackables.config.example.json` for a full reference.
+
+Key sections:
+
+| Section | Purpose |
+|---------|---------|
+| `admins` | Email list with elevated access |
+| `features.*` | Feature flags: `subscriptionEnforcementEnabled`, `workspaceBillingEnabled`, `batchSchedulerEnabled`, `customMCPServerTokens` |
+| `limits[]` | Per-tier resource caps (trackable items, API rate limits, log retention) |
+| `billing.*` | Lemon Squeezy store config and tier definitions |
+| `webhooks.queue.*` | Webhook delivery queue: `enabled`, rate limit settings |
+| `batch.schedulerTimeZone` | BullMQ scheduler timezone |
+
+`lib/public-app-config.ts` derives a browser-safe subset from the runtime config and exposes it to the client.
+
+### Running a single test
+
+`npm run test` temporarily swaps in the example config before invoking `tsx --test`. To run a specific test file:
+
+```bash
+npm run test -- path/to/file.test.ts
+```
+
+### Webhooks
+
+Webhook delivery lives in `server/webhooks/`. The three supported provider types are `generic`, `microsoft-teams`, and `discord` (see `server/webhooks/providers/`). The dispatch pipeline is: trigger rule evaluation → queue (BullMQ via Redis) → HTTP delivery with rate limiting.
+
+UI for managing webhooks per trackable is under `app/[locale]/dashboard/trackables/[id]/webhooks/`.
 
 ### Formatting
 

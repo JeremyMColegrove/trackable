@@ -1,3 +1,4 @@
+import type { WebhookProviderName } from "@/lib/runtime-config"
 import type { TierLimits } from "@/server/subscriptions/types"
 
 export interface PublicWorkspacePlan {
@@ -30,6 +31,8 @@ export interface PublicAppConfig {
   defaultTierId: string
   /** Whether custom MCP server tokens are enabled (self-hosted auth). */
   customMCPServerTokens: boolean
+  /** Which webhook providers are enabled. `true` = all, `false` = none, array = specific types. */
+  webhooks: boolean | WebhookProviderName[]
 }
 
 /** @deprecated Use PublicWorkspacePlan */

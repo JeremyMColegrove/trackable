@@ -22,6 +22,7 @@ import {
   BillingSuccessModal,
   type BillingSuccessScenario,
 } from "@/app/[locale]/dashboard/billing-success-modal"
+import { useWorkspaceContext } from "@/app/[locale]/dashboard/workspace-context-provider"
 
 function getPlanCtaLabel(
   planRank: number,
@@ -52,6 +53,19 @@ export function WorkspaceTierDialog({
     workspacePlans,
     defaultTierId,
   } = useAppSettings()
+  const { activeWorkspace } = useWorkspaceContext()
+
+  const isCancelledWithActivePeriod =
+    activeWorkspace?.subscriptionStatus === "cancelled" &&
+    activeWorkspace?.currentPeriodEnd !== null &&
+    new Date(activeWorkspace.currentPeriodEnd!) > new Date()
+
+  const downgradeDate = isCancelledWithActivePeriod
+    ? new Date(activeWorkspace!.currentPeriodEnd!).toLocaleDateString(
+        undefined,
+        { year: "numeric", month: "long", day: "numeric" }
+      )
+    : null
   const plans = workspacePlans
   const currentPlan = getWorkspacePlan(currentTier)
   const defaultPlan = getWorkspacePlan(defaultTierId)
@@ -266,6 +280,17 @@ export function WorkspaceTierDialog({
               </DialogDescription>
             </DialogHeader>
           </div>
+
+          {isCancelledWithActivePeriod && (
+            <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300 sm:mx-6">
+              <T>
+                Your subscription has been cancelled. Your workspace will be
+                downgraded to the Free plan on{" "}
+              </T>
+              <span className="font-semibold">{downgradeDate}</span>
+              <T>.</T>
+            </div>
+          )}
 
           <div className="grid gap-4 px-4 py-5 sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-6">
             {plans.map((plan) => {
