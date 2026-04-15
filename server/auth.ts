@@ -30,7 +30,6 @@ const appOrigin = getAppOrigin()
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
-    camelCase: true,
     schema: {
       user,
       session,

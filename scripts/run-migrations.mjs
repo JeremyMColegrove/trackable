@@ -14,7 +14,7 @@ async function main() {
 	}
 
 	const pool = new Pool({ connectionString })
-	const db = drizzle(pool)
+	const db = drizzle(pool, { casing: "snake_case" })
 
 	try {
 		const migrationsFolder = resolve(process.cwd(), "drizzle")

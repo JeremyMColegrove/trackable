@@ -339,7 +339,7 @@ export function WorkspaceTierDialog({
                       ) : null}
                       {showMostPopularBadge ? (
                         <Badge className="h-auto rounded-full bg-primary px-3 py-1 text-[10px] font-bold tracking-wider text-primary-foreground uppercase shadow-sm hover:bg-primary">
-                          <T>Best Seller</T>
+                          <T>Most Popular</T>
                         </Badge>
                       ) : null}
                     </div>

@@ -3,7 +3,7 @@ import "server-only"
 import { TRPCError } from "@trpc/server"
 import { and, eq, ilike, isNull, or } from "drizzle-orm"
 
-import { db } from "@/db"
+import { db, withUserContext } from "@/db"
 import { users, workspaceInvitations, workspaceMembers } from "@/db/schema"
 import { userMembershipsCache } from "@/server/redis/access-control-cache.repository"
 import {
@@ -239,49 +239,53 @@ export class WorkspaceInvitationService {
       workspaceId
     )
 
-    const invitations = await db.query.workspaceInvitations.findMany({
-      where: and(
-        eq(workspaceInvitations.workspaceId, workspaceId),
-        eq(workspaceInvitations.status, "pending")
-      ),
-      with: {
-        invitedUser: {
-          columns: {
-            id: true,
-            displayName: true,
-            primaryEmail: true,
-            imageUrl: true,
+    return withUserContext(userId, async (db) => {
+      const invitations = await db.query.workspaceInvitations.findMany({
+        where: and(
+          eq(workspaceInvitations.workspaceId, workspaceId),
+          eq(workspaceInvitations.status, "pending")
+        ),
+        with: {
+          invitedUser: {
+            columns: {
+              id: true,
+              displayName: true,
+              primaryEmail: true,
+              imageUrl: true,
+            },
+          },
+          invitedByUser: {
+            columns: {
+              id: true,
+              displayName: true,
+              primaryEmail: true,
+            },
           },
         },
-        invitedByUser: {
-          columns: {
-            id: true,
-            displayName: true,
-            primaryEmail: true,
-          },
-        },
-      },
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
-    })
+        orderBy: (table, { desc }) => [desc(table.createdAt)],
+      })
 
-    return invitations.map((invitation) => ({
-      id: invitation.id,
-      role: invitation.role,
-      roleLabel: getWorkspaceRoleLabel(invitation.role),
-      status: invitation.status,
-      invitedEmail:
-        invitation.invitedUser?.primaryEmail ?? invitation.invitedEmail ?? null,
-      invitedDisplayName:
-        invitation.invitedUser?.displayName ??
-        invitation.invitedEmail ??
-        "Pending invite",
-      imageUrl: invitation.invitedUser?.imageUrl ?? null,
-      invitedByDisplayName:
-        invitation.invitedByUser.displayName ??
-        invitation.invitedByUser.primaryEmail,
-      invitedByEmail: invitation.invitedByUser.primaryEmail,
-      createdAt: invitation.createdAt.toISOString(),
-    }))
+      return invitations.map((invitation) => ({
+        id: invitation.id,
+        role: invitation.role,
+        roleLabel: getWorkspaceRoleLabel(invitation.role),
+        status: invitation.status,
+        invitedEmail:
+          invitation.invitedUser?.primaryEmail ??
+          invitation.invitedEmail ??
+          null,
+        invitedDisplayName:
+          invitation.invitedUser?.displayName ??
+          invitation.invitedEmail ??
+          "Pending invite",
+        imageUrl: invitation.invitedUser?.imageUrl ?? null,
+        invitedByDisplayName:
+          invitation.invitedByUser.displayName ??
+          invitation.invitedByUser.primaryEmail,
+        invitedByEmail: invitation.invitedByUser.primaryEmail,
+        createdAt: invitation.createdAt.toISOString(),
+      }))
+    })
   }
 
   async listPendingInvitationsForUser(userId: string) {

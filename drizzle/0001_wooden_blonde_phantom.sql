@@ -1,1 +1,0 @@
-ALTER TYPE "public"."webhook_provider" ADD VALUE 'microsoft_teams';

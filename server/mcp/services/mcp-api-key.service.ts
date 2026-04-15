@@ -2,7 +2,7 @@ import "server-only"
 
 import { and, desc, eq } from "drizzle-orm"
 
-import { db } from "@/db"
+import { db, withUserContext } from "@/db"
 import { apiKeys } from "@/db/schema"
 import {
   buildApiKeySecret,
@@ -59,34 +59,36 @@ export class McpApiKeyService {
   ): Promise<{ trackableId: string; keys: McpApiKeyRecord[] }> {
     await this.assertApiIngestionAccess(trackableId, authContext)
 
-    const rows = await db.query.apiKeys.findMany({
-      where: eq(apiKeys.projectId, trackableId),
-      orderBy: [desc(apiKeys.createdAt)],
-      columns: {
-        id: true,
-        name: true,
-        lastFour: true,
-        status: true,
-        expiresAt: true,
-        lastUsedAt: true,
-        usageCount: true,
-        createdAt: true,
-      },
-    })
+    return withUserContext(authContext.userId, async (db) => {
+      const rows = await db.query.apiKeys.findMany({
+        where: eq(apiKeys.projectId, trackableId),
+        orderBy: [desc(apiKeys.createdAt)],
+        columns: {
+          id: true,
+          name: true,
+          lastFour: true,
+          status: true,
+          expiresAt: true,
+          lastUsedAt: true,
+          usageCount: true,
+          createdAt: true,
+        },
+      })
 
-    return {
-      trackableId,
-      keys: rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        lastFour: row.lastFour,
-        status: row.status,
-        expiresAt: row.expiresAt?.toISOString() ?? null,
-        lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
-        usageCount: row.usageCount,
-        createdAt: row.createdAt.toISOString(),
-      })),
-    }
+      return {
+        trackableId,
+        keys: rows.map((row) => ({
+          id: row.id,
+          name: row.name,
+          lastFour: row.lastFour,
+          status: row.status,
+          expiresAt: row.expiresAt?.toISOString() ?? null,
+          lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
+          usageCount: row.usageCount,
+          createdAt: row.createdAt.toISOString(),
+        })),
+      }
+    })
   }
 
   async createApiKey(

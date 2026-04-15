@@ -893,7 +893,9 @@
     "This link is no longer valid.": "هذا الرابط لم يعد صالحا.",
     "Check your new email to finish changing your address.": "تحقق من بريدك الإلكتروني الجديد لإنهاء تغيير عنوانك.",
     "Microsoft Teams": "فرق مايكروسوفت",
-    "AI and MCP Integration": "تكامل الذكاء الاصطناعي وMCP"
+    "AI and MCP Integration": "تكامل الذكاء الاصطناعي وMCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "يتحكم في أنواع موفر خدمة خطاف الويب المتوفرة. اضبط على \"صحيح\" لتمكين جميع الموفرين (عام، Microsoft Teams، Discord)، أو \"خطأ\" لتعطيل خطافات الويب بالكامل، أو مجموعة من أسماء الموفرين لتمكين مجموعة فرعية معينة.",
+    "Most Popular": "الأكثر شعبية"
   },
   "de": {
     "Tracking for your team.": "Tracking für Ihr Team.",
@@ -1789,7 +1791,9 @@
     "This link is no longer valid.": "Dieser Link ist nicht mehr gültig.",
     "Check your new email to finish changing your address.": "Überprüfen Sie Ihre neue E-Mail, um die Änderung Ihrer Adresse abzuschließen.",
     "Microsoft Teams": "Microsoft-Teams",
-    "AI and MCP Integration": "KI- und MCP-Integration"
+    "AI and MCP Integration": "KI- und MCP-Integration",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Steuert, welche Webhook-Anbietertypen verfügbar sind. Legen Sie den Wert auf „true“ fest, um alle Anbieter zu aktivieren (generisch, Microsoft Teams, Discord), auf „false“, um Webhooks vollständig zu deaktivieren, oder auf ein Array von Anbieternamen, um eine bestimmte Teilmenge zu aktivieren.",
+    "Most Popular": "Am beliebtesten"
   },
   "es": {
     "Tracking for your team.": "Seguimiento para tu equipo.",
@@ -2685,7 +2689,9 @@
     "This link is no longer valid.": "Este enlace ya no es válido.",
     "Check your new email to finish changing your address.": "Revisa tu nuevo correo electrónico para terminar de cambiar tu dirección.",
     "Microsoft Teams": "Equipos de Microsoft",
-    "AI and MCP Integration": "Integración de IA y MCP"
+    "AI and MCP Integration": "Integración de IA y MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Controla qué tipos de proveedores de webhooks están disponibles. Configúrelo en verdadero para habilitar todos los proveedores (genéricos, Microsoft Teams, Discord), falso para deshabilitar los webhooks por completo o una serie de nombres de proveedores para habilitar un subconjunto específico.",
+    "Most Popular": "Más Popular"
   },
   "fr": {
     "Tracking for your team.": "Suivi de votre équipe.",
@@ -3581,7 +3587,9 @@
     "This link is no longer valid.": "Ce lien n'est plus valide.",
     "Check your new email to finish changing your address.": "Vérifiez votre nouvel e-mail pour terminer la modification de votre adresse.",
     "Microsoft Teams": "Équipes Microsoft",
-    "AI and MCP Integration": "Intégration IA et MCP"
+    "AI and MCP Integration": "Intégration IA et MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Contrôle quels types de fournisseurs de webhooks sont disponibles. Définissez sur true pour activer tous les fournisseurs (génériques, Microsoft Teams, Discord), false pour désactiver complètement les webhooks ou sur un tableau de noms de fournisseurs pour activer un sous-ensemble spécifique.",
+    "Most Popular": "Les plus populaires"
   },
   "hi": {
     "Tracking for your team.": "अपनी टीम के लिए ट्रैकिंग।",
@@ -4477,7 +4485,9 @@
     "This link is no longer valid.": "यह लिंक अब मान्य नहीं है.",
     "Check your new email to finish changing your address.": "अपना पता बदलना समाप्त करने के लिए अपना नया ईमेल जांचें।",
     "Microsoft Teams": "माइक्रोसॉफ्ट टीमें",
-    "AI and MCP Integration": "एआई और एमसीपी एकीकरण"
+    "AI and MCP Integration": "एआई और एमसीपी एकीकरण",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "नियंत्रित करता है कि कौन से वेबहुक प्रदाता प्रकार उपलब्ध हैं। सभी प्रदाताओं (जेनेरिक, माइक्रोसॉफ्ट टीम्स, डिस्कॉर्ड) को सक्षम करने के लिए सही पर सेट करें, वेबहुक को पूरी तरह से अक्षम करने के लिए गलत पर सेट करें, या किसी विशिष्ट उपसमूह को सक्षम करने के लिए प्रदाता नामों की एक सरणी पर सेट करें।",
+    "Most Popular": "सबसे लोकप्रिय"
   },
   "id": {
     "Tracking for your team.": "Pelacakan untuk tim Anda.",
@@ -5373,7 +5383,9 @@
     "This link is no longer valid.": "Tautan ini tidak lagi valid.",
     "Check your new email to finish changing your address.": "Periksa email baru Anda untuk menyelesaikan perubahan alamat Anda.",
     "Microsoft Teams": "Tim Microsoft",
-    "AI and MCP Integration": "Integrasi AI dan MCP"
+    "AI and MCP Integration": "Integrasi AI dan MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Mengontrol jenis penyedia webhook mana yang tersedia. Setel ke true untuk mengaktifkan semua penyedia (generik, Microsoft Teams, Discord), false untuk menonaktifkan webhook sepenuhnya, atau serangkaian nama penyedia untuk mengaktifkan subset tertentu.",
+    "Most Popular": "Paling Populer"
   },
   "it": {
     "Tracking for your team.": "Monitoraggio per la tua squadra.",
@@ -6269,7 +6281,9 @@
     "This link is no longer valid.": "Questo collegamento non è più valido.",
     "Check your new email to finish changing your address.": "Controlla la tua nuova email per completare la modifica del tuo indirizzo.",
     "Microsoft Teams": "Microsoft Teams",
-    "AI and MCP Integration": "Integrazione AI e MCP"
+    "AI and MCP Integration": "Integrazione AI e MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Controlla quali tipi di provider di webhook sono disponibili. Imposta su true per abilitare tutti i provider (generico, Microsoft Teams, Discord), false per disabilitare completamente i webhook o su una serie di nomi di provider per abilitare un sottoinsieme specifico.",
+    "Most Popular": "Il più popolare"
   },
   "ja": {
     "Tracking for your team.": "チームの追跡。",
@@ -7165,7 +7179,9 @@
     "This link is no longer valid.": "このリンクは無効になりました。",
     "Check your new email to finish changing your address.": "新しいメールを確認して、アドレスの変更を完了します。",
     "Microsoft Teams": "マイクロソフトチーム",
-    "AI and MCP Integration": "AIとMCPの統合"
+    "AI and MCP Integration": "AIとMCPの統合",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "どの Webhook プロバイダーのタイプを使用できるかを制御します。 すべてのプロバイダー (汎用、Microsoft Teams、Discord) を有効にする場合は true に設定し、Webhook を完全に無効にする場合は false に設定するか、特定のサブセットを有効にする場合はプロバイダー名の配列を設定します。",
+    "Most Popular": "最も人気のある"
   },
   "ko": {
     "Tracking for your team.": "팀을 추적합니다.",
@@ -8061,7 +8077,9 @@
     "This link is no longer valid.": "이 링크는 더 이상 유효하지 않습니다.",
     "Check your new email to finish changing your address.": "새 이메일을 확인하여 주소 변경을 완료하세요.",
     "Microsoft Teams": "마이크로소프트 팀즈",
-    "AI and MCP Integration": "AI와 MCP 통합"
+    "AI and MCP Integration": "AI와 MCP 통합",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "사용 가능한 웹훅 공급자 유형을 제어합니다. 모든 공급자(일반, Microsoft Teams, Discord)를 활성화하려면 true로 설정하고, 웹후크를 완전히 비활성화하려면 false로 설정하고, 특정 하위 집합을 활성화하려면 공급자 이름 배열을 설정합니다.",
+    "Most Popular": "가장 인기있는"
   },
   "nl": {
     "Tracking for your team.": "Volgen voor uw team.",
@@ -8957,7 +8975,9 @@
     "This link is no longer valid.": "Deze link is niet langer geldig.",
     "Check your new email to finish changing your address.": "Controleer uw nieuwe e-mailadres om het wijzigen van uw adres te voltooien.",
     "Microsoft Teams": "Microsoft Teams",
-    "AI and MCP Integration": "AI- en MCP-integratie"
+    "AI and MCP Integration": "AI- en MCP-integratie",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Bepaalt welke typen webhookproviders beschikbaar zijn. Stel in op true om alle providers in te schakelen (algemeen, Microsoft Teams, Discord), false om webhooks volledig uit te schakelen, of een reeks providernamen om een ​​specifieke subset in te schakelen.",
+    "Most Popular": "Meest populair"
   },
   "pl": {
     "Tracking for your team.": "Śledzenie dla Twojego zespołu.",
@@ -9853,7 +9873,9 @@
     "This link is no longer valid.": "Ten link jest już nieaktualny.",
     "Check your new email to finish changing your address.": "Sprawdź swój nowy adres e-mail, aby dokończyć zmianę adresu.",
     "Microsoft Teams": "Zespoły Microsoftu",
-    "AI and MCP Integration": "Integracja AI i MCP"
+    "AI and MCP Integration": "Integracja AI i MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Kontroluje, które typy dostawców webhook są dostępne. Ustaw na true, aby włączyć wszystkich dostawców (ogólne, Microsoft Teams, Discord), false, aby całkowicie wyłączyć webhooki, lub tablicę nazw dostawców, aby włączyć określony podzbiór.",
+    "Most Popular": "Najpopularniejsze"
   },
   "pt": {
     "Tracking for your team.": "Rastreamento para sua equipe.",
@@ -10749,7 +10771,9 @@
     "This link is no longer valid.": "Este link não é mais válido.",
     "Check your new email to finish changing your address.": "Verifique seu novo e-mail para terminar de alterar seu endereço.",
     "Microsoft Teams": "Equipes Microsoft",
-    "AI and MCP Integration": "Integração de IA e MCP"
+    "AI and MCP Integration": "Integração de IA e MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Controla quais tipos de provedores de webhook estão disponíveis. Defina como verdadeiro para habilitar todos os provedores (genérico, Microsoft Teams, Discord), falso para desabilitar totalmente os webhooks ou uma série de nomes de provedores para habilitar um subconjunto específico.",
+    "Most Popular": "Mais populares"
   },
   "ru": {
     "Tracking for your team.": "Отслеживание вашей команды.",
@@ -11645,7 +11669,9 @@
     "This link is no longer valid.": "Эта ссылка больше не действительна.",
     "Check your new email to finish changing your address.": "Проверьте свой новый адрес электронной почты, чтобы завершить изменение адреса.",
     "Microsoft Teams": "Команды Майкрософт",
-    "AI and MCP Integration": "Интеграция AI и MCP"
+    "AI and MCP Integration": "Интеграция AI и MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Определяет, какие типы поставщиков веб-перехватчиков доступны. Установите значение true, чтобы включить всех поставщиков (универсальные, Microsoft Teams, Discord), значение false, чтобы полностью отключить веб-перехватчики, или массив имен поставщиков, чтобы включить определенное подмножество.",
+    "Most Popular": "Самый популярный"
   },
   "tr": {
     "Tracking for your team.": "Ekibiniz için takip.",
@@ -12541,7 +12567,9 @@
     "This link is no longer valid.": "Bu bağlantı artık geçerli değil.",
     "Check your new email to finish changing your address.": "Adresinizi değiştirmeyi tamamlamak için yeni e-postanızı kontrol edin.",
     "Microsoft Teams": "Microsoft Ekipleri",
-    "AI and MCP Integration": "Yapay Zeka ve MCP Entegrasyonu"
+    "AI and MCP Integration": "Yapay Zeka ve MCP Entegrasyonu",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Hangi web kancası sağlayıcı türlerinin kullanılabilir olduğunu kontrol eder. Tüm sağlayıcıları (genel, Microsoft Teams, Discord) etkinleştirmek için doğru, web kancalarını tamamen devre dışı bırakmak için yanlış veya belirli bir alt kümeyi etkinleştirmek için bir dizi sağlayıcı adı olarak ayarlayın.",
+    "Most Popular": "En Popüler"
   },
   "vi": {
     "Tracking for your team.": "Theo dõi cho nhóm của bạn.",
@@ -13437,7 +13465,9 @@
     "This link is no longer valid.": "Liên kết này không còn hợp lệ.",
     "Check your new email to finish changing your address.": "Kiểm tra email mới của bạn để hoàn tất việc thay đổi địa chỉ của bạn.",
     "Microsoft Teams": "Nhóm Microsoft",
-    "AI and MCP Integration": "Tích hợp AI và MCP"
+    "AI and MCP Integration": "Tích hợp AI và MCP",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "Kiểm soát loại nhà cung cấp webhook nào có sẵn. Đặt thành true để bật tất cả các nhà cung cấp (chung, Microsoft Teams, Discord), sai để tắt hoàn toàn webhooks hoặc một loạt tên nhà cung cấp để bật một tập hợp con cụ thể.",
+    "Most Popular": "Phổ biến nhất"
   },
   "zh-CN": {
     "Tracking for your team.": "跟踪您的团队。",
@@ -14333,6 +14363,8 @@
     "This link is no longer valid.": "该链接不再有效。",
     "Check your new email to finish changing your address.": "检查您的新电子邮件以完成地址更改。",
     "Microsoft Teams": "微软团队",
-    "AI and MCP Integration": "AI与MCP集成"
+    "AI and MCP Integration": "AI与MCP集成",
+    "Controls which webhook provider types are available. Set to true to enable all providers (generic, Microsoft Teams, Discord), false to disable webhooks entirely, or an array of provider names to enable a specific subset.": "控制哪些 Webhook 提供程序类型可用。 设置为 true 以启用所有提供程序（通用、Microsoft Teams、Discord），设置为 false 以完全禁用 Webhook，或设置为一组提供程序名称以启用特定子集。",
+    "Most Popular": "最受欢迎"
   }
 }

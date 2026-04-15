@@ -30,6 +30,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --chown=nextjs:nodejs scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 COPY --chown=nextjs:nodejs scripts/run-migrations.mjs ./scripts/run-migrations.mjs
+COPY --chown=nextjs:nodejs scripts/setup-db-roles.mjs ./scripts/setup-db-roles.mjs
 
 RUN chmod +x /app/scripts/docker-entrypoint.sh && mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app
 

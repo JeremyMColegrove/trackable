@@ -197,6 +197,15 @@ const configFileSchema = z
       .partial()
       .optional(),
     batch: runtimeConfigObjectShape.shape.batch.partial().optional(),
+    // Legacy runtime config keys kept for backward compatibility.
+    // These values now live in internal server config and are ignored here.
+    usage: z
+      .object({
+        invalidApiKeyRateLimitPerMinute: z.number().int().positive().optional(),
+        maxBodyBytes: z.number().int().positive().optional(),
+        pageSize: z.number().int().positive().optional(),
+      })
+      .optional(),
   })
   .strict()
 

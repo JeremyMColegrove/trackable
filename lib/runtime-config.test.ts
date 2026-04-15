@@ -70,6 +70,33 @@ test("loadRuntimeConfigFromPath enables customMCPServerTokens when set to true",
   }
 })
 
+test("loadRuntimeConfigFromPath tolerates legacy usage config keys", () => {
+  const tempDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "trackables-runtime-config-")
+  )
+  const configPath = path.join(tempDirectory, "config.json")
+
+  fs.writeFileSync(
+    configPath,
+    JSON.stringify({
+      usage: {
+        invalidApiKeyRateLimitPerMinute: 10,
+        maxBodyBytes: 102400,
+        pageSize: 50,
+      },
+    }),
+    "utf8"
+  )
+
+  try {
+    const config = loadRuntimeConfigFromPath(configPath)
+    assert.equal(config.auth.emailServiceEnabled, false)
+    assert.equal(config.features.customMCPServerTokens, false)
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true })
+  }
+})
+
 test("loadRuntimeConfigFromPath merges sparse config files with app defaults", () => {
   const tempDirectory = fs.mkdtempSync(
     path.join(os.tmpdir(), "trackables-runtime-config-")

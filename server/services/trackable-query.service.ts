@@ -3,7 +3,7 @@ import "server-only"
 import { TRPCError } from "@trpc/server"
 import { count, desc, eq, max } from "drizzle-orm"
 
-import { db } from "@/db"
+import { db, withUserContext } from "@/db"
 import {
   apiKeys,
   trackableApiUsageEvents,
@@ -73,49 +73,59 @@ export class TrackableQueryService {
       trackableId,
       userId
     )
-    const trackable = await this.getRequiredTrackable(trackableId)
-    const permissions = this.buildPermissions(
-      trackable.kind,
-      canManageTrackable
-    )
 
-    const ownedApiKeys = permissions.canManageApiKeys
-      ? await db.query.apiKeys.findMany({
-          where: eq(apiKeys.projectId, trackable.id),
-          orderBy: [desc(apiKeys.createdAt)],
+    return withUserContext(userId, async (db) => {
+      const trackable = await db.query.trackableItems.findFirst({
+        where: eq(trackableItems.id, trackableId),
+      })
+
+      if (!trackable || trackable.archivedAt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trackable not found.",
         })
-      : []
+      }
 
-    return {
-      id: trackable.id,
-      kind: trackable.kind,
-      name: trackable.name,
-      description: trackable.description,
-      permissions,
-      settings: trackable.settings,
-      createdAt: trackable.createdAt.toISOString(),
-      submissionCount: trackable.submissionCount,
-      apiUsageCount: trackable.apiUsageCount,
-      lastSubmissionAt: trackable.lastSubmissionAt?.toISOString() ?? null,
-      lastApiUsageAt: trackable.lastApiUsageAt?.toISOString() ?? null,
-      activeForm: null,
-      recentSubmissions: [],
-      apiKeys: permissions.canManageApiKeys
-        ? ownedApiKeys.map((key) => ({
-            id: key.id,
-            name: key.name,
-            maskedKey: `${key.keyPrefix}...${key.lastFour}`,
-            status: key.status,
-            expiresAt: key.expiresAt?.toISOString() ?? null,
-            trackableUsageCount: 0,
-            lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
-          }))
-        : [],
-      shareSettings: {
-        accessGrants: [],
-        shareLinks: [],
-      },
-    }
+      const permissions = this.buildPermissions(trackable.kind, canManageTrackable)
+
+      const ownedApiKeys = permissions.canManageApiKeys
+        ? await db.query.apiKeys.findMany({
+            where: eq(apiKeys.projectId, trackable.id),
+            orderBy: [desc(apiKeys.createdAt)],
+          })
+        : []
+
+      return {
+        id: trackable.id,
+        kind: trackable.kind,
+        name: trackable.name,
+        description: trackable.description,
+        permissions,
+        settings: trackable.settings,
+        createdAt: trackable.createdAt.toISOString(),
+        submissionCount: trackable.submissionCount,
+        apiUsageCount: trackable.apiUsageCount,
+        lastSubmissionAt: trackable.lastSubmissionAt?.toISOString() ?? null,
+        lastApiUsageAt: trackable.lastApiUsageAt?.toISOString() ?? null,
+        activeForm: null,
+        recentSubmissions: [],
+        apiKeys: permissions.canManageApiKeys
+          ? ownedApiKeys.map((key) => ({
+              id: key.id,
+              name: key.name,
+              maskedKey: `${key.keyPrefix}...${key.lastFour}`,
+              status: key.status,
+              expiresAt: key.expiresAt?.toISOString() ?? null,
+              trackableUsageCount: 0,
+              lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+            }))
+          : [],
+        shareSettings: {
+          accessGrants: [],
+          shareLinks: [],
+        },
+      }
+    })
   }
 
   async getById(trackableId: string, userId: string) {
@@ -124,6 +134,7 @@ export class TrackableQueryService {
       userId
     )
 
+    return withUserContext(userId, async (db) => {
     const trackable = await db.query.trackableItems.findFirst({
       where: eq(trackableItems.id, trackableId),
       with: {
@@ -286,7 +297,8 @@ export class TrackableQueryService {
           : [],
       },
     }
-  }
+  })
+}
 }
 
 export const trackableQueryService = new TrackableQueryService()
