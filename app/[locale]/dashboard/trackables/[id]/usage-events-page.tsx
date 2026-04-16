@@ -484,6 +484,10 @@ export function UsageEventsPage() {
             onOpenNearbyLogs={handleOpenNearbyLogs}
             onGroupByField={handleGroupByField}
             onSortChange={handleSortChange}
+            hasActiveFilters={
+              appliedQuery.trim().length > 0 ||
+              normalizedUrlState.range !== "all_time"
+            }
           />
         ) : (
           <UsageEventsTableSkeleton />

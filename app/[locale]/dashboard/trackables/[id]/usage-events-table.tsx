@@ -85,6 +85,7 @@ export function UsageEventsTable({
 	endMessage,
 	isFetchingNextPage = false,
 	onLoadMore,
+	hasActiveFilters,
 	title = "",
 	description = "",
 	headerButton,
@@ -109,6 +110,7 @@ export function UsageEventsTable({
 	title?: React.ReactNode;
 	description?: string;
 	headerButton?: React.ReactNode;
+	hasActiveFilters?: boolean;
 }) {
 	const [selectedUsageEvent, setSelectedUsageEvent] = useState<
 		UsageEventTableData["rows"][number] | null
@@ -234,7 +236,7 @@ export function UsageEventsTable({
 			visibleColumns,
 		],
 	);
-	const emptyState = hasReceivedEvent ? (
+	const emptyState = hasActiveFilters || hasReceivedEvent ? (
 		gt("No logs found.")
 	) : hasActiveConnection ? (
 		<TrackableTableEmptyState
